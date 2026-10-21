@@ -1,40 +1,59 @@
 import { Head } from '@inertiajs/react';
 import ProcedureController from '@/actions/App/Http/Controllers/ProcedureController';
-import FormPage from '@/components/form-page';
-import ProcedureFormFields from '@/components/procedure-form-fields';
+import ProcedureWizard from '@/components/procedure-wizard';
+import type {
+    Applicant,
+    WizardOptions,
+} from '@/components/procedure-wizard/types';
 import { create, index } from '@/routes/procedures';
 import { show } from '@/routes/taxpayers';
-import type { CurrentUit, ProcedureTypeOption, TaxpayerSummary } from '@/types';
+import type {
+    CurrentUit,
+    DocumentTypeOption,
+    ProcedureTypeOption,
+} from '@/types';
 
 export default function ProcedureCreate({
     taxpayer,
     establishmentId,
     procedureTypes,
     currentUit,
+    documentTypes,
+    establishmentOptions,
 }: {
-    taxpayer: TaxpayerSummary | null;
+    taxpayer: Applicant | null;
     establishmentId: number | null;
     procedureTypes: ProcedureTypeOption[];
     currentUit: CurrentUit;
+    documentTypes: DocumentTypeOption[];
+    establishmentOptions: WizardOptions;
 }) {
     return (
         <>
             <Head title="Nuevo trámite" />
 
-            <FormPage
+            <ProcedureWizard
                 title="Nuevo trámite"
-                description="Quién solicita, para qué establecimiento y qué procedimientos del TUPA."
-                form={ProcedureController.store.form()}
+                description="Paso a paso: qué solicita, quién, dónde y los datos de mesa de partes."
+                action={ProcedureController.store()}
+                initial={{
+                    procedure_type_ids: [],
+                    taxpayer_id: taxpayer?.id ?? null,
+                    taxpayer: null,
+                    establishment_id: taxpayer ? establishmentId : null,
+                    establishment: null,
+                    file_number: '',
+                    folios: '',
+                    notes: '',
+                }}
+                initialApplicant={taxpayer}
+                procedureTypes={procedureTypes}
+                currentUit={currentUit}
+                documentTypes={documentTypes}
+                options={establishmentOptions}
                 cancelHref={taxpayer ? show(taxpayer.id).url : index().url}
                 submitLabel="Registrar trámite"
-            >
-                <ProcedureFormFields
-                    taxpayer={taxpayer}
-                    establishmentId={establishmentId}
-                    procedureTypes={procedureTypes}
-                    currentUit={currentUit}
-                />
-            </FormPage>
+            />
         </>
     );
 }

@@ -25,6 +25,19 @@ class EstablishmentRequest extends FormRequest
     {
         return [
             'taxpayer_id' => ['required', 'integer', Rule::exists(Taxpayer::class, 'id')],
+            ...self::rulesFor(),
+        ];
+    }
+
+    /**
+     * Establishment rules without the owner, reusable nested in other
+     * requests (e.g. "establishment." when a procedure registers a new one).
+     *
+     * @return array<string, array<mixed>>
+     */
+    public static function rulesFor(string $prefix = ''): array
+    {
+        return collect([
             'trade_name' => ['nullable', 'string', 'max:150'],
             'activity' => ['required', 'string', 'max:255'],
             'economic_sector' => ['nullable', Rule::enum(EconomicSector::class)],
@@ -39,7 +52,7 @@ class EstablishmentRequest extends FormRequest
             'area' => ['nullable', 'numeric', 'decimal:0,2', 'min:0.01', 'max:99999999.99'],
             'capacity' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'risk_level' => ['nullable', Rule::enum(RiskLevel::class)],
-        ];
+        ])->mapWithKeys(fn (array $rule, string $key) => [$prefix.$key => $rule])->all();
     }
 
     /**
@@ -49,8 +62,15 @@ class EstablishmentRequest extends FormRequest
      */
     public function attributes(): array
     {
-        return [
-            'taxpayer_id' => 'contribuyente',
+        return ['taxpayer_id' => 'contribuyente', ...self::attributesFor()];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function attributesFor(string $prefix = ''): array
+    {
+        return collect([
             'trade_name' => 'nombre comercial',
             'activity' => 'giro',
             'economic_sector' => 'sector económico',
@@ -65,6 +85,6 @@ class EstablishmentRequest extends FormRequest
             'area' => 'área',
             'capacity' => 'aforo',
             'risk_level' => 'nivel de riesgo',
-        ];
+        ])->mapWithKeys(fn (string $label, string $key) => [$prefix.$key => $label])->all();
     }
 }

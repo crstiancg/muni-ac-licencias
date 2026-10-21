@@ -6,9 +6,15 @@ use App\Actions\Procedures\IssueDocuments;
 use App\Actions\Procedures\IssuePaymentOrder;
 use App\Actions\Procedures\RegisterPayment;
 use App\Actions\Procedures\RegisterProcedure;
+use App\Actions\Procedures\ResolveParties;
+use App\Enums\DocumentType;
+use App\Enums\EconomicSector;
 use App\Enums\IssuedDocumentType;
 use App\Enums\PaymentOrderStatus;
 use App\Enums\ProcedureStatus;
+use App\Enums\RiskLevel;
+use App\Enums\SettlementType;
+use App\Enums\StreetType;
 use App\Http\Requests\ProcedureRequest;
 use App\Models\License;
 use App\Models\Procedure;
@@ -76,7 +82,7 @@ class ProcedureController extends Controller
     {
         return Inertia::render('procedures/create', [
             'taxpayer' => $request->integer('taxpayer')
-                ? Taxpayer::query()->find($request->integer('taxpayer'), ['id', 'document_type', 'document_number', 'ruc', 'name', 'address'])
+                ? Taxpayer::query()->find($request->integer('taxpayer'), ['id', 'document_type', 'document_number', 'ruc', 'name', 'address', 'phone'])
                 : null,
             // "Copiar datos de licencia": same owner and establishment.
             'establishmentId' => $request->integer('establishment') ?: null,
@@ -234,7 +240,8 @@ class ProcedureController extends Controller
 
         return Inertia::render('procedures/edit', [
             'procedure' => $procedure->load([
-                'taxpayer:id,document_type,document_number,ruc,name,address',
+                'taxpayer:id,document_type,document_number,ruc,name,address,phone',
+                'establishment',
                 'types:id',
             ]),
             ...$this->formOptions(),
@@ -244,15 +251,22 @@ class ProcedureController extends Controller
     /**
      * Update the procedure while it is still registered.
      */
-    public function update(ProcedureRequest $request, Procedure $procedure): RedirectResponse
+    public function update(ProcedureRequest $request, Procedure $procedure, ResolveParties $parties): RedirectResponse
     {
         if (! $procedure->status->isEditable()) {
             return $this->notEditable($procedure);
         }
 
-        DB::transaction(function () use ($request, $procedure) {
-            $procedure->update($request->safe()->except('procedure_type_ids'));
-            $procedure->types()->sync($request->validated('procedure_type_ids'));
+        DB::transaction(function () use ($request, $procedure, $parties) {
+            $data = $request->validated();
+
+            $procedure->update([
+                ...$parties->handle($data),
+                'file_number' => $data['file_number'] ?? null,
+                'folios' => $data['folios'] ?? null,
+                'notes' => $data['notes'] ?? null,
+            ]);
+            $procedure->types()->sync($data['procedure_type_ids']);
             $procedure->log('actualizado');
         });
 
@@ -320,6 +334,13 @@ class ProcedureController extends Controller
                     'fee' => $currentUit ? $type->feeFor($currentUit) : null,
                 ]),
             'currentUit' => $currentUit?->only('year', 'amount'),
+            'documentTypes' => DocumentType::options(),
+            'establishmentOptions' => [
+                'economicSectors' => EconomicSector::options(),
+                'streetTypes' => StreetType::options(),
+                'settlementTypes' => SettlementType::options(),
+                'riskLevels' => RiskLevel::options(),
+            ],
         ];
     }
 }

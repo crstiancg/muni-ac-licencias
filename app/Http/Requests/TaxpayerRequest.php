@@ -27,24 +27,33 @@ abstract class TaxpayerRequest extends FormRequest
      */
     public function rules(): array
     {
-        $type = DocumentType::tryFrom((string) $this->input('document_type'));
+        return self::rulesFor(DocumentType::tryFrom((string) $this->input('document_type')), $this->taxpayerId());
+    }
 
-        return [
+    /**
+     * Taxpayer rules, reusable nested in other requests (e.g. "taxpayer." when
+     * a procedure registers a new taxpayer).
+     *
+     * @return array<string, array<mixed>>
+     */
+    public static function rulesFor(?DocumentType $type, ?int $ignoreId = null, string $prefix = ''): array
+    {
+        $rules = [
             'document_type' => ['required', Rule::enum(DocumentType::class)],
             'document_number' => array_values(array_filter([
                 'required',
                 'string',
                 $type ? 'regex:'.$type->pattern() : null,
                 $type === DocumentType::Ruc ? new Ruc : null,
-                Rule::unique(Taxpayer::class)
+                Rule::unique(Taxpayer::class, 'document_number')
                     ->where('document_type', $type?->value)
-                    ->ignore($this->taxpayerId()),
+                    ->ignore($ignoreId),
             ])),
             'ruc' => [
                 'nullable',
-                'prohibited_if:document_type,ruc',
+                "prohibited_if:{$prefix}document_type,ruc",
                 Ruc::naturalPerson(),
-                Rule::unique(Taxpayer::class)->ignore($this->taxpayerId()),
+                Rule::unique(Taxpayer::class, 'ruc')->ignore($ignoreId),
             ],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:100'],
@@ -58,6 +67,8 @@ abstract class TaxpayerRequest extends FormRequest
             'representative_sunarp' => ['nullable', 'string', 'max:30'],
             'representative_phone' => ['nullable', 'string', 'max:20'],
         ];
+
+        return collect($rules)->mapWithKeys(fn (array $rule, string $key) => [$prefix.$key => $rule])->all();
     }
 
     /**
@@ -76,10 +87,18 @@ abstract class TaxpayerRequest extends FormRequest
      */
     public function messages(): array
     {
+        return self::messagesFor();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function messagesFor(string $prefix = ''): array
+    {
         return [
-            'document_number.regex' => 'El :attribute no tiene un formato válido para el tipo elegido.',
-            'document_number.unique' => 'Ya existe un contribuyente con este documento.',
-            'ruc.prohibited_if' => 'El RUC adicional solo aplica a personas naturales.',
+            "{$prefix}document_number.regex" => 'El :attribute no tiene un formato válido para el tipo elegido.',
+            "{$prefix}document_number.unique" => 'Ya existe un contribuyente con este documento.',
+            "{$prefix}ruc.prohibited_if" => 'El RUC adicional solo aplica a personas naturales.',
         ];
     }
 
@@ -90,7 +109,15 @@ abstract class TaxpayerRequest extends FormRequest
      */
     public function attributes(): array
     {
-        return [
+        return self::attributesFor();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function attributesFor(string $prefix = ''): array
+    {
+        return collect([
             'document_type' => 'tipo de documento',
             'document_number' => 'número de documento',
             'ruc' => 'RUC',
@@ -105,6 +132,6 @@ abstract class TaxpayerRequest extends FormRequest
             'representative_document' => 'documento del representante',
             'representative_sunarp' => 'partida registral',
             'representative_phone' => 'teléfono del representante',
-        ];
+        ])->mapWithKeys(fn (string $label, string $key) => [$prefix.$key => $label])->all();
     }
 }

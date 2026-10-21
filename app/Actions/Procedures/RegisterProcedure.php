@@ -9,12 +9,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Registers a procedure with the next code of the year (2026-00001).
+ * Registers a procedure with the next code of the year (2026-00001),
+ * creating the taxpayer and establishment in the same transaction when new.
  */
 class RegisterProcedure
 {
+    public function __construct(private ResolveParties $parties) {}
+
     /**
-     * @param  array{taxpayer_id: int, establishment_id: int, procedure_type_ids: list<int>, file_number?: ?string, folios?: ?int, notes?: ?string}  $data
+     * @param  array<string, mixed>  $data  validated ProcedureRequest data
      */
     public function handle(array $data): Procedure
     {
@@ -22,11 +25,10 @@ class RegisterProcedure
             ['year' => $year, 'sequence' => $sequence] = YearlySequence::next(Procedure::class);
 
             $procedure = Procedure::create([
+                ...$this->parties->handle($data),
                 'year' => $year,
                 'sequence' => $sequence,
                 'code' => sprintf('%d-%05d', $year, $sequence),
-                'taxpayer_id' => $data['taxpayer_id'],
-                'establishment_id' => $data['establishment_id'],
                 'status' => ProcedureStatus::Registered,
                 'file_number' => $data['file_number'] ?? null,
                 'folios' => $data['folios'] ?? null,
