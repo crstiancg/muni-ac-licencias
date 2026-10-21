@@ -708,6 +708,35 @@ function IssueDocumentsDialog({ procedure }: { procedure: ProcedureDetail }) {
                                 </fieldset>
                             )}
 
+                            {!issuesNothing && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="valid_until">
+                                        Vigencia temporal hasta (opcional)
+                                    </Label>
+                                    <Input
+                                        id="valid_until"
+                                        type="date"
+                                        name="valid_until"
+                                        min={new Date(
+                                            Date.now() + 86400000,
+                                        ).toLocaleDateString('en-CA')}
+                                        aria-invalid={
+                                            errors.valid_until
+                                                ? true
+                                                : undefined
+                                        }
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Solo si el solicitante pidió una
+                                        licencia temporal. Vacío = según el tipo
+                                        de trámite (por ley, indeterminada salvo
+                                        excepciones como la provisional de
+                                        bodegas).
+                                    </p>
+                                    <InputError message={errors.valid_until} />
+                                </div>
+                            )}
+
                             <InputError message={errors.documents} />
 
                             <DialogFooter className="gap-2">

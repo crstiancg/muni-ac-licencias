@@ -4,10 +4,10 @@ namespace App\Console\Commands;
 
 use App\Enums\EconomicSector;
 use App\Enums\SettlementType;
-use App\Enums\StreetType;
 use App\Models\Establishment;
 use App\Models\Taxpayer;
 use App\Support\Legacy\LegacyApplicant;
+use App\Support\Legacy\LegacyEstablishment;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -119,7 +119,7 @@ class ImportLegacyEstablishments extends Command
             'activity' => $this->limit(mb_strtoupper($activity), 255),
             'economic_sector' => self::SECTORS[(int) $row->see_ide_est] ?? null,
             // "AV [Avenida]" => AV
-            'street_type' => StreetType::tryFrom(strtok((string) $row->tra_tipo_via_est, ' ') ?: ''),
+            'street_type' => LegacyEstablishment::streetType($row->tra_tipo_via_est),
             'street' => $this->limit(mb_strtoupper($street), 150),
             'number' => $this->limit($this->clean($row->tra_est_nro), 20),
             'interior' => $this->limit($this->clean($row->tra_est_int), 20),
@@ -135,21 +135,11 @@ class ImportLegacyEstablishments extends Command
     }
 
     /**
-     * Owner + normalized address, e.g. "12|JR|TACNA|246|".
-     *
      * @param  array<string, mixed>  $attributes
      */
     private function key(array $attributes): string
     {
-        $normalize = fn (?string $value) => preg_replace('/[^A-Z0-9Ñ]+/u', '', mb_strtoupper((string) $value));
-
-        return implode('|', [
-            $attributes['taxpayer_id'],
-            $attributes['street_type']?->value,
-            $normalize($attributes['street']),
-            $normalize($attributes['number']),
-            $normalize($attributes['interior']),
-        ]);
+        return LegacyEstablishment::key($attributes['taxpayer_id'], $attributes['street_type'], $attributes['street'], $attributes['number'], $attributes['interior']);
     }
 
     private function clean(?string $value): ?string

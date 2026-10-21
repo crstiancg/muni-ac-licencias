@@ -7,7 +7,9 @@ use App\Enums\LicenseStatus;
 use App\Enums\ProcedureStatus;
 use App\Models\License;
 use App\Models\Procedure;
+use App\Models\ProcedureType;
 use App\Support\YearlySequence;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,9 +24,10 @@ class IssueDocuments
 {
     /**
      * @param  array{sign_kind?: ?string, sign_faces?: ?int, sign_material?: ?string, sign_width?: ?string, sign_height?: ?string}  $sign
+     * @param  string|null  $validUntil  temporary licence requested by the applicant (Ley 28976 art. 11)
      * @return Collection<int, License>
      */
-    public function handle(Procedure $procedure, array $sign = []): Collection
+    public function handle(Procedure $procedure, array $sign = [], ?string $validUntil = null): Collection
     {
         if ($procedure->status !== ProcedureStatus::Paid) {
             throw ValidationException::withMessages(['documents' => 'Solo se emiten documentos de un trámite pagado.']);
@@ -32,8 +35,8 @@ class IssueDocuments
 
         $procedure->loadMissing('taxpayer', 'establishment', 'types');
 
-        return DB::transaction(function () use ($procedure, $sign) {
-            $licenses = $this->documentTypes($procedure)->map(function (IssuedDocumentType $type) use ($procedure, $sign) {
+        return DB::transaction(function () use ($procedure, $sign, $validUntil) {
+            $licenses = $this->documentTypes($procedure)->map(function (IssuedDocumentType $type) use ($procedure, $sign, $validUntil) {
                 ['year' => $year, 'sequence' => $sequence] = YearlySequence::next(
                     License::class,
                     fn ($query) => $query->where('type', $type),
@@ -51,6 +54,7 @@ class IssueDocuments
                     'taxpayer_id' => $taxpayer->id,
                     'establishment_id' => $establishment->id,
                     'issued_at' => now(),
+                    'valid_until' => $validUntil ?? $this->validUntil($procedure, $type),
                     'status' => LicenseStatus::Active,
                     'holder_name' => $taxpayer->name,
                     'holder_document' => strtoupper($taxpayer->document_type->value).' '.$taxpayer->document_number,
@@ -75,6 +79,19 @@ class IssueDocuments
 
             return $licenses;
         });
+    }
+
+    /**
+     * Indefinite unless a procedure type of that document has a validity
+     * (e.g. provisional licence for bodegas, 12 months): the shortest wins.
+     */
+    private function validUntil(Procedure $procedure, IssuedDocumentType $type): ?CarbonInterface
+    {
+        $months = $procedure->types
+            ->filter(fn (ProcedureType $procedureType) => $procedureType->document_type === $type && $procedureType->validity_months)
+            ->min('validity_months');
+
+        return $months ? now()->addMonths($months) : null;
     }
 
     /**

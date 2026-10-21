@@ -23,6 +23,7 @@ type ProcedureTypeFormData = Pick<
     | 'uit_percentage'
     | 'risk_level'
     | 'document_type'
+    | 'validity_months'
     | 'processing_days'
     | 'legal_basis'
     | 'position'
@@ -198,6 +199,29 @@ export default function ProcedureTypeFormFields({
                     invalid={!!form?.errors.document_type}
                 />
                 <InputError message={form?.errors.document_type} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="validity_months">
+                    Vigencia del documento (meses)
+                </Label>
+                <Input
+                    id="validity_months"
+                    type="number"
+                    name="validity_months"
+                    inputMode="numeric"
+                    defaultValue={procedureType?.validity_months ?? ''}
+                    onBlur={() => form?.validate('validity_months')}
+                    aria-invalid={
+                        form?.errors.validity_months ? true : undefined
+                    }
+                    placeholder="Indeterminada"
+                />
+                <p className="text-xs text-muted-foreground">
+                    Vacío = indeterminada (Ley 28976). Ej.: 12 para la licencia
+                    provisional de bodegas (Ley 30877).
+                </p>
+                <InputError message={form?.errors.validity_months} />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

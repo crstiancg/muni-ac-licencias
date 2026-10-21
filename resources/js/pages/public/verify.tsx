@@ -8,8 +8,10 @@ type VerifiedLicense = {
     status: string;
     status_label: string;
     is_valid: boolean;
+    is_legacy: boolean;
     status_changed_at: string | null;
     issued_at: string;
+    valid_until: string | null;
     holder_name: string;
     trade_name: string | null;
     activity: string;
@@ -75,6 +77,15 @@ export default function Verify({
                                 }
                             />
 
+                            {license.is_legacy && license.is_valid && (
+                                <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+                                    Documento emitido en el sistema anterior. Si
+                                    el establecimiento cerró, puede no estar
+                                    actualizado: confirme su vigencia en la
+                                    municipalidad.
+                                </p>
+                            )}
+
                             <section className="space-y-3 rounded-xl border bg-background p-5">
                                 <div>
                                     <div className="text-xs text-muted-foreground">
@@ -108,6 +119,14 @@ export default function Verify({
                                 <Row
                                     label="Fecha de emisión"
                                     value={formatDate(license.issued_at)}
+                                />
+                                <Row
+                                    label="Vigencia"
+                                    value={
+                                        license.valid_until
+                                            ? `Hasta el ${formatDate(license.valid_until)}`
+                                            : 'Indeterminada'
+                                    }
                                 />
                             </section>
                         </>

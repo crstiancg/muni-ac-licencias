@@ -195,7 +195,13 @@ class ProcedureController extends Controller
             'sign_height' => 'alto',
         ]) : [];
 
-        $licenses = $issue->handle($procedure, $sign);
+        // Temporary licence, only when the applicant asked for it (Ley 28976 art. 11).
+        $validUntil = $request->validate(
+            ['valid_until' => ['nullable', 'date', 'after:today']],
+            attributes: ['valid_until' => 'vigencia temporal'],
+        )['valid_until'] ?? null;
+
+        $licenses = $issue->handle($procedure, $sign, $validUntil);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => $licenses->isEmpty()
             ? "Trámite {$procedure->code} atendido."

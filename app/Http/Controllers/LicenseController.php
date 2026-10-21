@@ -64,14 +64,15 @@ class LicenseController extends Controller
             $out = fopen('php://output', 'w');
             // UTF-8 BOM so Excel shows accents.
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Número', 'Tipo', 'Estado', 'Emisión', 'Titular', 'Documento', 'Nombre comercial', 'Giro', 'Dirección', 'Área m²', 'Anuncio'], ';');
+            fputcsv($out, ['Número', 'Tipo', 'Estado', 'Emisión', 'Vencimiento', 'Titular', 'Documento', 'Nombre comercial', 'Giro', 'Dirección', 'Área m²', 'Anuncio'], ';');
 
             $query->lazy(500)->each(function (License $license) use ($out) {
                 fputcsv($out, [
                     $license->number,
                     $license->type->label(),
-                    $license->status->label(),
+                    $license->effectiveStatus()->label(),
                     $license->issued_at->format('d/m/Y'),
+                    $license->valid_until?->format('d/m/Y') ?? 'Indeterminada',
                     $license->holder_name,
                     $license->holder_document,
                     $license->trade_name,
@@ -170,8 +171,8 @@ class LicenseController extends Controller
             ...$license->only('id', 'number', 'issued_at', 'holder_name', 'holder_document', 'trade_name', 'activity', 'address'),
             'type' => $license->type->value,
             'type_label' => $license->type->label(),
-            'status' => $license->status->value,
-            'status_label' => $license->status->label(),
+            'status' => $license->effectiveStatus()->value,
+            'status_label' => $license->effectiveStatus()->label(),
         ];
     }
 }

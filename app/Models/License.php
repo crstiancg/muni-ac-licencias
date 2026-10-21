@@ -103,6 +103,17 @@ class License extends Model
     }
 
     /**
+     * Status as of today: a licence past its valid_until counts as expired
+     * even before licenses:expire records it.
+     */
+    public function effectiveStatus(): LicenseStatus
+    {
+        return $this->status === LicenseStatus::Active && $this->valid_until?->lt(today())
+            ? LicenseStatus::Expired
+            : $this->status;
+    }
+
+    /**
      * Public URL the QR points to.
      */
     public function verificationUrl(): string

@@ -14,6 +14,7 @@ export type ProcedureType = {
     uit_percentage: string;
     risk_level: RiskLevelValue | null;
     document_type: 'licencia' | 'anuncio' | null;
+    validity_months: number | null;
     processing_days: number | null;
     legal_basis: string | null;
     position: number;
