@@ -2,13 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Procedures\IssueDocuments;
+use App\Actions\Procedures\IssuePaymentOrder;
+use App\Actions\Procedures\RegisterPayment;
 use App\Actions\Procedures\RegisterProcedure;
+use App\Enums\IssuedDocumentType;
+use App\Enums\PaymentOrderStatus;
 use App\Enums\ProcedureStatus;
 use App\Http\Requests\ProcedureRequest;
+use App\Models\License;
 use App\Models\Procedure;
 use App\Models\ProcedureType;
 use App\Models\Taxpayer;
 use App\Models\Uit;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -71,6 +78,8 @@ class ProcedureController extends Controller
             'taxpayer' => $request->integer('taxpayer')
                 ? Taxpayer::query()->find($request->integer('taxpayer'), ['id', 'document_type', 'document_number', 'ruc', 'name', 'address'])
                 : null,
+            // "Copiar datos de licencia": same owner and establishment.
+            'establishmentId' => $request->integer('establishment') ?: null,
             ...$this->formOptions(),
         ]);
     }
@@ -96,11 +105,14 @@ class ProcedureController extends Controller
             'taxpayer',
             'establishment',
             'types',
+            'paymentOrder.items',
+            'licenses',
             'events.user:id,name',
             'registeredBy:id,name',
         ]);
 
         $currentUit = Uit::query()->firstWhere('year', now()->year);
+        $documentTypes = (new IssueDocuments)->documentTypes($procedure);
 
         return Inertia::render('procedures/show', [
             'procedure' => [
@@ -109,11 +121,99 @@ class ProcedureController extends Controller
                     ...$type->only('id', 'name', 'tupa_code', 'uit_percentage', 'risk_level'),
                     'fee' => $currentUit ? $type->feeFor($currentUit) : null,
                 ]),
+                'payment_order' => $procedure->paymentOrder ? [
+                    ...$procedure->paymentOrder->toArray(),
+                    'status_label' => $procedure->paymentOrder->status->label(),
+                ] : null,
+                'licenses' => $procedure->licenses->map(fn (License $license) => [
+                    ...$license->only('id', 'number', 'issued_at'),
+                    'type_label' => $license->type->label(),
+                    'status' => $license->status->value,
+                    'status_label' => $license->status->label(),
+                ]),
+                'documents_to_issue' => $documentTypes->map(fn (IssuedDocumentType $type) => $type->label()),
+                'needs_sign_data' => $documentTypes->contains(IssuedDocumentType::SignAuthorization),
                 'status_label' => $procedure->status->label(),
                 'is_editable' => $procedure->status->isEditable(),
                 'is_cancellable' => $procedure->status->isCancellable(),
             ],
             'currentUit' => $currentUit?->only('year', 'amount'),
+        ]);
+    }
+
+    /**
+     * Issue the payment order, freezing the fees with the current UIT.
+     */
+    public function issuePaymentOrder(Procedure $procedure, IssuePaymentOrder $issue): RedirectResponse
+    {
+        $order = $issue->handle($procedure->load('types'));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $order->status === PaymentOrderStatus::Paid
+            ? "Orden {$order->code} emitida: exonerado de pago."
+            : "Orden de pago {$order->code} emitida por S/ {$order->total}."]);
+
+        return back();
+    }
+
+    /**
+     * Record the Caja receipt that paid the procedure's payment order.
+     */
+    public function registerPayment(Request $request, Procedure $procedure, RegisterPayment $register): RedirectResponse
+    {
+        $data = $request->validate([
+            'receipt_number' => ['required', 'string', 'max:50'],
+            'paid_at' => ['required', 'date', 'before_or_equal:today'],
+        ], attributes: ['receipt_number' => 'N° de comprobante', 'paid_at' => 'fecha de pago']);
+
+        abort_unless($procedure->paymentOrder, 404);
+
+        $register->handle($procedure->paymentOrder, $data['receipt_number'], $data['paid_at']);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Pago del trámite {$procedure->code} registrado."]);
+
+        return back();
+    }
+
+    /**
+     * Issue the licence and/or sign authorization of a paid procedure.
+     */
+    public function issueDocuments(Request $request, Procedure $procedure, IssueDocuments $issue): RedirectResponse
+    {
+        $needsSign = $issue->documentTypes($procedure->load('types'))->contains(IssuedDocumentType::SignAuthorization);
+
+        $sign = $needsSign ? $request->validate([
+            'sign_kind' => ['required', 'in:simple,luminoso,iluminado'],
+            'sign_faces' => ['required', 'integer', 'min:1', 'max:4'],
+            'sign_material' => ['nullable', 'string', 'max:100'],
+            'sign_width' => ['required', 'numeric', 'min:0.01', 'max:9999'],
+            'sign_height' => ['required', 'numeric', 'min:0.01', 'max:9999'],
+        ], attributes: [
+            'sign_kind' => 'tipo de anuncio',
+            'sign_faces' => 'caras',
+            'sign_material' => 'material',
+            'sign_width' => 'largo',
+            'sign_height' => 'alto',
+        ]) : [];
+
+        $licenses = $issue->handle($procedure, $sign);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $licenses->isEmpty()
+            ? "Trámite {$procedure->code} atendido."
+            : 'Emitido: '.$licenses->pluck('number')->join(', ').'.']);
+
+        return back();
+    }
+
+    /**
+     * Printable payment order.
+     */
+    public function printPaymentOrder(Procedure $procedure): View
+    {
+        abort_unless($procedure->paymentOrder, 404);
+
+        return view('print.payment-order', [
+            'procedure' => $procedure->load('taxpayer', 'establishment'),
+            'order' => $procedure->paymentOrder->load('items', 'issuedBy:id,name'),
         ]);
     }
 
@@ -177,6 +277,9 @@ class ProcedureController extends Controller
                 'cancelled_at' => now(),
                 'cancellation_reason' => $data['cancellation_reason'],
             ]);
+            $procedure->paymentOrder()
+                ->where('status', PaymentOrderStatus::Pending)
+                ->update(['status' => PaymentOrderStatus::Cancelled]);
             $procedure->log('anulado', $data['cancellation_reason']);
         });
 

@@ -41,11 +41,14 @@ const currency = new Intl.NumberFormat('es-PE', {
 export default function ProcedureFormFields({
     procedure,
     taxpayer,
+    establishmentId: initialEstablishmentId,
     procedureTypes,
     currentUit,
 }: {
     procedure?: Procedure & { types?: { id: number }[] };
     taxpayer: TaxpayerSummary | null;
+    /** Preselected establishment (e.g. a new procedure from a licence). */
+    establishmentId?: number | null;
     procedureTypes: ProcedureTypeOption[];
     currentUit: CurrentUit;
 }) {
@@ -54,7 +57,7 @@ export default function ProcedureFormFields({
     const [establishments, setEstablishments] = useState<Establishment[]>([]);
     const [loading, setLoading] = useState(false);
     const [establishmentId, setEstablishmentId] = useState(
-        procedure?.establishment_id ?? null,
+        procedure?.establishment_id ?? initialEstablishmentId ?? null,
     );
     const [typeIds, setTypeIds] = useState<number[]>(
         procedure?.types?.map((type) => type.id) ?? [],

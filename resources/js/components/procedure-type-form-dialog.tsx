@@ -13,6 +13,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import type { SelectOption } from '@/components/form-select';
 import { Spinner } from '@/components/ui/spinner';
 import type { ProcedureType, RiskLevelOption } from '@/types';
 
@@ -23,11 +24,13 @@ import type { ProcedureType, RiskLevelOption } from '@/types';
 export default function ProcedureTypeFormDialog({
     procedureType,
     riskLevels,
+    documentTypes,
     uitAmount,
     trigger,
 }: {
     procedureType?: ProcedureType;
     riskLevels: RiskLevelOption[];
+    documentTypes: SelectOption[];
     uitAmount: string | null;
     trigger: ReactNode;
 }) {
@@ -63,6 +66,7 @@ export default function ProcedureTypeFormDialog({
                             <ProcedureTypeFormFields
                                 procedureType={procedureType}
                                 riskLevels={riskLevels}
+                                documentTypes={documentTypes}
                                 uitAmount={uitAmount}
                             />
 

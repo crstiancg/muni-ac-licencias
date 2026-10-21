@@ -1,5 +1,7 @@
 import { useFormContext } from '@inertiajs/react';
 import { useState } from 'react';
+import FormSelect from '@/components/form-select';
+import type { SelectOption } from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -20,6 +22,7 @@ type ProcedureTypeFormData = Pick<
     | 'description'
     | 'uit_percentage'
     | 'risk_level'
+    | 'document_type'
     | 'processing_days'
     | 'legal_basis'
     | 'position'
@@ -42,10 +45,12 @@ const textareaClassName =
 export default function ProcedureTypeFormFields({
     procedureType,
     riskLevels,
+    documentTypes,
     uitAmount,
 }: {
     procedureType?: ProcedureType;
     riskLevels: RiskLevelOption[];
+    documentTypes: SelectOption[];
     uitAmount: string | null;
 }) {
     const form = useFormContext<ProcedureTypeFormData>();
@@ -180,6 +185,19 @@ export default function ProcedureTypeFormFields({
                     </p>
                     <InputError message={form?.errors.risk_level} />
                 </div>
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="document_type">Documento que emite</Label>
+                <FormSelect
+                    id="document_type"
+                    name="document_type"
+                    options={documentTypes}
+                    defaultValue={procedureType?.document_type}
+                    emptyLabel="Ninguno (cese, duplicado, otros)"
+                    invalid={!!form?.errors.document_type}
+                />
+                <InputError message={form?.errors.document_type} />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

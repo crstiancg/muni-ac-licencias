@@ -6,6 +6,7 @@ use App\Enums\DocumentType;
 use App\Exceptions\DocumentLookupUnavailable;
 use App\Http\Requests\StoreTaxpayerRequest;
 use App\Http\Requests\UpdateTaxpayerRequest;
+use App\Models\License;
 use App\Models\Procedure;
 use App\Models\Taxpayer;
 use App\Rules\Ruc;
@@ -153,6 +154,15 @@ class TaxpayerController extends Controller
         return Inertia::render('taxpayers/show', [
             'taxpayer' => $taxpayer,
             'establishments' => $taxpayer->establishments()->latest('id')->get(),
+            'licenses' => $taxpayer->licenses()
+                ->latest('issued_at')
+                ->get()
+                ->map(fn (License $license) => [
+                    ...$license->only('id', 'number', 'issued_at', 'activity', 'address'),
+                    'type_label' => $license->type->label(),
+                    'status' => $license->status->value,
+                    'status_label' => $license->status->label(),
+                ]),
             'procedures' => $taxpayer->procedures()
                 ->with(['types:id,name', 'establishment'])
                 ->latest('id')

@@ -1,6 +1,7 @@
 import { Form, Head, router } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import ProcedureTypeController from '@/actions/App/Http/Controllers/ProcedureTypeController';
+import type { SelectOption } from '@/components/form-select';
 import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
 import ProcedureTypeFormDialog from '@/components/procedure-type-form-dialog';
@@ -65,11 +66,13 @@ export default function ProcedureTypeIndex({
     filters,
     currentUit,
     riskLevels,
+    documentTypes,
 }: {
     procedureTypes: Paginated<ProcedureType>;
     filters: Filters;
     currentUit: { year: number; amount: string } | null;
     riskLevels: RiskLevelOption[];
+    documentTypes: SelectOption[];
 }) {
     const sortBy = (sort: string) => visit({ ...filters, sort });
     const riskLabel = (value: ProcedureType['risk_level']) =>
@@ -92,6 +95,7 @@ export default function ProcedureTypeIndex({
 
                     <ProcedureTypeFormDialog
                         riskLevels={riskLevels}
+                        documentTypes={documentTypes}
                         uitAmount={currentUit?.amount ?? null}
                         trigger={
                             <Button data-test="create-procedure-type-button">
@@ -234,6 +238,9 @@ export default function ProcedureTypeIndex({
                                                 <ProcedureTypeFormDialog
                                                     procedureType={type}
                                                     riskLevels={riskLevels}
+                                                    documentTypes={
+                                                        documentTypes
+                                                    }
                                                     uitAmount={
                                                         currentUit?.amount ??
                                                         null

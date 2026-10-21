@@ -75,6 +75,14 @@ class Taxpayer extends Model
     }
 
     /**
+     * @return HasMany<License, $this>
+     */
+    public function licenses(): HasMany
+    {
+        return $this->hasMany(License::class);
+    }
+
+    /**
      * Companies (personas jurídicas) are identified by a RUC starting with 20.
      */
     public function isCompany(): bool

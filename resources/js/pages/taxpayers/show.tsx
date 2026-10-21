@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import EstablishmentController from '@/actions/App/Http/Controllers/EstablishmentController';
 import TaxpayerController from '@/actions/App/Http/Controllers/TaxpayerController';
 import Heading from '@/components/heading';
+import LicenseStatusBadge from '@/components/license-status-badge';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import {
     create as createEstablishment,
     edit as editEstablishment,
 } from '@/routes/establishments';
+import { show as showLicense } from '@/routes/licenses';
 import { edit, index, show } from '@/routes/taxpayers';
 import {
     create as createProcedure,
@@ -29,6 +31,7 @@ import {
 import type {
     DocumentTypeOption,
     Establishment,
+    LicenseStatusValue,
     ProcedureStatusValue,
     Taxpayer,
 } from '@/types';
@@ -43,9 +46,21 @@ type ProcedureRow = {
     establishment: string;
 };
 
+type LicenseRow = {
+    id: number;
+    number: string;
+    issued_at: string;
+    activity: string;
+    address: string;
+    type_label: string;
+    status: LicenseStatusValue;
+    status_label: string;
+};
+
 type Props = {
     taxpayer: Taxpayer;
     establishments: Establishment[];
+    licenses: LicenseRow[];
     procedures: ProcedureRow[];
     documentTypes: DocumentTypeOption[];
 };
@@ -59,6 +74,7 @@ const date = new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium' });
 export default function TaxpayerShow({
     taxpayer,
     establishments,
+    licenses,
     procedures,
     documentTypes,
 }: Props) {
@@ -135,6 +151,46 @@ export default function TaxpayerShow({
                                 {taxpayer.representative_phone}
                             </Field>
                         </>
+                    )}
+                </section>
+
+                <section className="flex flex-col gap-4">
+                    <h2 className="text-lg font-semibold">
+                        Licencias y autorizaciones ({licenses.length})
+                    </h2>
+
+                    {licenses.length === 0 ? (
+                        <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                            Aún no tiene documentos emitidos.
+                        </div>
+                    ) : (
+                        <ul className="divide-y rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                            {licenses.map((license) => (
+                                <li key={license.id}>
+                                    <Link
+                                        href={showLicense(license.id)}
+                                        className="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-muted/30"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="font-medium tabular-nums">
+                                                {license.number}
+                                                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                                    {license.type_label}
+                                                </span>
+                                            </div>
+                                            <div className="truncate text-sm text-muted-foreground">
+                                                {license.activity} ·{' '}
+                                                {license.address}
+                                            </div>
+                                        </div>
+                                        <LicenseStatusBadge
+                                            status={license.status}
+                                            label={license.status_label}
+                                        />
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
                     )}
                 </section>
 

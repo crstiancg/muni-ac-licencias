@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\IssuedDocumentType;
 use App\Enums\RiskLevel;
 use Database\Factories\ProcedureTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -20,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property string $uit_percentage
  * @property RiskLevel|null $risk_level
+ * @property IssuedDocumentType|null $document_type
  * @property int|null $processing_days
  * @property string|null $legal_basis
  * @property int $position
@@ -30,7 +32,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  */
 #[Fillable([
-    'tupa_code', 'name', 'description', 'uit_percentage', 'risk_level',
+    'tupa_code', 'name', 'description', 'uit_percentage', 'risk_level', 'document_type',
     'processing_days', 'legal_basis', 'position', 'is_active',
     'legacy_id', 'legacy_amount',
 ])]
@@ -49,6 +51,7 @@ class ProcedureType extends Model
         return [
             'uit_percentage' => 'decimal:4',
             'risk_level' => RiskLevel::class,
+            'document_type' => IssuedDocumentType::class,
             'processing_days' => 'integer',
             'position' => 'integer',
             'is_active' => 'boolean',

@@ -10,7 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * A request (trámite) of a taxpayer for one of their establishments.
@@ -83,6 +85,22 @@ class Procedure extends Model
     }
 
     /**
+     * @return HasOne<PaymentOrder, $this>
+     */
+    public function paymentOrder(): HasOne
+    {
+        return $this->hasOne(PaymentOrder::class);
+    }
+
+    /**
+     * @return HasMany<License, $this>
+     */
+    public function licenses(): HasMany
+    {
+        return $this->hasMany(License::class);
+    }
+
+    /**
      * @return HasMany<ProcedureEvent, $this>
      */
     public function events(): HasMany
@@ -104,7 +122,7 @@ class Procedure extends Model
     public function log(string $type, ?string $description = null): ProcedureEvent
     {
         return $this->events()->create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'type' => $type,
             'description' => $description,
         ]);

@@ -4,6 +4,8 @@ namespace App\Actions\Procedures;
 
 use App\Enums\ProcedureStatus;
 use App\Models\Procedure;
+use App\Support\YearlySequence;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -17,10 +19,7 @@ class RegisterProcedure
     public function handle(array $data): Procedure
     {
         return DB::transaction(function () use ($data) {
-            $year = now()->year;
-
-            // Lock the year's rows so two clerks never get the same sequence.
-            $sequence = (int) Procedure::query()->where('year', $year)->lockForUpdate()->max('sequence') + 1;
+            ['year' => $year, 'sequence' => $sequence] = YearlySequence::next(Procedure::class);
 
             $procedure = Procedure::create([
                 'year' => $year,
@@ -32,7 +31,7 @@ class RegisterProcedure
                 'file_number' => $data['file_number'] ?? null,
                 'folios' => $data['folios'] ?? null,
                 'notes' => $data['notes'] ?? null,
-                'registered_by' => auth()->id(),
+                'registered_by' => Auth::id(),
             ]);
 
             $procedure->types()->attach($data['procedure_type_ids']);

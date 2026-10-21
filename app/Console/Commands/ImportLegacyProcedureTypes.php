@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\IssuedDocumentType;
 use App\Enums\RiskLevel;
 use App\Models\ProcedureType;
 use Illuminate\Console\Attributes\Description;
@@ -45,6 +46,11 @@ class ImportLegacyProcedureTypes extends Command
                 'description' => $row->tit_desc,
                 'uit_percentage' => round((float) $row->tor_porciento_uit, 4),
                 'risk_level' => $this->riskLevelFrom($row->tit_nombre),
+                'document_type' => match (true) {
+                    str_starts_with($row->tit_nombre, 'LICENCIA'), str_starts_with($row->tit_nombre, 'TRANSFERENCIA') => IssuedDocumentType::OperatingLicense,
+                    str_contains($row->tit_nombre, 'ANUNCIO') => IssuedDocumentType::SignAuthorization,
+                    default => null,
+                },
                 'position' => $index + 1,
                 'is_active' => $row->tit_estado === 'A',
                 'legacy_amount' => $row->tor_monto,

@@ -42,10 +42,45 @@ export type Procedure = {
     types?: { id: number; name: string }[];
 };
 
+export type PaymentOrder = {
+    id: number;
+    code: string;
+    uit_year: number;
+    uit_amount: string;
+    total: string;
+    status: 'pendiente' | 'pagada' | 'anulada';
+    status_label: string;
+    receipt_number: string | null;
+    paid_at: string | null;
+    created_at: string;
+    items: {
+        id: number;
+        description: string;
+        uit_percentage: string;
+        amount: string;
+    }[];
+};
+
+export type LicenseStatusValue =
+    'vigente' | 'cese_temporal' | 'cese_definitivo' | 'anulada' | 'caducada';
+
+export type LicenseSummary = {
+    id: number;
+    number: string;
+    issued_at: string;
+    type_label: string;
+    status: LicenseStatusValue;
+    status_label: string;
+};
+
 export type ProcedureDetail = Omit<Procedure, 'types' | 'taxpayer'> & {
     taxpayer: Taxpayer;
     establishment: Establishment;
     types: ProcedureTypeOption[];
+    payment_order: PaymentOrder | null;
+    licenses: LicenseSummary[];
+    documents_to_issue: string[];
+    needs_sign_data: boolean;
     events: ProcedureEvent[];
     registered_by: { id: number; name: string } | null;
     status_label: string;

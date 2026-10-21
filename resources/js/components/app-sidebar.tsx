@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import {
+    BadgeCheck,
     BookOpen,
     ClipboardList,
     FileText,
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as establishmentsIndex } from '@/routes/establishments';
+import { index as licensesIndex } from '@/routes/licenses';
 import { index as procedureTypesIndex } from '@/routes/procedure-types';
 import { index as proceduresIndex } from '@/routes/procedures';
 import { index as taxpayersIndex } from '@/routes/taxpayers';
@@ -40,6 +42,11 @@ const mainNavItems: NavItem[] = [
         title: 'Trámites',
         href: proceduresIndex(),
         icon: FileText,
+    },
+    {
+        title: 'Licencias',
+        href: licensesIndex(),
+        icon: BadgeCheck,
     },
     {
         title: 'Contribuyentes',

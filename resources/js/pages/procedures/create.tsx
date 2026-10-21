@@ -8,10 +8,12 @@ import type { CurrentUit, ProcedureTypeOption, TaxpayerSummary } from '@/types';
 
 export default function ProcedureCreate({
     taxpayer,
+    establishmentId,
     procedureTypes,
     currentUit,
 }: {
     taxpayer: TaxpayerSummary | null;
+    establishmentId: number | null;
     procedureTypes: ProcedureTypeOption[];
     currentUit: CurrentUit;
 }) {
@@ -28,6 +30,7 @@ export default function ProcedureCreate({
             >
                 <ProcedureFormFields
                     taxpayer={taxpayer}
+                    establishmentId={establishmentId}
                     procedureTypes={procedureTypes}
                     currentUit={currentUit}
                 />
