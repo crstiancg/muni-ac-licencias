@@ -1,6 +1,7 @@
 import { Plus, Store } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import TaxpayerController from '@/actions/App/Http/Controllers/TaxpayerController';
+import AreaInput from '@/components/area-input';
 import FormSelect from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Spinner } from '@/components/ui/spinner';
@@ -179,18 +180,19 @@ export default function EstablishmentStep({
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-6">
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-7">
                         <WizardInput {...field('number')} label="N°" />
                         <WizardInput {...field('interior')} label="Int." />
                         <WizardInput {...field('block')} label="Mz." />
                         <WizardInput {...field('lot')} label="Lt." />
-                        <WizardInput
-                            {...field('area')}
-                            label="Área (m²)"
-                            type="number"
-                            step="0.01"
-                            inputMode="decimal"
-                        />
+                        <div className="col-span-2">
+                            <AreaInput
+                                id="establishment_area"
+                                value={newEstablishment.area}
+                                onChange={(value) => onChangeNew('area', value)}
+                                error={errors['establishment.area']}
+                            />
+                        </div>
                         <WizardInput
                             {...field('capacity')}
                             label="Aforo"

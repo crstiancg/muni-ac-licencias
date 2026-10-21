@@ -1,4 +1,6 @@
 import { useFormContext } from '@inertiajs/react';
+import { useState } from 'react';
+import AreaInput from '@/components/area-input';
 import FormSelect from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
@@ -34,6 +36,7 @@ export default function EstablishmentFormFields({
     options: EstablishmentOptions;
 }) {
     const form = useFormContext<EstablishmentFormData>();
+    const [area, setArea] = useState(establishment?.area ?? '');
 
     const text = (
         field: TextField,
@@ -124,21 +127,15 @@ export default function EstablishmentFormFields({
             </Section>
 
             <Section title="Local">
-                <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="grid gap-2">
-                        <Label htmlFor="area">Área (m²)</Label>
-                        <Input
-                            id="area"
-                            type="number"
-                            name="area"
-                            inputMode="decimal"
-                            step="0.01"
-                            defaultValue={establishment?.area ?? ''}
-                            onBlur={() => form?.validate('area')}
-                            aria-invalid={form?.errors.area ? true : undefined}
-                        />
-                        <InputError message={form?.errors.area} />
-                    </div>
+                <div className="grid gap-4 sm:grid-cols-[2fr_1fr_1fr]">
+                    <AreaInput
+                        id="area"
+                        name="area"
+                        value={area}
+                        onChange={setArea}
+                        onBlur={() => form?.validate('area')}
+                        error={form?.errors.area}
+                    />
 
                     <div className="grid gap-2">
                         <Label htmlFor="capacity">Aforo (personas)</Label>
