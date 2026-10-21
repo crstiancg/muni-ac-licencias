@@ -5,6 +5,7 @@ use App\Http\Controllers\EstablishmentController;
 use App\Http\Controllers\ItseCertificateController;
 use App\Http\Controllers\LicenseController;
 use App\Http\Controllers\ProcedureController;
+use App\Http\Controllers\RevenueReportController;
 use App\Http\Controllers\TaxpayerController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +46,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('licenses', LicenseController::class)->only(['index', 'show']);
 
     Route::get('audit', [AuditController::class, 'index'])->name('audit.index');
+
+    Route::get('reports/revenue', [RevenueReportController::class, 'index'])->name('reports.revenue');
+    Route::get('reports/revenue/export', [RevenueReportController::class, 'export'])->name('reports.revenue.export');
 
     Route::post('itse/{certificate}/revoke', [ItseCertificateController::class, 'revoke'])->name('itse.revoke');
     Route::resource('itse', ItseCertificateController::class)

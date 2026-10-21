@@ -11,6 +11,7 @@ import {
     ShieldCheck,
     Store,
     Users,
+    Wallet,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -32,6 +33,7 @@ import { index as itseIndex } from '@/routes/itse';
 import { index as licensesIndex } from '@/routes/licenses';
 import { index as procedureTypesIndex } from '@/routes/procedure-types';
 import { index as proceduresIndex } from '@/routes/procedures';
+import { revenue } from '@/routes/reports';
 import { index as taxpayersIndex } from '@/routes/taxpayers';
 import { index as uitsIndex } from '@/routes/uits';
 import type { NavItem } from '@/types';
@@ -56,6 +58,11 @@ const mainNavItems: NavItem[] = [
         title: 'ITSE',
         href: itseIndex(),
         icon: ShieldCheck,
+    },
+    {
+        title: 'Recaudación',
+        href: revenue(),
+        icon: Wallet,
     },
     {
         title: 'Contribuyentes',
