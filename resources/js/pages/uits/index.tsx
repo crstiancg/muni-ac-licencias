@@ -1,9 +1,9 @@
 import { Form, Head, router } from '@inertiajs/react';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import UitController from '@/actions/App/Http/Controllers/UitController';
 import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
+import SearchInput from '@/components/search-input';
 import SortableHeader from '@/components/sortable-header';
 import UitFormDialog from '@/components/uit-form-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { index } from '@/routes/uits';
 import type { Paginated, Uit } from '@/types';
@@ -85,6 +84,8 @@ export default function UitIndex({
 
                 <SearchInput
                     initial={filters.search ?? ''}
+                    placeholder="Buscar por año o base legal"
+                    label="Buscar UIT"
                     onSearch={(search) =>
                         visit({ ...filters, search: search || null })
                     }
@@ -176,48 +177,6 @@ export default function UitIndex({
                 <Pagination paginator={uits} />
             </div>
         </>
-    );
-}
-
-/**
- * Debounced search input. Only `value` re-triggers the effect; `onSearch` is
- * an Effect Event so it always sees the latest filters (e.g. current sort).
- */
-function SearchInput({
-    initial,
-    onSearch,
-}: {
-    initial: string;
-    onSearch: (search: string) => void;
-}) {
-    const [value, setValue] = useState(initial);
-    const firstRender = useRef(true);
-    const search = useEffectEvent(onSearch);
-
-    useEffect(() => {
-        if (firstRender.current) {
-            firstRender.current = false;
-
-            return;
-        }
-
-        const timeout = setTimeout(() => search(value.trim()), 300);
-
-        return () => clearTimeout(timeout);
-    }, [value]);
-
-    return (
-        <div className="relative max-w-sm">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-                type="search"
-                value={value}
-                onChange={(event) => setValue(event.target.value)}
-                placeholder="Buscar por año o base legal"
-                aria-label="Buscar UIT"
-                className="pl-9"
-            />
-        </div>
     );
 }
 

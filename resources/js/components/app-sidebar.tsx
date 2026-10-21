@@ -1,5 +1,11 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, Landmark, LayoutGrid } from 'lucide-react';
+import {
+    BookOpen,
+    ClipboardList,
+    FolderGit2,
+    Landmark,
+    LayoutGrid,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,6 +20,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as procedureTypesIndex } from '@/routes/procedure-types';
 import { index as uitsIndex } from '@/routes/uits';
 import type { NavItem } from '@/types';
 
@@ -30,6 +37,11 @@ const parameterNavItems: NavItem[] = [
         title: 'UIT',
         href: uitsIndex(),
         icon: Landmark,
+    },
+    {
+        title: 'Tipos de trámite',
+        href: procedureTypesIndex(),
+        icon: ClipboardList,
     },
 ];
 
