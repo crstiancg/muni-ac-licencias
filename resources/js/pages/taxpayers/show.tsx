@@ -5,6 +5,8 @@ import EstablishmentController from '@/actions/App/Http/Controllers/Establishmen
 import TaxpayerController from '@/actions/App/Http/Controllers/TaxpayerController';
 import Heading from '@/components/heading';
 import LicenseStatusBadge from '@/components/license-status-badge';
+import ItseStatusBadge from '@/components/itse-status-badge';
+import type { ItseState } from '@/components/itse-status-badge';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +24,7 @@ import {
     create as createEstablishment,
     edit as editEstablishment,
 } from '@/routes/establishments';
+import { create as createItse } from '@/routes/itse';
 import { show as showLicense } from '@/routes/licenses';
 import { edit, index, show } from '@/routes/taxpayers';
 import {
@@ -59,7 +62,15 @@ type LicenseRow = {
 
 type Props = {
     taxpayer: Taxpayer;
-    establishments: Establishment[];
+    establishments: (Establishment & {
+        itse: {
+            id: number;
+            number: string;
+            valid_until: string;
+            state: ItseState;
+            state_label: string;
+        } | null;
+    })[];
     licenses: LicenseRow[];
     procedures: ProcedureRow[];
     documentTypes: DocumentTypeOption[];
@@ -299,7 +310,40 @@ export default function TaxpayerShow({
                                                     {establishment.capacity}
                                                 </Badge>
                                             )}
+                                            {establishment.itse ? (
+                                                <ItseStatusBadge
+                                                    state={
+                                                        establishment.itse.state
+                                                    }
+                                                    label={
+                                                        establishment.itse
+                                                            .state_label
+                                                    }
+                                                />
+                                            ) : (
+                                                <Badge
+                                                    variant="outline"
+                                                    className="text-muted-foreground"
+                                                >
+                                                    Sin ITSE
+                                                </Badge>
+                                            )}
                                         </div>
+                                        {(!establishment.itse ||
+                                            establishment.itse.state !==
+                                                'vigente') && (
+                                            <Link
+                                                href={createItse({
+                                                    query: {
+                                                        establishment:
+                                                            establishment.id,
+                                                    },
+                                                })}
+                                                className="mt-2 inline-block text-xs underline underline-offset-4"
+                                            >
+                                                Registrar ITSE
+                                            </Link>
+                                        )}
                                     </div>
                                     <div className="flex shrink-0 flex-col gap-1">
                                         <Button

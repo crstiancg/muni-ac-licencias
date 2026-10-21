@@ -1,10 +1,18 @@
 import { Head, Link } from '@inertiajs/react';
-import { BadgeCheck, FilePlus, FileText, Receipt, Wallet } from 'lucide-react';
+import {
+    BadgeCheck,
+    FilePlus,
+    FileText,
+    Receipt,
+    ShieldCheck,
+    Wallet,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import Heading from '@/components/heading';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
+import { index as itseIndex } from '@/routes/itse';
 import { index as licensesIndex } from '@/routes/licenses';
 import { create, index, show } from '@/routes/procedures';
 import type { ProcedureStatusValue } from '@/types';
@@ -28,6 +36,8 @@ type Stats = {
     payments_month: number;
     licenses_year: number;
     licenses_active: number;
+    itse_expiring: number;
+    itse_expired: number;
 };
 
 type RecentProcedure = {
@@ -169,6 +179,17 @@ export default function Dashboard({
                             href={
                                 licensesIndex({
                                     query: { filter: { status: 'vigente' } },
+                                }).url
+                            }
+                        />
+                        <Stat
+                            icon={<ShieldCheck />}
+                            label="ITSE por vencer"
+                            value={stats.itse_expiring}
+                            hint={`En los próximos 60 días · ${stats.itse_expired} ya vencidos`}
+                            href={
+                                itseIndex({
+                                    query: { filter: { state: 'por_vencer' } },
                                 }).url
                             }
                         />

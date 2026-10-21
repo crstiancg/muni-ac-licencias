@@ -6,6 +6,8 @@ use App\Enums\DocumentType;
 use App\Exceptions\DocumentLookupUnavailable;
 use App\Http\Requests\StoreTaxpayerRequest;
 use App\Http\Requests\UpdateTaxpayerRequest;
+use App\Models\Establishment;
+use App\Models\ItseCertificate;
 use App\Models\License;
 use App\Models\Procedure;
 use App\Models\Taxpayer;
@@ -153,7 +155,14 @@ class TaxpayerController extends Controller
     {
         return Inertia::render('taxpayers/show', [
             'taxpayer' => $taxpayer,
-            'establishments' => $taxpayer->establishments()->latest('id')->get(),
+            'establishments' => $taxpayer->establishments()->with('itseCertificates')->latest('id')->get()->map(fn (Establishment $establishment) => [
+                ...$establishment->withoutRelations()->toArray(),
+                'itse' => ($itse = $establishment->itseCertificates->first()) ? [
+                    ...$itse->only('id', 'number', 'valid_until'),
+                    'state' => $itse->effectiveStatus(),
+                    'state_label' => ItseCertificate::statusLabel($itse->effectiveStatus()),
+                ] : null,
+            ]),
             'licenses' => $taxpayer->licenses()
                 ->latest('issued_at')
                 ->get()

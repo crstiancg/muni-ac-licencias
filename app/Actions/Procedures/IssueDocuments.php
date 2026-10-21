@@ -42,6 +42,8 @@ class IssueDocuments
             $this->ensureCanAffect($effects, $related);
         }
 
+        $this->ensurePriorItse($procedure);
+
         return DB::transaction(function () use ($procedure, $sign, $validUntil, $related, $effects) {
             $licenses = $this->documentTypes($procedure)->map(function (IssuedDocumentType $type) use ($procedure, $sign, $validUntil) {
                 ['year' => $year, 'sequence' => $sequence] = YearlySequence::next(
@@ -102,6 +104,22 @@ class IssueDocuments
             ->filter()
             ->unique(fn (LicenseEffect $effect) => $effect->value)
             ->values();
+    }
+
+    /**
+     * High and very high risk licences need the ITSE before being granted
+     * (D.S. N° 002-2018-PCM): block issuing without one in force.
+     */
+    private function ensurePriorItse(Procedure $procedure): void
+    {
+        $needsPriorItse = $procedure->types->contains(
+            fn (ProcedureType $type) => $type->document_type === IssuedDocumentType::OperatingLicense
+                && $type->risk_level?->requiresPriorItse(),
+        );
+
+        if ($needsPriorItse && ! $procedure->establishment->validItse()) {
+            throw ValidationException::withMessages(['documents' => 'Riesgo alto o muy alto: registra primero el certificado ITSE vigente del establecimiento (ITSE previa).']);
+        }
     }
 
     /**

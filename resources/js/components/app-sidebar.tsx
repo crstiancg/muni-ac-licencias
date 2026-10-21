@@ -7,6 +7,7 @@ import {
     FolderGit2,
     Landmark,
     LayoutGrid,
+    ShieldCheck,
     Store,
     Users,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as establishmentsIndex } from '@/routes/establishments';
+import { index as itseIndex } from '@/routes/itse';
 import { index as licensesIndex } from '@/routes/licenses';
 import { index as procedureTypesIndex } from '@/routes/procedure-types';
 import { index as proceduresIndex } from '@/routes/procedures';
@@ -47,6 +49,11 @@ const mainNavItems: NavItem[] = [
         title: 'Licencias',
         href: licensesIndex(),
         icon: BadgeCheck,
+    },
+    {
+        title: 'ITSE',
+        href: itseIndex(),
+        icon: ShieldCheck,
     },
     {
         title: 'Contribuyentes',

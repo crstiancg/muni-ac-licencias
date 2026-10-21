@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\LicenseStatus;
 use App\Enums\PaymentOrderStatus;
 use App\Enums\ProcedureStatus;
+use App\Models\ItseCertificate;
 use App\Models\License;
 use App\Models\PaymentOrder;
 use App\Models\Procedure;
@@ -41,6 +42,8 @@ class DashboardController extends Controller
                 'payments_month' => (clone $paidThisMonth)->where('total', '>', 0)->count(),
                 'licenses_year' => License::query()->whereNotNull('sequence')->where('year', now()->year)->count(),
                 'licenses_active' => License::query()->where('status', LicenseStatus::Active)->count(),
+                'itse_expiring' => ItseCertificate::query()->state('por_vencer')->count(),
+                'itse_expired' => ItseCertificate::query()->state('vencido')->count(),
             ],
             'recent' => Procedure::query()
                 ->where('year', '>', 0)

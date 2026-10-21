@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -79,6 +80,22 @@ class Establishment extends Model
     public function taxpayer(): BelongsTo
     {
         return $this->belongsTo(Taxpayer::class);
+    }
+
+    /**
+     * @return HasMany<ItseCertificate, $this>
+     */
+    public function itseCertificates(): HasMany
+    {
+        return $this->hasMany(ItseCertificate::class)->latest('issued_at');
+    }
+
+    /**
+     * The ITSE certificate in force, if any.
+     */
+    public function validItse(): ?ItseCertificate
+    {
+        return $this->itseCertificates()->valid()->first();
     }
 
     /**
