@@ -24,6 +24,7 @@ type ProcedureTypeFormData = Pick<
     | 'risk_level'
     | 'document_type'
     | 'validity_months'
+    | 'license_effect'
     | 'processing_days'
     | 'legal_basis'
     | 'position'
@@ -47,11 +48,13 @@ export default function ProcedureTypeFormFields({
     procedureType,
     riskLevels,
     documentTypes,
+    licenseEffects,
     uitAmount,
 }: {
     procedureType?: ProcedureType;
     riskLevels: RiskLevelOption[];
     documentTypes: SelectOption[];
+    licenseEffects: SelectOption[];
     uitAmount: string | null;
 }) {
     const form = useFormContext<ProcedureTypeFormData>();
@@ -222,6 +225,25 @@ export default function ProcedureTypeFormFields({
                     provisional de bodegas (Ley 30877).
                 </p>
                 <InputError message={form?.errors.validity_months} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="license_effect">
+                    Efecto sobre una licencia existente
+                </Label>
+                <FormSelect
+                    id="license_effect"
+                    name="license_effect"
+                    options={licenseEffects}
+                    defaultValue={procedureType?.license_effect}
+                    emptyLabel="Ninguno"
+                    invalid={!!form?.errors.license_effect}
+                />
+                <p className="text-xs text-muted-foreground">
+                    Transferencia o cambio de giro reemplazan la licencia
+                    anterior; cese la cierra; duplicado la reimprime.
+                </p>
+                <InputError message={form?.errors.license_effect} />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

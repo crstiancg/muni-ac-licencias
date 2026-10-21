@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Auth;
  * @property string $code
  * @property int $taxpayer_id
  * @property int $establishment_id
+ * @property int|null $related_license_id
  * @property ProcedureStatus $status
  * @property string|null $file_number
  * @property int|null $folios
@@ -37,7 +38,7 @@ use Illuminate\Support\Facades\Auth;
  * @property Carbon|null $updated_at
  */
 #[Fillable([
-    'year', 'sequence', 'code', 'taxpayer_id', 'establishment_id', 'status',
+    'year', 'sequence', 'code', 'taxpayer_id', 'establishment_id', 'related_license_id', 'status',
     'file_number', 'folios', 'notes', 'cancelled_at', 'cancellation_reason',
     'registered_by', 'legacy_id',
 ])]
@@ -82,6 +83,16 @@ class Procedure extends Model
     public function types(): BelongsToMany
     {
         return $this->belongsToMany(ProcedureType::class)->orderBy('position');
+    }
+
+    /**
+     * The existing licence this procedure replaces, closes or duplicates.
+     *
+     * @return BelongsTo<License, $this>
+     */
+    public function relatedLicense(): BelongsTo
+    {
+        return $this->belongsTo(License::class, 'related_license_id');
     }
 
     /**

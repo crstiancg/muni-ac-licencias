@@ -25,12 +25,14 @@ export default function ProcedureTypeFormDialog({
     procedureType,
     riskLevels,
     documentTypes,
+    licenseEffects,
     uitAmount,
     trigger,
 }: {
     procedureType?: ProcedureType;
     riskLevels: RiskLevelOption[];
     documentTypes: SelectOption[];
+    licenseEffects: SelectOption[];
     uitAmount: string | null;
     trigger: ReactNode;
 }) {
@@ -67,6 +69,7 @@ export default function ProcedureTypeFormDialog({
                                 procedureType={procedureType}
                                 riskLevels={riskLevels}
                                 documentTypes={documentTypes}
+                                licenseEffects={licenseEffects}
                                 uitAmount={uitAmount}
                             />
 

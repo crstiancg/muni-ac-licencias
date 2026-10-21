@@ -67,12 +67,14 @@ export default function ProcedureTypeIndex({
     currentUit,
     riskLevels,
     documentTypes,
+    licenseEffects,
 }: {
     procedureTypes: Paginated<ProcedureType>;
     filters: Filters;
     currentUit: { year: number; amount: string } | null;
     riskLevels: RiskLevelOption[];
     documentTypes: SelectOption[];
+    licenseEffects: SelectOption[];
 }) {
     const sortBy = (sort: string) => visit({ ...filters, sort });
     const riskLabel = (value: ProcedureType['risk_level']) =>
@@ -96,6 +98,7 @@ export default function ProcedureTypeIndex({
                     <ProcedureTypeFormDialog
                         riskLevels={riskLevels}
                         documentTypes={documentTypes}
+                        licenseEffects={licenseEffects}
                         uitAmount={currentUit?.amount ?? null}
                         trigger={
                             <Button data-test="create-procedure-type-button">
@@ -240,6 +243,9 @@ export default function ProcedureTypeIndex({
                                                     riskLevels={riskLevels}
                                                     documentTypes={
                                                         documentTypes
+                                                    }
+                                                    licenseEffects={
+                                                        licenseEffects
                                                     }
                                                     uitAmount={
                                                         currentUit?.amount ??

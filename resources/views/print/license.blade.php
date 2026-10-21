@@ -6,6 +6,10 @@
     <h1>{{ $license->type->label() }}</h1>
     <div class="number">N° {{ $license->number }}</div>
 
+    @if ($license->duplicates > 0)
+        <p style="text-align:center"><span class="stamp" style="border-color:#111;color:#111">DUPLICADO{{ $license->duplicates > 1 ? " N° {$license->duplicates}" : '' }}</span></p>
+    @endif
+
     @if ($license->status->value !== 'vigente')
         <p style="text-align:center"><span class="stamp">{{ mb_strtoupper($license->status->label()) }}</span></p>
     @endif

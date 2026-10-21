@@ -59,6 +59,8 @@ type LicenseDetail = {
     establishment_id: number;
     legacy_id: number | null;
     procedure: { id: number; code: string } | null;
+    duplicates: number;
+    replaced_by: { id: number; number: string } | null;
     verification_url: string;
     transitions: { value: LicenseStatusValue; label: string }[];
 };
@@ -131,6 +133,14 @@ export default function LicenseShow({ license }: Props) {
                                 ` desde el ${formatDate(license.status_changed_at)}`}
                         </div>
                         <div className="mt-1">{license.status_reason}</div>
+                        {license.replaced_by && (
+                            <Link
+                                href={show(license.replaced_by.id)}
+                                className="mt-1 inline-block font-medium underline underline-offset-4"
+                            >
+                                Ver {license.replaced_by.number}
+                            </Link>
+                        )}
                     </div>
                 )}
 

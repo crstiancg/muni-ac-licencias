@@ -10,6 +10,7 @@ use App\Actions\Procedures\ResolveParties;
 use App\Enums\DocumentType;
 use App\Enums\EconomicSector;
 use App\Enums\IssuedDocumentType;
+use App\Enums\LicenseEffect;
 use App\Enums\PaymentOrderStatus;
 use App\Enums\ProcedureStatus;
 use App\Enums\RiskLevel;
@@ -113,6 +114,7 @@ class ProcedureController extends Controller
             'types',
             'paymentOrder.items',
             'licenses',
+            'relatedLicense',
             'events.user:id,name',
             'registeredBy:id,name',
         ]);
@@ -139,6 +141,11 @@ class ProcedureController extends Controller
                 ]),
                 'documents_to_issue' => $documentTypes->map(fn (IssuedDocumentType $type) => $type->label()),
                 'needs_sign_data' => $documentTypes->contains(IssuedDocumentType::SignAuthorization),
+                'license_effects' => (new IssueDocuments)->licenseEffects($procedure)->map(fn (LicenseEffect $effect) => $effect->label()),
+                'related_license' => $procedure->relatedLicense ? [
+                    ...$procedure->relatedLicense->only('id', 'number', 'holder_name', 'address'),
+                    'status_label' => $procedure->relatedLicense->effectiveStatus()->label(),
+                ] : null,
                 'status_label' => $procedure->status->label(),
                 'is_editable' => $procedure->status->isEditable(),
                 'is_cancellable' => $procedure->status->isCancellable(),
@@ -207,7 +214,12 @@ class ProcedureController extends Controller
             attributes: ['valid_until' => 'vigencia temporal'],
         )['valid_until'] ?? null;
 
-        $licenses = $issue->handle($procedure, $sign, $validUntil);
+        $relatedId = $request->validate(
+            ['related_license_id' => ['nullable', 'integer', 'exists:licenses,id']],
+            attributes: ['related_license_id' => 'licencia'],
+        )['related_license_id'] ?? null;
+
+        $licenses = $issue->handle($procedure, $sign, $validUntil, $relatedId ? License::find($relatedId) : null);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => $licenses->isEmpty()
             ? "Trámite {$procedure->code} atendido."

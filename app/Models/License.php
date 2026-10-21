@@ -30,6 +30,8 @@ use Illuminate\Support\Str;
  * @property LicenseStatus $status
  * @property string|null $status_reason
  * @property Carbon|null $status_changed_at
+ * @property int $duplicates
+ * @property int|null $replaced_by_id
  * @property string $qr_token
  * @property string $holder_name
  * @property string $holder_document
@@ -54,7 +56,7 @@ use Illuminate\Support\Str;
  */
 #[Fillable([
     'type', 'year', 'sequence', 'number', 'procedure_id', 'taxpayer_id', 'establishment_id',
-    'issued_at', 'valid_until', 'status', 'status_reason', 'status_changed_at', 'qr_token',
+    'issued_at', 'valid_until', 'status', 'status_reason', 'status_changed_at', 'duplicates', 'replaced_by_id', 'qr_token',
     'holder_name', 'holder_document', 'trade_name', 'activity', 'address', 'area', 'capacity', 'risk_level',
     'sign_kind', 'sign_faces', 'sign_material', 'sign_width', 'sign_height',
     'issued_by', 'legacy_id',
@@ -79,6 +81,7 @@ class License extends Model
             'area' => 'decimal:2',
             'sign_width' => 'decimal:2',
             'sign_height' => 'decimal:2',
+            'duplicates' => 'integer',
         ];
     }
 
@@ -127,6 +130,14 @@ class License extends Model
     public function procedure(): BelongsTo
     {
         return $this->belongsTo(Procedure::class);
+    }
+
+    /**
+     * @return BelongsTo<License, $this>
+     */
+    public function replacedBy(): BelongsTo
+    {
+        return $this->belongsTo(License::class, 'replaced_by_id');
     }
 
     /**

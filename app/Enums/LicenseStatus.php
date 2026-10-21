@@ -9,6 +9,7 @@ enum LicenseStatus: string
     case Closed = 'cese_definitivo';
     case Revoked = 'anulada';
     case Expired = 'caducada';
+    case Replaced = 'reemplazada';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum LicenseStatus: string
             self::Closed => 'Cese definitivo',
             self::Revoked => 'Anulada',
             self::Expired => 'Caducada',
+            self::Replaced => 'Reemplazada',
         };
     }
 

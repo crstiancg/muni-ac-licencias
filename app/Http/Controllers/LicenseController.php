@@ -7,6 +7,7 @@ use App\Enums\LicenseStatus;
 use App\Models\License;
 use App\Support\QrCode;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -88,6 +89,31 @@ class LicenseController extends Controller
     }
 
     /**
+     * Up to 10 licences for pickers: ?q= searches number, holder or address;
+     * without q, the in-force licences of ?taxpayer=.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $term = trim((string) $request->query('q'));
+
+        $licenses = License::query()
+            ->when(
+                mb_strlen($term) >= 2,
+                fn ($query) => $query->search($term),
+                fn ($query) => $query->where('taxpayer_id', $request->integer('taxpayer'))
+                    ->whereIn('status', [LicenseStatus::Active, LicenseStatus::TemporarilyClosed]),
+            )
+            ->latest('issued_at')
+            ->limit(10)
+            ->get();
+
+        return response()->json($licenses->map(fn (License $license) => [
+            ...$this->row($license),
+            'duplicates' => $license->duplicates,
+        ]));
+    }
+
+    /**
      * The licence: snapshot data, status actions and its procedure.
      */
     public function show(License $license): Response
@@ -99,6 +125,8 @@ class LicenseController extends Controller
                 ...$this->row($license),
                 ...$license->only('valid_until', 'status_reason', 'status_changed_at', 'area', 'capacity', 'risk_level', 'sign_kind', 'sign_faces', 'sign_material', 'sign_width', 'sign_height', 'taxpayer_id', 'establishment_id', 'legacy_id'),
                 'procedure' => $license->procedure?->only('id', 'code'),
+                'duplicates' => $license->duplicates,
+                'replaced_by' => $license->replacedBy?->only('id', 'number'),
                 'verification_url' => $license->verificationUrl(),
                 'transitions' => array_map(fn (LicenseStatus $status) => ['value' => $status->value, 'label' => $status->label()], $license->status->transitions()),
             ],

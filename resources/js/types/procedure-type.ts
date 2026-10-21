@@ -15,6 +15,7 @@ export type ProcedureType = {
     risk_level: RiskLevelValue | null;
     document_type: 'licencia' | 'anuncio' | null;
     validity_months: number | null;
+    license_effect: 'reemplaza' | 'cese' | 'cese_temporal' | 'duplicado' | null;
     processing_days: number | null;
     legal_basis: string | null;
     position: number;

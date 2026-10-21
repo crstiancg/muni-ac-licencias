@@ -13,6 +13,7 @@ import ProcedureController from '@/actions/App/Http/Controllers/ProcedureControl
 import FormSelect from '@/components/form-select';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import LicensePicker from '@/components/license-picker';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,9 @@ const EVENT_LABELS: Record<string, string> = {
     licencia_cese_temporal: 'Cese temporal',
     licencia_cese_definitivo: 'Cese definitivo',
     licencia_anulada: 'Licencia anulada',
+    licencia_reemplazada: 'Licencia reemplazada',
+    licencia_caducada: 'Licencia caducada',
+    licencia_duplicado: 'Duplicado de licencia',
 };
 
 const textareaClassName =
@@ -288,6 +292,26 @@ export default function ProcedureShow({ procedure, currentUit }: Props) {
                     </Card>
                 )}
 
+                {procedure.related_license && (
+                    <Card title="Licencia afectada">
+                        <Link
+                            href={showLicense(procedure.related_license.id)}
+                            className="flex items-center justify-between gap-3 text-sm hover:underline"
+                        >
+                            <span>
+                                <span className="font-medium tabular-nums">
+                                    {procedure.related_license.number}
+                                </span>{' '}
+                                · {procedure.related_license.holder_name} ·{' '}
+                                {procedure.related_license.address}
+                            </span>
+                            <Badge variant="outline">
+                                {procedure.related_license.status_label}
+                            </Badge>
+                        </Link>
+                    </Card>
+                )}
+
                 {procedure.licenses.length > 0 && (
                     <Card title="Documentos emitidos">
                         <ul className="divide-y">
@@ -432,9 +456,11 @@ function NextStep({
                                 : 'dar por atendido el trámite'}
                         </div>
                         <div className="text-muted-foreground">
-                            {procedure.documents_to_issue.length > 0
-                                ? 'Cada documento lleva un QR para verificar su vigencia.'
-                                : 'Estos procedimientos no emiten documento.'}
+                            {procedure.license_effects.length > 0
+                                ? `${procedure.license_effects.join(', ')}: al emitir se elige la licencia afectada.`
+                                : procedure.documents_to_issue.length > 0
+                                  ? 'Cada documento lleva un QR para verificar su vigencia.'
+                                  : 'Estos procedimientos no emiten documento.'}
                         </div>
                     </div>
                     <IssueDocumentsDialog procedure={procedure} />
@@ -588,7 +614,7 @@ function IssueDocumentsDialog({ procedure }: { procedure: ProcedureDetail }) {
                 </DialogTitle>
                 <DialogDescription>
                     {issuesNothing
-                        ? 'El trámite quedará como emitido, sin documento.'
+                        ? 'El trámite quedará como emitido, sin documento nuevo.'
                         : `Se emitirá: ${procedure.documents_to_issue.join(', ')}. Los datos del titular y del establecimiento quedan fijados tal como están hoy.`}
                 </DialogDescription>
                 <Form
@@ -599,6 +625,22 @@ function IssueDocumentsDialog({ procedure }: { procedure: ProcedureDetail }) {
                 >
                     {({ processing, errors }) => (
                         <>
+                            {procedure.license_effects.length > 0 && (
+                                <fieldset className="space-y-2">
+                                    <legend className="mb-1 text-sm font-semibold">
+                                        Licencia afectada
+                                    </legend>
+                                    <p className="text-xs text-muted-foreground">
+                                        {procedure.license_effects.join(', ')}.
+                                    </p>
+                                    <LicensePicker
+                                        name="related_license_id"
+                                        taxpayerId={procedure.taxpayer.id}
+                                        error={errors.related_license_id}
+                                    />
+                                </fieldset>
+                            )}
+
                             {procedure.needs_sign_data && (
                                 <fieldset className="space-y-3">
                                     <legend className="mb-2 text-sm font-semibold">

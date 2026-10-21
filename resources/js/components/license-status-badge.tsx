@@ -8,6 +8,7 @@ const STYLES: Record<LicenseStatusValue, string> = {
     cese_definitivo: 'border-zinc-500/40 text-zinc-600 dark:text-zinc-300',
     anulada: 'border-red-500/40 text-red-700 dark:text-red-300',
     caducada: 'border-zinc-500/40 text-zinc-600 dark:text-zinc-300',
+    reemplazada: 'border-sky-500/40 text-sky-700 dark:text-sky-300',
 };
 
 export default function LicenseStatusBadge({

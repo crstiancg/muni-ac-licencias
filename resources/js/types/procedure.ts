@@ -62,7 +62,12 @@ export type PaymentOrder = {
 };
 
 export type LicenseStatusValue =
-    'vigente' | 'cese_temporal' | 'cese_definitivo' | 'anulada' | 'caducada';
+    | 'vigente'
+    | 'cese_temporal'
+    | 'cese_definitivo'
+    | 'anulada'
+    | 'caducada'
+    | 'reemplazada';
 
 export type LicenseSummary = {
     id: number;
@@ -81,6 +86,14 @@ export type ProcedureDetail = Omit<Procedure, 'types' | 'taxpayer'> & {
     licenses: LicenseSummary[];
     documents_to_issue: string[];
     needs_sign_data: boolean;
+    license_effects: string[];
+    related_license: {
+        id: number;
+        number: string;
+        holder_name: string;
+        address: string;
+        status_label: string;
+    } | null;
     events: ProcedureEvent[];
     registered_by: { id: number; name: string } | null;
     status_label: string;

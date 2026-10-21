@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\IssuedDocumentType;
+use App\Enums\LicenseEffect;
 use App\Enums\RiskLevel;
 use App\Http\Requests\StoreProcedureTypeRequest;
 use App\Http\Requests\UpdateProcedureTypeRequest;
@@ -60,6 +61,7 @@ class ProcedureTypeController extends Controller
             'currentUit' => $currentUit?->only('year', 'amount'),
             'riskLevels' => RiskLevel::options(),
             'documentTypes' => IssuedDocumentType::options(),
+            'licenseEffects' => LicenseEffect::options(),
         ]);
     }
 

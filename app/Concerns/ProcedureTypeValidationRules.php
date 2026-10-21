@@ -3,6 +3,7 @@
 namespace App\Concerns;
 
 use App\Enums\IssuedDocumentType;
+use App\Enums\LicenseEffect;
 use App\Enums\RiskLevel;
 use App\Models\ProcedureType;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -32,6 +33,7 @@ trait ProcedureTypeValidationRules
             'risk_level' => ['nullable', Rule::enum(RiskLevel::class)],
             'document_type' => ['nullable', Rule::enum(IssuedDocumentType::class)],
             'validity_months' => ['nullable', 'integer', 'min:1', 'max:120'],
+            'license_effect' => ['nullable', Rule::enum(LicenseEffect::class)],
             'processing_days' => ['nullable', 'integer', 'min:1', 'max:365'],
             'legal_basis' => ['nullable', 'string', 'max:150'],
             'position' => ['nullable', 'integer', 'min:0', 'max:9999'],
@@ -54,6 +56,7 @@ trait ProcedureTypeValidationRules
             'risk_level' => 'nivel de riesgo',
             'document_type' => 'documento que emite',
             'validity_months' => 'vigencia',
+            'license_effect' => 'efecto sobre la licencia',
             'processing_days' => 'plazo de atención',
             'legal_basis' => 'base legal',
             'position' => 'orden',

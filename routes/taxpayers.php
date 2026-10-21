@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->except('destroy')
         ->middlewareFor(['store', 'update'], 'precognitive');
 
+    Route::get('licenses/search', [LicenseController::class, 'search'])->name('licenses.search');
     Route::get('licenses/export', [LicenseController::class, 'export'])->name('licenses.export');
     Route::get('licenses/{license}/print', [LicenseController::class, 'print'])->name('licenses.print');
     Route::post('licenses/{license}/status', [LicenseController::class, 'changeStatus'])->name('licenses.status');
