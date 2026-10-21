@@ -21,20 +21,20 @@ export default function ConfirmPassword() {
                     options: confirmOptions(),
                     submit: confirmStore(),
                 }}
-                label="Confirm with passkey"
+                label="Confirmar con llave de acceso"
                 loadingLabel="Confirming..."
-                separator="Or confirm with password"
+                separator="O confirma con tu contraseña"
             />
 
             <Form noValidate {...store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">Contraseña</Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
-                                placeholder="Password"
+                                placeholder="Tu contraseña"
                                 autoComplete="current-password"
                                 autoFocus
                             />
@@ -49,7 +49,7 @@ export default function ConfirmPassword() {
                                 data-test="confirm-password-button"
                             >
                                 {processing && <Spinner />}
-                                Confirm password
+                                Confirmar
                             </Button>
                         </div>
                     </div>
@@ -60,7 +60,7 @@ export default function ConfirmPassword() {
 }
 
 ConfirmPassword.layout = {
-    title: 'Confirm password',
+    title: 'Confirma tu contraseña',
     description:
-        'This is a secure area of the application. Please confirm your password before continuing.',
+        'Por seguridad, vuelve a escribir tu contraseña para continuar.',
 };
