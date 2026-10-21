@@ -5,6 +5,7 @@ import {
     FolderGit2,
     Landmark,
     LayoutGrid,
+    Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as procedureTypesIndex } from '@/routes/procedure-types';
+import { index as taxpayersIndex } from '@/routes/taxpayers';
 import { index as uitsIndex } from '@/routes/uits';
 import type { NavItem } from '@/types';
 
@@ -29,6 +31,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Contribuyentes',
+        href: taxpayersIndex(),
+        icon: Users,
     },
 ];
 

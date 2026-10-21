@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // DNI (RENIEC) and RUC (SUNAT) lookups. Without a token the lookup answers 503.
+    'apis_net' => [
+        'url' => env('APIS_NET_URL', 'https://api.apis.net.pe'),
+        'token' => env('APIS_NET_TOKEN'),
+    ],
+
 ];
