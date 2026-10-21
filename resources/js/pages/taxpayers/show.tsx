@@ -1,9 +1,10 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { Pencil, Plus, Store, Trash2 } from 'lucide-react';
+import { FilePlus, Pencil, Plus, Store, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import EstablishmentController from '@/actions/App/Http/Controllers/EstablishmentController';
 import TaxpayerController from '@/actions/App/Http/Controllers/TaxpayerController';
 import Heading from '@/components/heading';
+import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,21 +22,44 @@ import {
     edit as editEstablishment,
 } from '@/routes/establishments';
 import { edit, index, show } from '@/routes/taxpayers';
-import type { DocumentTypeOption, Establishment, Taxpayer } from '@/types';
+import {
+    create as createProcedure,
+    show as showProcedure,
+} from '@/routes/procedures';
+import type {
+    DocumentTypeOption,
+    Establishment,
+    ProcedureStatusValue,
+    Taxpayer,
+} from '@/types';
+
+type ProcedureRow = {
+    id: number;
+    code: string;
+    status: ProcedureStatusValue;
+    status_label: string;
+    created_at: string;
+    types: string[];
+    establishment: string;
+};
 
 type Props = {
     taxpayer: Taxpayer;
     establishments: Establishment[];
+    procedures: ProcedureRow[];
     documentTypes: DocumentTypeOption[];
 };
 
+const date = new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium' });
+
 /**
- * The taxpayer's file: one place for their data and establishments
- * (procedures and licences will join here).
+ * The taxpayer's file: one place for their data, establishments and
+ * procedures (licences will join here).
  */
 export default function TaxpayerShow({
     taxpayer,
     establishments,
+    procedures,
     documentTypes,
 }: Props) {
     const documentLabel = documentTypes.find(
@@ -64,6 +88,16 @@ export default function TaxpayerShow({
                     </div>
 
                     <div className="flex gap-2">
+                        <Button asChild>
+                            <Link
+                                href={createProcedure({
+                                    query: { taxpayer: taxpayer.id },
+                                })}
+                            >
+                                <FilePlus />
+                                Nuevo trámite
+                            </Link>
+                        </Button>
                         <Button variant="outline" asChild>
                             <Link href={edit(taxpayer.id)}>
                                 <Pencil />
@@ -101,6 +135,52 @@ export default function TaxpayerShow({
                                 {taxpayer.representative_phone}
                             </Field>
                         </>
+                    )}
+                </section>
+
+                <section className="flex flex-col gap-4">
+                    <h2 className="text-lg font-semibold">
+                        Trámites ({procedures.length})
+                    </h2>
+
+                    {procedures.length === 0 ? (
+                        <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                            Aún no tiene trámites en el sistema nuevo.
+                        </div>
+                    ) : (
+                        <ul className="divide-y rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                            {procedures.map((procedure) => (
+                                <li key={procedure.id}>
+                                    <Link
+                                        href={showProcedure(procedure.id)}
+                                        className="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-muted/30"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="font-medium tabular-nums">
+                                                {procedure.code}
+                                                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                                    {date.format(
+                                                        new Date(
+                                                            procedure.created_at,
+                                                        ),
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <div className="truncate text-sm">
+                                                {procedure.types.join(' · ')}
+                                            </div>
+                                            <div className="truncate text-xs text-muted-foreground">
+                                                {procedure.establishment}
+                                            </div>
+                                        </div>
+                                        <ProcedureStatusBadge
+                                            status={procedure.status}
+                                            label={procedure.status_label}
+                                        />
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
                     )}
                 </section>
 

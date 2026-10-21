@@ -6,6 +6,7 @@ use App\Enums\DocumentType;
 use App\Exceptions\DocumentLookupUnavailable;
 use App\Http\Requests\StoreTaxpayerRequest;
 use App\Http\Requests\UpdateTaxpayerRequest;
+use App\Models\Procedure;
 use App\Models\Taxpayer;
 use App\Rules\Ruc;
 use App\Services\DocumentLookup;
@@ -64,6 +65,16 @@ class TaxpayerController extends Controller
                 ->orderBy('name')
                 ->limit(10)
                 ->get(['id', 'document_type', 'document_number', 'ruc', 'name', 'address'])
+        );
+    }
+
+    /**
+     * The taxpayer's establishments, for pickers (e.g. registering a procedure).
+     */
+    public function establishments(Taxpayer $taxpayer): JsonResponse
+    {
+        return response()->json(
+            $taxpayer->establishments()->latest('id')->get()
         );
     }
 
@@ -142,6 +153,17 @@ class TaxpayerController extends Controller
         return Inertia::render('taxpayers/show', [
             'taxpayer' => $taxpayer,
             'establishments' => $taxpayer->establishments()->latest('id')->get(),
+            'procedures' => $taxpayer->procedures()
+                ->with(['types:id,name', 'establishment'])
+                ->latest('id')
+                ->limit(20)
+                ->get()
+                ->map(fn (Procedure $procedure) => [
+                    ...$procedure->only('id', 'code', 'status', 'created_at'),
+                    'status_label' => $procedure->status->label(),
+                    'types' => $procedure->types->pluck('name'),
+                    'establishment' => $procedure->establishment->activity.' · '.$procedure->establishment->full_address,
+                ]),
             'documentTypes' => DocumentType::options(),
         ]);
     }

@@ -67,6 +67,14 @@ class Taxpayer extends Model
     }
 
     /**
+     * @return HasMany<Procedure, $this>
+     */
+    public function procedures(): HasMany
+    {
+        return $this->hasMany(Procedure::class);
+    }
+
+    /**
      * Companies (personas jurídicas) are identified by a RUC starting with 20.
      */
     public function isCompany(): bool

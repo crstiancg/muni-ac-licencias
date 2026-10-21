@@ -2,6 +2,7 @@ export type * from './auth';
 export type * from './establishment';
 export type * from './navigation';
 export type * from './pagination';
+export type * from './procedure';
 export type * from './procedure-type';
 export type * from './taxpayer';
 export type * from './ui';

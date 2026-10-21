@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import {
     BookOpen,
     ClipboardList,
+    FileText,
     FolderGit2,
     Landmark,
     LayoutGrid,
@@ -24,6 +25,7 @@ import {
 import { dashboard } from '@/routes';
 import { index as establishmentsIndex } from '@/routes/establishments';
 import { index as procedureTypesIndex } from '@/routes/procedure-types';
+import { index as proceduresIndex } from '@/routes/procedures';
 import { index as taxpayersIndex } from '@/routes/taxpayers';
 import { index as uitsIndex } from '@/routes/uits';
 import type { NavItem } from '@/types';
@@ -33,6 +35,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Trámites',
+        href: proceduresIndex(),
+        icon: FileText,
     },
     {
         title: 'Contribuyentes',
