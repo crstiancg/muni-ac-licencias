@@ -15,11 +15,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        if (User::query()->where('email', 'password@gmail.com')->doesntExist()) {
+            User::factory()->create([
+                'name' => 'Admin Dev',
+                'email' => 'password@gmail.com',
+            ]);
+        }
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        if (app()->isLocal()) {
+            $this->call(UitDevSeeder::class);
+        }
     }
 }

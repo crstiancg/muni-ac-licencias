@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\UitFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -35,5 +37,20 @@ class Uit extends Model
             'year' => 'integer',
             'amount' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Filter UITs by year or legal basis.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function search(Builder $query, ?string $term): void
+    {
+        $query->when($term, fn (Builder $query) => $query->where(
+            fn (Builder $query) => $query
+                ->where('year', 'like', "{$term}%")
+                ->orWhere('legal_basis', 'like', "%{$term}%")
+        ));
     }
 }

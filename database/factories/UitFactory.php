@@ -18,7 +18,8 @@ class UitFactory extends Factory
     public function definition(): array
     {
         return [
-            'year' => fake()->unique()->numberBetween(1995, (int) date('Y')),
+            // Lazy so an overridden year (e.g. a sequence) never consumes the unique pool.
+            'year' => fn () => fake()->unique()->numberBetween(1990, now()->year + 1),
             'amount' => fake()->randomFloat(2, 2000, 6000),
             'legal_basis' => 'D.S. N° '.fake()->numberBetween(100, 400).'-'.fake()->year().'-EF',
         ];

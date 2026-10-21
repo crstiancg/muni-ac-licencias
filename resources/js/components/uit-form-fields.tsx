@@ -8,7 +8,8 @@ type UitFormData = Pick<Uit, 'year' | 'amount' | 'legal_basis'>;
 
 /**
  * UIT fields, validated live against the server rules (Precognition).
- * Must be rendered inside an Inertia <Form>.
+ * Must be rendered inside an Inertia <Form noValidate>: validation messages
+ * come from the FormRequest, never from the browser.
  */
 export default function UitFormFields({ uit }: { uit?: Uit }) {
     const form = useFormContext<UitFormData>();
@@ -23,10 +24,9 @@ export default function UitFormFields({ uit }: { uit?: Uit }) {
                     type="number"
                     name="year"
                     inputMode="numeric"
-                    min={1990}
                     defaultValue={uit?.year ?? new Date().getFullYear()}
                     onBlur={() => form?.validate('year')}
-                    required
+                    aria-invalid={form?.errors.year ? true : undefined}
                     autoFocus
                 />
 
@@ -42,11 +42,10 @@ export default function UitFormFields({ uit }: { uit?: Uit }) {
                     name="amount"
                     inputMode="decimal"
                     step="0.01"
-                    min="0.01"
                     defaultValue={uit?.amount}
                     onBlur={() => form?.validate('amount')}
+                    aria-invalid={form?.errors.amount ? true : undefined}
                     placeholder="5350.00"
-                    required
                 />
 
                 <InputError message={form?.errors.amount} />
@@ -58,9 +57,9 @@ export default function UitFormFields({ uit }: { uit?: Uit }) {
                 <Input
                     id="legal_basis"
                     name="legal_basis"
-                    maxLength={150}
                     defaultValue={uit?.legal_basis ?? ''}
                     onBlur={() => form?.validate('legal_basis')}
+                    aria-invalid={form?.errors.legal_basis ? true : undefined}
                     placeholder="D.S. N° 260-2024-EF"
                 />
 

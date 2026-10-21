@@ -1,7 +1,11 @@
-import { Form, Head, Link } from '@inertiajs/react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Form, Head, router } from '@inertiajs/react';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import UitController from '@/actions/App/Http/Controllers/UitController';
 import Heading from '@/components/heading';
+import Pagination from '@/components/pagination';
+import SortableHeader from '@/components/sortable-header';
+import UitFormDialog from '@/components/uit-form-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,21 +17,51 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { create, edit, index } from '@/routes/uits';
-import type { Uit } from '@/types';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { index } from '@/routes/uits';
+import type { Paginated, Uit } from '@/types';
 
 const currency = new Intl.NumberFormat('es-PE', {
     style: 'currency',
     currency: 'PEN',
 });
 
+const DEFAULT_SORT = '-year';
+
+type Filters = { search: string | null; sort: string };
+
+/**
+ * Reloads the list with Spatie Query Builder params
+ * (?filter[search]=&sort=), back on page 1. Defaults are left out of the URL.
+ */
+function visit({ search, sort }: Filters) {
+    router.get(
+        index().url,
+        {
+            ...(search ? { filter: { search } } : {}),
+            ...(sort !== DEFAULT_SORT ? { sort } : {}),
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            only: ['uits', 'filters'],
+        },
+    );
+}
+
 export default function UitIndex({
     uits,
+    filters,
     currentYear,
 }: {
-    uits: Uit[];
+    uits: Paginated<Uit>;
+    filters: Filters;
     currentYear: number;
 }) {
+    const sortBy = (sort: string) => visit({ ...filters, sort });
+
     return (
         <>
             <Head title="UIT" />
@@ -39,29 +73,49 @@ export default function UitIndex({
                         description="Valor de la UIT por año, usado para calcular los derechos de trámite"
                     />
 
-                    <Button asChild>
-                        <Link href={create()}>
-                            <Plus />
-                            Registrar UIT
-                        </Link>
-                    </Button>
+                    <UitFormDialog
+                        trigger={
+                            <Button data-test="create-uit-button">
+                                <Plus />
+                                Registrar UIT
+                            </Button>
+                        }
+                    />
                 </div>
 
-                {uits.length === 0 ? (
+                <SearchInput
+                    initial={filters.search ?? ''}
+                    onSearch={(search) =>
+                        visit({ ...filters, search: search || null })
+                    }
+                />
+
+                {uits.data.length === 0 ? (
                     <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-                        Aún no hay UIT registradas.
+                        {filters.search
+                            ? `No hay UIT que coincidan con “${filters.search}”.`
+                            : 'Aún no hay UIT registradas.'}
                     </div>
                 ) : (
                     <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                         <table className="w-full text-sm">
                             <thead className="bg-muted/50 text-left text-muted-foreground">
                                 <tr>
-                                    <th className="px-4 py-3 font-medium">
+                                    <SortableHeader
+                                        column="year"
+                                        sort={filters.sort}
+                                        onSort={sortBy}
+                                    >
                                         Año
-                                    </th>
-                                    <th className="px-4 py-3 text-right font-medium">
+                                    </SortableHeader>
+                                    <SortableHeader
+                                        column="amount"
+                                        sort={filters.sort}
+                                        onSort={sortBy}
+                                        align="right"
+                                    >
                                         Valor
-                                    </th>
+                                    </SortableHeader>
                                     <th className="px-4 py-3 font-medium">
                                         Base legal
                                     </th>
@@ -73,8 +127,11 @@ export default function UitIndex({
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {uits.map((uit) => (
-                                    <tr key={uit.id}>
+                                {uits.data.map((uit) => (
+                                    <tr
+                                        key={uit.id}
+                                        className="hover:bg-muted/30"
+                                    >
                                         <td className="px-4 py-3 font-medium">
                                             <span className="flex items-center gap-2">
                                                 {uit.year}
@@ -93,18 +150,18 @@ export default function UitIndex({
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex justify-end gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    asChild
-                                                >
-                                                    <Link
-                                                        href={edit(uit.id)}
-                                                        aria-label={`Editar UIT ${uit.year}`}
-                                                    >
-                                                        <Pencil />
-                                                    </Link>
-                                                </Button>
+                                                <UitFormDialog
+                                                    uit={uit}
+                                                    trigger={
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            aria-label={`Editar UIT ${uit.year}`}
+                                                        >
+                                                            <Pencil />
+                                                        </Button>
+                                                    }
+                                                />
 
                                                 <DeleteUit uit={uit} />
                                             </div>
@@ -115,8 +172,52 @@ export default function UitIndex({
                         </table>
                     </div>
                 )}
+
+                <Pagination paginator={uits} />
             </div>
         </>
+    );
+}
+
+/**
+ * Debounced search input. Only `value` re-triggers the effect; `onSearch` is
+ * an Effect Event so it always sees the latest filters (e.g. current sort).
+ */
+function SearchInput({
+    initial,
+    onSearch,
+}: {
+    initial: string;
+    onSearch: (search: string) => void;
+}) {
+    const [value, setValue] = useState(initial);
+    const firstRender = useRef(true);
+    const search = useEffectEvent(onSearch);
+
+    useEffect(() => {
+        if (firstRender.current) {
+            firstRender.current = false;
+
+            return;
+        }
+
+        const timeout = setTimeout(() => search(value.trim()), 300);
+
+        return () => clearTimeout(timeout);
+    }, [value]);
+
+    return (
+        <div className="relative max-w-sm">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+                type="search"
+                value={value}
+                onChange={(event) => setValue(event.target.value)}
+                placeholder="Buscar por año o base legal"
+                aria-label="Buscar UIT"
+                className="pl-9"
+            />
+        </div>
     );
 }
 
@@ -141,13 +242,16 @@ function DeleteUit({ uit }: { uit: Uit }) {
                 </DialogDescription>
 
                 <Form
+                    noValidate
                     {...UitController.destroy.form(uit.id)}
                     options={{ preserveScroll: true }}
                 >
                     {({ processing }) => (
                         <DialogFooter className="gap-2">
                             <DialogClose asChild>
-                                <Button variant="secondary">Cancelar</Button>
+                                <Button type="button" variant="secondary">
+                                    Cancelar
+                                </Button>
                             </DialogClose>
 
                             <Button
@@ -155,6 +259,7 @@ function DeleteUit({ uit }: { uit: Uit }) {
                                 disabled={processing}
                                 data-test="confirm-delete-uit-button"
                             >
+                                {processing && <Spinner />}
                                 Eliminar
                             </Button>
                         </DialogFooter>
