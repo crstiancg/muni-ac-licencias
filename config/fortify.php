@@ -161,7 +161,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Accounts are created by an administrator, never self-registered.
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

@@ -4,7 +4,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicVerificationController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+// Internal system: the root goes straight to the dashboard (or the login).
+Route::redirect('/', '/dashboard')->name('home');
 
 // Public licence verification from the printed QR (no login).
 Route::get('v/{token}', [PublicVerificationController::class, 'show'])
