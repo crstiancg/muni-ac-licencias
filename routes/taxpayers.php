@@ -4,6 +4,8 @@ use App\Http\Controllers\AuditController;
 use App\Http\Controllers\EstablishmentController;
 use App\Http\Controllers\ItseCertificateController;
 use App\Http\Controllers\LicenseController;
+use App\Http\Controllers\MarketController;
+use App\Http\Controllers\MarketStallController;
 use App\Http\Controllers\PaymentOrderController;
 use App\Http\Controllers\ProcedureController;
 use App\Http\Controllers\RevenueReportController;
@@ -47,6 +49,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('licenses', LicenseController::class)->only(['index', 'show']);
 
     Route::get('audit', [AuditController::class, 'index'])->name('audit.index');
+
+    Route::post('markets/{market}/charges', [MarketController::class, 'generateCharges'])->name('markets.charges');
+    Route::resource('markets', MarketController::class)->only(['index', 'store', 'update', 'show']);
+    Route::post('market-stalls/{marketStall}/bill', [MarketStallController::class, 'bill'])->name('market-stalls.bill');
+    Route::resource('market-stalls', MarketStallController::class)->except(['index', 'destroy']);
 
     Route::controller(PaymentOrderController::class)->prefix('payment-orders/{paymentOrder}')->name('payment-orders.')->group(function () {
         Route::get('print', 'print')->name('print');

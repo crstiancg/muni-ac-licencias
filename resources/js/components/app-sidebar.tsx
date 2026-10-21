@@ -13,6 +13,7 @@ import {
     Store,
     Users,
     Wallet,
+    Warehouse,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -32,6 +33,7 @@ import { index as auditIndex } from '@/routes/audit';
 import { index as establishmentsIndex } from '@/routes/establishments';
 import { index as itseIndex } from '@/routes/itse';
 import { index as licensesIndex } from '@/routes/licenses';
+import { index as marketsIndex } from '@/routes/markets';
 import { index as paymentOrdersIndex } from '@/routes/payment-orders';
 import { index as procedureTypesIndex } from '@/routes/procedure-types';
 import { index as proceduresIndex } from '@/routes/procedures';
@@ -70,6 +72,11 @@ const mainNavItems: NavItem[] = [
         title: 'Recaudación',
         href: revenue(),
         icon: Wallet,
+    },
+    {
+        title: 'Mercados',
+        href: marketsIndex(),
+        icon: Warehouse,
     },
     {
         title: 'Contribuyentes',

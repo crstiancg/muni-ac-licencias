@@ -4,6 +4,7 @@ namespace App\Actions\Procedures;
 
 use App\Enums\PaymentOrderStatus;
 use App\Enums\ProcedureStatus;
+use App\Models\MarketCharge;
 use App\Models\PaymentOrder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,11 @@ class RegisterPayment
                 $order->procedure->update(['status' => ProcedureStatus::Paid]);
                 $order->procedure->log('pagado', "Comprobante {$receiptNumber} del {$order->paid_at->format('d/m/Y')} ({$order->code}).");
             }
+
+            // Market stall fees billed in this order.
+            MarketCharge::query()
+                ->where('payment_order_id', $order->id)
+                ->update(['paid_at' => $paidAt, 'receipt_number' => $receiptNumber]);
         });
     }
 }
