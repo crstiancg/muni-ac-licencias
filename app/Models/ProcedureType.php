@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Audited;
 use App\Enums\IssuedDocumentType;
 use App\Enums\LicenseEffect;
 use App\Enums\RiskLevel;
@@ -41,6 +42,8 @@ use Illuminate\Support\Carbon;
 ])]
 class ProcedureType extends Model
 {
+    use Audited;
+
     /** @use HasFactory<ProcedureTypeFactory> */
     use HasFactory;
 

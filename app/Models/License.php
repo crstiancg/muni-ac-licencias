@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Audited;
 use App\Enums\IssuedDocumentType;
 use App\Enums\LicenseStatus;
 use App\Enums\RiskLevel;
@@ -64,6 +65,8 @@ use Illuminate\Support\Str;
 #[Hidden(['qr_token'])]
 class License extends Model
 {
+    use Audited;
+
     /**
      * Get the attributes that should be cast.
      *

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\EstablishmentController;
 use App\Http\Controllers\ItseCertificateController;
 use App\Http\Controllers\LicenseController;
@@ -42,6 +43,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('licenses/{license}/print', [LicenseController::class, 'print'])->name('licenses.print');
     Route::post('licenses/{license}/status', [LicenseController::class, 'changeStatus'])->name('licenses.status');
     Route::resource('licenses', LicenseController::class)->only(['index', 'show']);
+
+    Route::get('audit', [AuditController::class, 'index'])->name('audit.index');
 
     Route::post('itse/{certificate}/revoke', [ItseCertificateController::class, 'revoke'])->name('itse.revoke');
     Route::resource('itse', ItseCertificateController::class)

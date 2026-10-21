@@ -28,6 +28,9 @@ class ImportLegacyTaxpayers extends Command
      */
     public function handle(): int
     {
+        // Bulk migration: not user changes, keep it out of the audit log.
+        activity()->disableLogging();
+
         /** @var array<string, array<string, mixed>> $taxpayers keyed by "type:number" */
         $taxpayers = [];
         $skipped = 0;

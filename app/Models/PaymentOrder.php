@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Audited;
 use App\Enums\PaymentOrderStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +36,8 @@ use Illuminate\Support\Carbon;
 ])]
 class PaymentOrder extends Model
 {
+    use Audited;
+
     /**
      * Get the attributes that should be cast.
      *

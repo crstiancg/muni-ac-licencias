@@ -5,6 +5,7 @@ import {
     ClipboardList,
     FileText,
     FolderGit2,
+    History,
     Landmark,
     LayoutGrid,
     ShieldCheck,
@@ -25,6 +26,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as auditIndex } from '@/routes/audit';
 import { index as establishmentsIndex } from '@/routes/establishments';
 import { index as itseIndex } from '@/routes/itse';
 import { index as licensesIndex } from '@/routes/licenses';
@@ -77,6 +79,11 @@ const parameterNavItems: NavItem[] = [
         title: 'Tipos de trámite',
         href: procedureTypesIndex(),
         icon: ClipboardList,
+    },
+    {
+        title: 'Auditoría',
+        href: auditIndex(),
+        icon: History,
     },
 ];
 

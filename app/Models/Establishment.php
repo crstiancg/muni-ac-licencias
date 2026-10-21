@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Audited;
 use App\Enums\EconomicSector;
 use App\Enums\RiskLevel;
 use App\Enums\SettlementType;
@@ -53,6 +54,8 @@ use Illuminate\Support\Carbon;
 #[Appends(['full_address'])]
 class Establishment extends Model
 {
+    use Audited;
+
     /** @use HasFactory<EstablishmentFactory> */
     use HasFactory;
 

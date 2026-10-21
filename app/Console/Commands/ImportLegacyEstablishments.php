@@ -42,6 +42,9 @@ class ImportLegacyEstablishments extends Command
      */
     public function handle(): int
     {
+        // Bulk migration: not user changes, keep it out of the audit log.
+        activity()->disableLogging();
+
         // "dni:44865351" => taxpayer id
         $taxpayerIds = Taxpayer::query()
             ->get(['id', 'document_type', 'document_number'])

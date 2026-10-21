@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Audited;
 use App\Enums\DocumentType;
 use Database\Factories\TaxpayerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -42,6 +43,8 @@ use Illuminate\Support\Carbon;
 ])]
 class Taxpayer extends Model
 {
+    use Audited;
+
     /** @use HasFactory<TaxpayerFactory> */
     use HasFactory;
 

@@ -63,6 +63,9 @@ class ImportLegacyProcedures extends Command
      */
     public function handle(): int
     {
+        // Bulk migration: not user changes, keep it out of the audit log.
+        activity()->disableLogging();
+
         $this->loadMaps();
 
         $imported = Procedure::query()->whereNotNull('legacy_id')->pluck('legacy_id')->flip()->all();

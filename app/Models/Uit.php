@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Audited;
 use Database\Factories\UitFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -23,6 +24,8 @@ use Illuminate\Support\Carbon;
 #[Fillable(['year', 'amount', 'legal_basis'])]
 class Uit extends Model
 {
+    use Audited;
+
     /** @use HasFactory<UitFactory> */
     use HasFactory;
 

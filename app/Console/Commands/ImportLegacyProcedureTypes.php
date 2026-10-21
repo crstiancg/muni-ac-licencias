@@ -24,6 +24,9 @@ class ImportLegacyProcedureTypes extends Command
      */
     public function handle(): int
     {
+        // Bulk migration: not user changes, keep it out of the audit log.
+        activity()->disableLogging();
+
         $rows = DB::connection('legacy')
             ->table('lic_tipo_tramite as t')
             ->leftJoin('lic_tipo_orden as o', 'o.tor_ide', '=', 't.tit_ide')

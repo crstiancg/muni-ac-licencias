@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Audited;
 use App\Enums\RiskLevel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -38,6 +39,8 @@ use Illuminate\Support\Carbon;
 ])]
 class ItseCertificate extends Model
 {
+    use Audited;
+
     public const int VALIDITY_YEARS = 2;
 
     /** Days before expiry when a certificate shows as "por vencer". */
