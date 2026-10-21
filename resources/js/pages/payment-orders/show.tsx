@@ -4,7 +4,7 @@ import PaymentOrderController from '@/actions/App/Http/Controllers/PaymentOrderC
 import Heading from '@/components/heading';
 import RegisterPaymentDialog from '@/components/register-payment-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { ORDER_STATUS_STYLES } from '@/lib/payment-orders';
 import type { PaymentOrderRow } from '@/lib/payment-orders';
@@ -32,8 +32,8 @@ export default function PaymentOrderShow({ order }: Props) {
         <>
             <Head title={`Orden ${order.code}`} />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <div className="space-y-2">
                         <Heading
                             title={`Orden de pago ${order.code}`}
@@ -102,7 +102,10 @@ export default function PaymentOrderShow({ order }: Props) {
                         {order.taxpayer_id ? (
                             <Link
                                 href={showTaxpayer(order.taxpayer_id)}
-                                className="text-sm hover:underline"
+                                className={buttonVariants({
+                                    variant: 'outline',
+                                    size: 'sm',
+                                })}
                             >
                                 {order.payer_name}
                             </Link>
@@ -121,7 +124,10 @@ export default function PaymentOrderShow({ order }: Props) {
                             {order.procedure ? (
                                 <Link
                                     href={showProcedure(order.procedure.id)}
-                                    className="hover:underline"
+                                    className={buttonVariants({
+                                        variant: 'outline',
+                                        size: 'sm',
+                                    })}
                                 >
                                     Trámite {order.procedure.code}
                                 </Link>

@@ -39,8 +39,10 @@ export default function Pagination<T>({
                     <PageButton
                         url={paginator.prev_page_url}
                         label="Página anterior"
+                        wide
                     >
                         <ChevronLeft />
+                        Anterior
                     </PageButton>
 
                     {/* Phones: compact indicator instead of page numbers. */}
@@ -73,7 +75,9 @@ export default function Pagination<T>({
                     <PageButton
                         url={paginator.next_page_url}
                         label="Página siguiente"
+                        wide
                     >
+                        Siguiente
                         <ChevronRight />
                     </PageButton>
                 </div>
@@ -86,16 +90,24 @@ function PageButton({
     url,
     active = false,
     label,
+    wide = false,
     children,
 }: {
     url: string | null;
     active?: boolean;
     label: string;
+    /** Previous/next: outlined button with text. */
+    wide?: boolean;
     children: React.ReactNode;
 }) {
     if (url === null) {
         return (
-            <Button variant="ghost" size="icon" disabled aria-label={label}>
+            <Button
+                variant={wide ? 'outline' : 'ghost'}
+                size={wide ? 'sm' : 'icon'}
+                disabled
+                aria-label={label}
+            >
                 {children}
             </Button>
         );
@@ -103,8 +115,8 @@ function PageButton({
 
     return (
         <Button
-            variant={active ? 'default' : 'ghost'}
-            size="icon"
+            variant={active ? 'default' : wide ? 'outline' : 'ghost'}
+            size={wide ? 'sm' : 'icon'}
             asChild
             aria-label={label}
         >

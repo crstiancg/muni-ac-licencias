@@ -2,6 +2,7 @@ import { Form, Head, router } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import ProcedureTypeController from '@/actions/App/Http/Controllers/ProcedureTypeController';
 import type { SelectOption } from '@/components/form-select';
+import FormSelect from '@/components/form-select';
 import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
 import ProcedureTypeFormDialog from '@/components/procedure-type-form-dialog';
@@ -19,7 +20,6 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { index } from '@/routes/procedure-types';
 import type { Paginated, ProcedureType, RiskLevelOption } from '@/types';
 
@@ -84,8 +84,8 @@ export default function ProcedureTypeIndex({
         <>
             <Head title="Tipos de trámite" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <Heading
                         title="Tipos de trámite"
                         description={
@@ -119,24 +119,21 @@ export default function ProcedureTypeIndex({
                         }
                     />
 
-                    <ToggleGroup
-                        type="single"
-                        variant="outline"
-                        value={filters.status}
-                        onValueChange={(status) =>
-                            status &&
-                            visit({ ...filters, status: status as Status })
-                        }
-                        aria-label="Filtrar por estado"
-                    >
-                        <ToggleGroupItem value="active">
-                            Activos
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="inactive">
-                            Inactivos
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="all">Todos</ToggleGroupItem>
-                    </ToggleGroup>
+                    <div className="w-52">
+                        <FormSelect
+                            id="status"
+                            name="status"
+                            options={[
+                                { value: 'active', label: 'Activos' },
+                                { value: 'inactive', label: 'Inactivos' },
+                                { value: 'all', label: 'Todos' },
+                            ]}
+                            defaultValue={filters.status}
+                            onValueChange={(status) =>
+                                visit({ ...filters, status: status as Status })
+                            }
+                        />
+                    </div>
                 </div>
 
                 {procedureTypes.data.length === 0 ? (
@@ -148,7 +145,7 @@ export default function ProcedureTypeIndex({
                 ) : (
                     <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                         <table className="w-full text-sm">
-                            <thead className="bg-muted/50 text-left text-muted-foreground">
+                            <thead className="bg-muted text-left text-foreground">
                                 <tr>
                                     <SortableHeader
                                         column="position"

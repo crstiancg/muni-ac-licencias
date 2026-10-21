@@ -6,7 +6,7 @@ import FormSelect from '@/components/form-select';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import LicenseStatusBadge from '@/components/license-status-badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -72,8 +72,8 @@ export default function LicenseShow({ license }: Props) {
         <>
             <Head title={license.number} />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <div className="space-y-2">
                         <Heading
                             title={`${license.type_label} ${license.number}`}
@@ -148,7 +148,10 @@ export default function LicenseShow({ license }: Props) {
                     <Field label="Titular">
                         <Link
                             href={showTaxpayer(license.taxpayer_id)}
-                            className="hover:underline"
+                            className={buttonVariants({
+                                variant: 'outline',
+                                size: 'sm',
+                            })}
                         >
                             {license.holder_name}
                         </Link>{' '}
@@ -177,7 +180,10 @@ export default function LicenseShow({ license }: Props) {
                         {license.procedure ? (
                             <Link
                                 href={showProcedure(license.procedure.id)}
-                                className="hover:underline"
+                                className={buttonVariants({
+                                    variant: 'outline',
+                                    size: 'sm',
+                                })}
                             >
                                 {license.procedure.code}
                             </Link>

@@ -6,7 +6,7 @@ import Pagination from '@/components/pagination';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import SearchInput from '@/components/search-input';
 import SortableHeader from '@/components/sortable-header';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { create, index, show } from '@/routes/procedures';
 import type { Paginated, Procedure, ProcedureStatusValue } from '@/types';
 
@@ -57,8 +57,8 @@ export default function ProcedureIndex({
         <>
             <Head title="Trámites" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <Heading
                         title="Trámites"
                         description="Solicitudes de licencias, autorizaciones y demás procedimientos del TUPA"
@@ -104,7 +104,7 @@ export default function ProcedureIndex({
                 ) : (
                     <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                         <table className="w-full text-sm">
-                            <thead className="bg-muted/50 text-left text-muted-foreground">
+                            <thead className="bg-muted text-left text-foreground">
                                 <tr>
                                     <th className="px-4 py-3 font-medium">
                                         Código
@@ -138,7 +138,11 @@ export default function ProcedureIndex({
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <Link
                                                 href={show(procedure.id)}
-                                                className="font-medium tabular-nums hover:underline"
+                                                className={buttonVariants({
+                                                    variant: 'outline',
+                                                    size: 'sm',
+                                                    className: 'tabular-nums',
+                                                })}
                                             >
                                                 {procedure.code}
                                             </Link>

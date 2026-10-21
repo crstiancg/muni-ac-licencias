@@ -163,8 +163,10 @@ export default function ProcedureWizard({
         : establishmentLabel || '—';
 
     return (
-        <div className="flex min-h-full flex-1 flex-col gap-6 p-4">
-            <Heading title={title} description={description} />
+        <div className="flex min-h-full flex-1 flex-col gap-6 p-4 md:p-6">
+            <div className="-mx-4 -mt-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+                <Heading title={title} description={description} />
+            </div>
 
             <ol className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {STEPS.map((item, index) => {
@@ -316,8 +318,9 @@ export default function ProcedureWizard({
                 )}
             </section>
 
-            <footer className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur">
-                <Button type="button" variant="ghost" asChild>
+            {/* Floating action bar: stays inside the content area while scrolling. */}
+            <footer className="sticky bottom-3 z-10 flex items-center justify-between gap-3 rounded-xl border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
+                <Button type="button" variant="outline" asChild>
                     <Link href={cancelHref}>Cancelar</Link>
                 </Button>
 

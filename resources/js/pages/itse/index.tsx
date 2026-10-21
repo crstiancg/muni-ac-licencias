@@ -1,6 +1,7 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { Ban, Plus } from 'lucide-react';
 import ItseCertificateController from '@/actions/App/Http/Controllers/ItseCertificateController';
+import FormSelect from '@/components/form-select';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import ItseStatusBadge from '@/components/itse-status-badge';
@@ -8,7 +9,7 @@ import type { ItseState } from '@/components/itse-status-badge';
 import Pagination from '@/components/pagination';
 import SearchInput from '@/components/search-input';
 import SortableHeader from '@/components/sortable-header';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -20,7 +21,6 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { create, index } from '@/routes/itse';
 import { show as showTaxpayer } from '@/routes/taxpayers';
 import type { Paginated } from '@/types';
@@ -86,8 +86,8 @@ export default function ItseIndex({
         <>
             <Head title="ITSE" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <Heading
                         title="Certificados ITSE"
                         description={`Inspección Técnica de Seguridad en Edificaciones · vigencia de 2 años · ${counts.por_vencer} por vencer, ${counts.vencido} vencidos`}
@@ -109,33 +109,23 @@ export default function ItseIndex({
                             visit({ ...filters, search: search || null })
                         }
                     />
-                    <ToggleGroup
-                        type="single"
-                        variant="outline"
-                        value={filters.state ?? 'todos'}
-                        onValueChange={(state) =>
-                            state &&
-                            visit({
-                                ...filters,
-                                state: state === 'todos' ? null : state,
-                            })
-                        }
-                        aria-label="Filtrar por estado"
-                    >
-                        <ToggleGroupItem value="todos">Todos</ToggleGroupItem>
-                        <ToggleGroupItem value="vigente">
-                            Vigentes
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="por_vencer">
-                            Por vencer
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="vencido">
-                            Vencidos
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="revocado">
-                            Revocados
-                        </ToggleGroupItem>
-                    </ToggleGroup>
+                    <div className="w-52">
+                        <FormSelect
+                            id="state"
+                            name="state"
+                            options={[
+                                { value: 'vigente', label: 'Vigentes' },
+                                { value: 'por_vencer', label: 'Por vencer' },
+                                { value: 'vencido', label: 'Vencidos' },
+                                { value: 'revocado', label: 'Revocados' },
+                            ]}
+                            defaultValue={filters.state}
+                            emptyLabel="Todos los estados"
+                            onValueChange={(state) =>
+                                visit({ ...filters, state: state || null })
+                            }
+                        />
+                    </div>
                 </div>
 
                 {certificates.data.length === 0 ? (
@@ -145,7 +135,7 @@ export default function ItseIndex({
                 ) : (
                     <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                         <table className="w-full text-sm">
-                            <thead className="bg-muted/50 text-left text-muted-foreground">
+                            <thead className="bg-muted text-left text-foreground">
                                 <tr>
                                     <th className="px-4 py-3 font-medium">
                                         Certificado
@@ -192,7 +182,10 @@ export default function ItseIndex({
                                                 href={showTaxpayer(
                                                     certificate.taxpayer.id,
                                                 )}
-                                                className="font-medium hover:underline"
+                                                className={buttonVariants({
+                                                    variant: 'outline',
+                                                    size: 'sm',
+                                                })}
                                             >
                                                 {certificate.taxpayer.name}
                                             </Link>

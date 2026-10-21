@@ -52,8 +52,8 @@ export default function RevenueReport({
         <>
             <Head title="Recaudación" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-end justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <Heading
                         title="Recaudación"
                         description="Órdenes de pago pagadas en Caja por fecha de pago"

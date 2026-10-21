@@ -6,7 +6,7 @@ import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
 import SearchInput from '@/components/search-input';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { ORDER_STATUS_STYLES } from '@/lib/payment-orders';
 import type { PaymentOrderRow } from '@/lib/payment-orders';
 import { cn } from '@/lib/utils';
@@ -57,8 +57,8 @@ export default function PaymentOrderIndex({
         <>
             <Head title="Órdenes de pago" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <Heading
                         title="Órdenes de pago"
                         description="Caja: trámites, otros conceptos y mercados en un solo lugar"
@@ -113,7 +113,7 @@ export default function PaymentOrderIndex({
                 ) : (
                     <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                         <table className="w-full text-sm">
-                            <thead className="bg-muted/50 text-left text-muted-foreground">
+                            <thead className="bg-muted text-left text-foreground">
                                 <tr>
                                     <th className="px-4 py-3 font-medium">
                                         Orden
@@ -141,7 +141,11 @@ export default function PaymentOrderIndex({
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <Link
                                                 href={show(order.id)}
-                                                className="font-medium tabular-nums hover:underline"
+                                                className={buttonVariants({
+                                                    variant: 'outline',
+                                                    size: 'sm',
+                                                    className: 'tabular-nums',
+                                                })}
                                             >
                                                 {order.code}
                                             </Link>

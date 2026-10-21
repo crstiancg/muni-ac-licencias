@@ -9,7 +9,7 @@ import ItseStatusBadge from '@/components/itse-status-badge';
 import type { ItseState } from '@/components/itse-status-badge';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -100,8 +100,8 @@ export default function TaxpayerShow({
         <>
             <Head title={taxpayer.name} />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <div>
                         <Heading
                             title={taxpayer.name}
@@ -339,7 +339,11 @@ export default function TaxpayerShow({
                                                             establishment.id,
                                                     },
                                                 })}
-                                                className="mt-2 inline-block text-xs underline underline-offset-4"
+                                                className={buttonVariants({
+                                                    variant: 'outline',
+                                                    size: 'sm',
+                                                    className: 'mt-2',
+                                                })}
                                             >
                                                 Registrar ITSE
                                             </Link>

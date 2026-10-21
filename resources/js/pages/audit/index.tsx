@@ -70,11 +70,13 @@ export default function AuditIndex({
         <>
             <Head title="Auditoría" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <Heading
-                    title="Auditoría"
-                    description="Quién cambió qué y cuándo en contribuyentes, establecimientos, licencias, ITSE, órdenes de pago y catálogos"
-                />
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+                    <Heading
+                        title="Auditoría"
+                        description="Quién cambió qué y cuándo en contribuyentes, establecimientos, licencias, ITSE, órdenes de pago y catálogos"
+                    />
+                </div>
 
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="w-52">

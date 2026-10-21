@@ -12,17 +12,17 @@ import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Profile',
+        title: 'Perfil',
         href: edit(),
         icon: null,
     },
     {
-        title: 'Security',
+        title: 'Seguridad',
         href: editSecurity(),
         icon: null,
     },
     {
-        title: 'Appearance',
+        title: 'Apariencia',
         href: editAppearance(),
         icon: null,
     },
@@ -32,17 +32,19 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="px-4 py-6">
-            <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
-            />
+        <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="-mx-4 -mt-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+                <Heading
+                    title="Configuración"
+                    description="Tu perfil, contraseña y apariencia"
+                />
+            </div>
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav
                         className="flex flex-col space-y-1 space-x-0"
-                        aria-label="Settings"
+                        aria-label="Configuración"
                     >
                         {sidebarNavItems.map((item, index) => (
                             <Button

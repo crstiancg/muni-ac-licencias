@@ -17,7 +17,7 @@ import LicensePicker from '@/components/license-picker';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import RegisterPaymentDialog from '@/components/register-payment-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -106,8 +106,8 @@ export default function ProcedureShow({ procedure, currentUit }: Props) {
         <>
             <Head title={`Trámite ${procedure.code}`} />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <div className="space-y-2">
                         <Heading
                             title={`Trámite ${procedure.code}`}
@@ -160,7 +160,10 @@ export default function ProcedureShow({ procedure, currentUit }: Props) {
                     <Card title="Contribuyente">
                         <Link
                             href={showTaxpayer(procedure.taxpayer.id)}
-                            className="font-medium hover:underline"
+                            className={buttonVariants({
+                                variant: 'outline',
+                                size: 'sm',
+                            })}
                         >
                             {procedure.taxpayer.name}
                         </Link>

@@ -5,8 +5,8 @@ import type { ReactNode } from 'react';
 import MarketController from '@/actions/App/Http/Controllers/MarketController';
 import FormSelect from '@/components/form-select';
 import Heading from '@/components/heading';
+import StatusDot from '@/components/status-dot';
 import InputError from '@/components/input-error';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -61,8 +61,8 @@ export default function MarketIndex({ markets }: { markets: MarketRow[] }) {
         <>
             <Head title="Mercados" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <Heading
                         title="Mercados"
                         description="Puestos, cuotas de alquiler y deuda de los comerciantes"
@@ -81,36 +81,23 @@ export default function MarketIndex({ markets }: { markets: MarketRow[] }) {
                     {markets.map((market) => (
                         <section
                             key={market.id}
-                            className="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border"
+                            className="relative flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-5 transition-colors hover:bg-muted/30 dark:border-sidebar-border"
                         >
-                            <div className="flex items-start justify-between gap-2">
-                                <Link
-                                    href={show(market.id)}
-                                    className="flex items-center gap-2 text-lg font-semibold hover:underline"
-                                >
-                                    <Store className="size-5 text-muted-foreground" />
-                                    {market.name}
-                                </Link>
-                                <MarketDialog
-                                    market={market}
-                                    trigger={
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            aria-label={`Editar ${market.name}`}
-                                        >
-                                            <Pencil />
-                                        </Button>
-                                    }
-                                />
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                                <Badge variant="outline">
-                                    Cobro {market.payment_frequency}
-                                </Badge>
-                                {!market.is_active && (
-                                    <Badge variant="secondary">Inactivo</Badge>
-                                )}
+                            <StatusDot
+                                active={market.is_active}
+                                label={market.is_active ? 'Activo' : 'Inactivo'}
+                            />
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h2 className="truncate font-semibold">
+                                        {market.name}
+                                    </h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Cobro {market.payment_frequency}
+                                        {!market.is_active && ' · inactivo'}
+                                    </p>
+                                </div>
+                                <Store className="size-5 shrink-0 text-muted-foreground" />
                             </div>
                             <dl className="grid grid-cols-2 gap-2 text-sm">
                                 <dt className="text-muted-foreground">
@@ -136,6 +123,19 @@ export default function MarketIndex({ markets }: { markets: MarketRow[] }) {
                                     </Link>
                                 </Button>
                                 <GenerateChargesDialog market={market} />
+                                <MarketDialog
+                                    market={market}
+                                    trigger={
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            aria-label={`Editar ${market.name}`}
+                                            title="Editar mercado"
+                                        >
+                                            <Pencil />
+                                        </Button>
+                                    }
+                                />
                             </div>
                         </section>
                     ))}

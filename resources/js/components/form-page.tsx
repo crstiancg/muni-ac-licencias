@@ -26,13 +26,15 @@ export default function FormPage({
     children: ReactNode;
 }) {
     return (
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4">
-            <Heading title={title} description={description} />
+        <div className="flex flex-col gap-6 p-4 md:p-6">
+            <div className="-mx-4 -mt-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+                <Heading title={title} description={description} />
+            </div>
 
             <Form
                 noValidate
                 {...form}
-                className="space-y-8 rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border"
+                className="mx-auto w-full max-w-3xl space-y-8 rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border"
             >
                 {({ processing }) => (
                     <>

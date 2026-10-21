@@ -75,11 +75,13 @@ export default function PaymentOrderCreate({
         <>
             <Head title="Orden por otros conceptos" />
 
-            <div className="flex flex-col gap-6 p-4">
-                <Heading
-                    title="Orden de pago por otros conceptos"
-                    description="Bambalinas, vallas, multas y demás cobros que no salen de un trámite."
-                />
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+                    <Heading
+                        title="Orden de pago por otros conceptos"
+                        description="Bambalinas, vallas, multas y demás cobros que no salen de un trámite."
+                    />
+                </div>
 
                 <form
                     noValidate
@@ -158,7 +160,13 @@ export default function PaymentOrderCreate({
                                     name={`concept_${position}`}
                                     options={concepts.map((concept) => ({
                                         value: String(concept.id),
-                                        label: concept.name,
+                                        label: `${concept.name} — ${
+                                            concept.fee
+                                                ? currency.format(
+                                                      Number(concept.fee),
+                                                  )
+                                                : 'sin UIT del año'
+                                        }`,
                                     }))}
                                     emptyLabel="Concepto libre"
                                     onValueChange={(value) => {

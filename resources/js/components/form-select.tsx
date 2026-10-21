@@ -58,12 +58,17 @@ export default function FormSelect({
                 >
                     <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                {/* Long labels (procedure type names) wrap instead of pushing the menu off-screen. */}
+                <SelectContent className="max-w-[min(var(--radix-select-content-available-width),48rem)]">
                     {emptyLabel && (
                         <SelectItem value={EMPTY}>{emptyLabel}</SelectItem>
                     )}
                     {options.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
+                        <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            className="whitespace-normal"
+                        >
                             {option.label}
                         </SelectItem>
                     ))}

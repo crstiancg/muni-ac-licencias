@@ -4,9 +4,9 @@ import MarketStallController from '@/actions/App/Http/Controllers/MarketStallCon
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { edit } from '@/routes/market-stalls';
+import { edit, show as showStall } from '@/routes/market-stalls';
 import { index, show as showMarket } from '@/routes/markets';
 import { show as showOrder } from '@/routes/payment-orders';
 import { show as showTaxpayer } from '@/routes/taxpayers';
@@ -69,8 +69,8 @@ export default function StallShow({ stall, charges, debt }: Props) {
         <>
             <Head title={`Puesto ${stall.code}`} />
 
-            <div className="flex flex-col gap-6 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-6 p-4 md:p-6">
+                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
                     <div className="space-y-2">
                         <Heading
                             title={`Puesto ${stall.code}`}
@@ -103,7 +103,10 @@ export default function StallShow({ stall, charges, debt }: Props) {
                         {stall.taxpayer ? (
                             <Link
                                 href={showTaxpayer(stall.taxpayer.id)}
-                                className="text-sm hover:underline"
+                                className={buttonVariants({
+                                    variant: 'outline',
+                                    size: 'sm',
+                                })}
                             >
                                 {stall.taxpayer.name}
                             </Link>
@@ -257,7 +260,15 @@ export default function StallShow({ stall, charges, debt }: Props) {
                                                         href={showOrder(
                                                             charge.order.id,
                                                         )}
-                                                        className="text-amber-700 underline underline-offset-4 dark:text-amber-300"
+                                                        className={buttonVariants(
+                                                            {
+                                                                variant:
+                                                                    'outline',
+                                                                size: 'sm',
+                                                                className:
+                                                                    'text-amber-700 dark:text-amber-300',
+                                                            },
+                                                        )}
                                                     >
                                                         En orden{' '}
                                                         {charge.order.code}
@@ -284,6 +295,6 @@ StallShow.layout = ({ stall }: Props) => ({
     breadcrumbs: [
         { title: 'Mercados', href: index() },
         { title: stall.market.name, href: showMarket(stall.market.id) },
-        { title: `Puesto ${stall.code}`, href: index() },
+        { title: `Puesto `, href: showStall(stall.id) },
     ],
 });
