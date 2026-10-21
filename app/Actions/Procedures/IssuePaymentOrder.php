@@ -2,6 +2,7 @@
 
 namespace App\Actions\Procedures;
 
+use App\Enums\PaymentOrderKind;
 use App\Enums\PaymentOrderStatus;
 use App\Enums\ProcedureStatus;
 use App\Models\PaymentOrder;
@@ -46,7 +47,11 @@ class IssuePaymentOrder
             $exonerated = (float) $total === 0.0;
 
             $order = PaymentOrder::create([
+                'kind' => PaymentOrderKind::Procedure,
                 'procedure_id' => $procedure->id,
+                'taxpayer_id' => $procedure->taxpayer_id,
+                'payer_name' => $procedure->taxpayer->name,
+                'payer_document' => $procedure->taxpayer->document_number,
                 'year' => $year,
                 'sequence' => $sequence,
                 'code' => sprintf('OP-%d-%05d', $year, $sequence),

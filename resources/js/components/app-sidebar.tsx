@@ -8,6 +8,7 @@ import {
     History,
     Landmark,
     LayoutGrid,
+    Receipt,
     ShieldCheck,
     Store,
     Users,
@@ -31,6 +32,7 @@ import { index as auditIndex } from '@/routes/audit';
 import { index as establishmentsIndex } from '@/routes/establishments';
 import { index as itseIndex } from '@/routes/itse';
 import { index as licensesIndex } from '@/routes/licenses';
+import { index as paymentOrdersIndex } from '@/routes/payment-orders';
 import { index as procedureTypesIndex } from '@/routes/procedure-types';
 import { index as proceduresIndex } from '@/routes/procedures';
 import { revenue } from '@/routes/reports';
@@ -58,6 +60,11 @@ const mainNavItems: NavItem[] = [
         title: 'ITSE',
         href: itseIndex(),
         icon: ShieldCheck,
+    },
+    {
+        title: 'Caja',
+        href: paymentOrdersIndex(),
+        icon: Receipt,
     },
     {
         title: 'Recaudación',

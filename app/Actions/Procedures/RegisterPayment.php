@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Records that the payment order was paid in Caja (receipt number and date).
+ * Records that a payment order was paid in Caja (receipt number and date)
+ * and settles what it paid for: the procedure, or nothing more for free
+ * concepts. Market stall fees are settled through their payment_order_id.
  */
 class RegisterPayment
 {
@@ -28,8 +30,10 @@ class RegisterPayment
                 'payment_registered_by' => Auth::id(),
             ]);
 
-            $order->procedure->update(['status' => ProcedureStatus::Paid]);
-            $order->procedure->log('pagado', "Comprobante {$receiptNumber} del {$order->paid_at->format('d/m/Y')} ({$order->code}).");
+            if ($order->procedure) {
+                $order->procedure->update(['status' => ProcedureStatus::Paid]);
+                $order->procedure->log('pagado', "Comprobante {$receiptNumber} del {$order->paid_at->format('d/m/Y')} ({$order->code}).");
+            }
         });
     }
 }

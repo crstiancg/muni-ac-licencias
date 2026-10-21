@@ -4,6 +4,7 @@ use App\Http\Controllers\AuditController;
 use App\Http\Controllers\EstablishmentController;
 use App\Http\Controllers\ItseCertificateController;
 use App\Http\Controllers\LicenseController;
+use App\Http\Controllers\PaymentOrderController;
 use App\Http\Controllers\ProcedureController;
 use App\Http\Controllers\RevenueReportController;
 use App\Http\Controllers\TaxpayerController;
@@ -46,6 +47,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('licenses', LicenseController::class)->only(['index', 'show']);
 
     Route::get('audit', [AuditController::class, 'index'])->name('audit.index');
+
+    Route::controller(PaymentOrderController::class)->prefix('payment-orders/{paymentOrder}')->name('payment-orders.')->group(function () {
+        Route::get('print', 'print')->name('print');
+        Route::post('payment', 'registerPayment')->name('payment');
+        Route::post('cancel', 'cancel')->name('cancel');
+    });
+    Route::resource('payment-orders', PaymentOrderController::class)->only(['index', 'create', 'store', 'show']);
 
     Route::get('reports/revenue', [RevenueReportController::class, 'index'])->name('reports.revenue');
     Route::get('reports/revenue/export', [RevenueReportController::class, 'export'])->name('reports.revenue.export');

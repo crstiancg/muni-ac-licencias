@@ -65,23 +65,21 @@ class RevenueReportController extends Controller
     public function export(Request $request): StreamedResponse
     {
         [$from, $to] = $this->range($request);
-        $orders = $this->paidOrders($from, $to)->with('procedure.taxpayer', 'items')->orderBy('paid_at');
+        $orders = $this->paidOrders($from, $to)->with('procedure:id,code', 'items')->orderBy('paid_at');
 
         return response()->streamDownload(function () use ($orders) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Fecha de pago', 'Comprobante', 'Orden', 'Trámite', 'Contribuyente', 'Documento', 'Conceptos', 'Total S/'], ';');
+            fputcsv($out, ['Fecha de pago', 'Comprobante', 'Orden', 'Trámite / tipo', 'Contribuyente', 'Documento', 'Conceptos', 'Total S/'], ';');
 
             $orders->lazy(500)->each(function (PaymentOrder $order) use ($out) {
-                $taxpayer = $order->procedure->taxpayer;
-
                 fputcsv($out, [
                     $order->paid_at?->format('d/m/Y'),
                     $order->receipt_number,
                     $order->code,
-                    $order->procedure->code,
-                    $taxpayer->name,
-                    strtoupper($taxpayer->document_type->value).' '.$taxpayer->document_number,
+                    $order->procedure?->code ?? $order->kind->label(),
+                    $order->payer_name,
+                    $order->payer_document,
                     $order->items->pluck('description')->join(' | '),
                     $order->total,
                 ], ';');

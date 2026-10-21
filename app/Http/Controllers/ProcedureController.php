@@ -236,8 +236,7 @@ class ProcedureController extends Controller
         abort_unless($procedure->paymentOrder, 404);
 
         return view('print.payment-order', [
-            'procedure' => $procedure->load('taxpayer', 'establishment'),
-            'order' => $procedure->paymentOrder->load('items', 'issuedBy:id,name'),
+            'order' => $procedure->paymentOrder->load('items', 'issuedBy:id,name', 'procedure.establishment'),
         ]);
     }
 

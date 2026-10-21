@@ -15,6 +15,7 @@ import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import LicensePicker from '@/components/license-picker';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
+import RegisterPaymentDialog from '@/components/register-payment-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -442,7 +443,12 @@ function NextStep({
                             .
                         </div>
                     </div>
-                    <RegisterPaymentDialog procedure={procedure} />
+                    <RegisterPaymentDialog
+                        form={ProcedureController.registerPayment.form(
+                            procedure.id,
+                        )}
+                        orderCode={procedure.payment_order.code}
+                    />
                 </>
             )}
 
@@ -505,86 +511,6 @@ function ConfirmAction({
                                 <Button disabled={processing}>
                                     {processing && <Spinner />}
                                     {submitLabel}
-                                </Button>
-                            </DialogFooter>
-                        </>
-                    )}
-                </Form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function RegisterPaymentDialog({ procedure }: { procedure: ProcedureDetail }) {
-    const today = new Date().toLocaleDateString('en-CA');
-
-    return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button>
-                    <Receipt />
-                    Registrar pago
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogTitle>Registrar pago</DialogTitle>
-                <DialogDescription>
-                    Comprobante emitido por Caja para la orden{' '}
-                    {procedure.payment_order?.code}.
-                </DialogDescription>
-                <Form
-                    noValidate
-                    {...ProcedureController.registerPayment.form(procedure.id)}
-                    options={{ preserveScroll: true }}
-                    className="space-y-4"
-                >
-                    {({ processing, errors }) => (
-                        <>
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="receipt_number">
-                                        N° de comprobante
-                                    </Label>
-                                    <Input
-                                        id="receipt_number"
-                                        name="receipt_number"
-                                        aria-invalid={
-                                            errors.receipt_number
-                                                ? true
-                                                : undefined
-                                        }
-                                        autoFocus
-                                    />
-                                    <InputError
-                                        message={errors.receipt_number}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="paid_at">
-                                        Fecha de pago
-                                    </Label>
-                                    <Input
-                                        id="paid_at"
-                                        type="date"
-                                        name="paid_at"
-                                        defaultValue={today}
-                                        max={today}
-                                        aria-invalid={
-                                            errors.paid_at ? true : undefined
-                                        }
-                                    />
-                                    <InputError message={errors.paid_at} />
-                                </div>
-                            </div>
-                            <DialogFooter className="gap-2">
-                                <DialogClose asChild>
-                                    <Button type="button" variant="secondary">
-                                        Cancelar
-                                    </Button>
-                                </DialogClose>
-                                <Button disabled={processing}>
-                                    {processing && <Spinner />}
-                                    Registrar pago
                                 </Button>
                             </DialogFooter>
                         </>
