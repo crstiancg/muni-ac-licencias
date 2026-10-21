@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        $this->call(RolesAndPermissionsSeeder::class);
+
         if (app()->isLocal()) {
             $this->call(UitDevSeeder::class);
         }

@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -11,18 +11,26 @@ import type { NavItem } from '@/types';
 
 export function NavMain({
     items,
-    label = 'Platform',
+    label = 'Gestión',
 }: {
     items: NavItem[];
     label?: string;
 }) {
     const { isCurrentUrl } = useCurrentUrl();
+    const { permissions } = usePage().props.auth;
+    const visible = items.filter(
+        (item) => !item.permission || permissions.includes(item.permission),
+    );
+
+    if (visible.length === 0) {
+        return null;
+    }
 
     return (
         <SidebarGroup className="px-2 py-0">
             <SidebarGroupLabel>{label}</SidebarGroupLabel>
             <SidebarMenu>
-                {items.map((item) => (
+                {visible.map((item) => (
                     <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
                             asChild

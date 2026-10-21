@@ -1,22 +1,21 @@
 import { Link } from '@inertiajs/react';
 import {
     BadgeCheck,
-    BookOpen,
     ClipboardList,
     FileText,
-    FolderGit2,
     History,
+    KeyRound,
     Landmark,
     LayoutGrid,
     Receipt,
     ShieldCheck,
     Store,
+    UserCog,
     Users,
     Wallet,
     Warehouse,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -38,8 +37,10 @@ import { index as paymentOrdersIndex } from '@/routes/payment-orders';
 import { index as procedureTypesIndex } from '@/routes/procedure-types';
 import { index as proceduresIndex } from '@/routes/procedures';
 import { revenue } from '@/routes/reports';
+import { index as rolesIndex } from '@/routes/roles';
 import { index as taxpayersIndex } from '@/routes/taxpayers';
 import { index as uitsIndex } from '@/routes/uits';
+import { index as usersIndex } from '@/routes/users';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -50,41 +51,49 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Trámites',
+        permission: 'procedures.view',
         href: proceduresIndex(),
         icon: FileText,
     },
     {
         title: 'Licencias',
+        permission: 'procedures.view',
         href: licensesIndex(),
         icon: BadgeCheck,
     },
     {
         title: 'ITSE',
+        permission: 'itse.manage',
         href: itseIndex(),
         icon: ShieldCheck,
     },
     {
         title: 'Caja',
+        permission: 'payments.collect',
         href: paymentOrdersIndex(),
         icon: Receipt,
     },
     {
         title: 'Recaudación',
+        permission: 'reports.view',
         href: revenue(),
         icon: Wallet,
     },
     {
         title: 'Mercados',
+        permission: 'markets.manage',
         href: marketsIndex(),
         icon: Warehouse,
     },
     {
         title: 'Contribuyentes',
+        permission: 'procedures.view',
         href: taxpayersIndex(),
         icon: Users,
     },
     {
         title: 'Establecimientos',
+        permission: 'procedures.view',
         href: establishmentsIndex(),
         icon: Store,
     },
@@ -93,37 +102,39 @@ const mainNavItems: NavItem[] = [
 const parameterNavItems: NavItem[] = [
     {
         title: 'UIT',
+        permission: 'parameters.manage',
         href: uitsIndex(),
         icon: Landmark,
     },
     {
         title: 'Tipos de trámite',
+        permission: 'parameters.manage',
         href: procedureTypesIndex(),
         icon: ClipboardList,
     },
     {
         title: 'Auditoría',
+        permission: 'audit.view',
         href: auditIndex(),
         icon: History,
     },
-];
-
-const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
+        title: 'Usuarios',
+        href: usersIndex(),
+        icon: UserCog,
+        permission: 'users.manage',
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+        title: 'Roles y permisos',
+        href: rolesIndex(),
+        icon: KeyRound,
+        permission: 'users.manage',
     },
 ];
 
 export function AppSidebar() {
     return (
-        <Sidebar collapsible="icon" variant="inset">
+        <Sidebar collapsible="icon" variant="floating">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -137,12 +148,11 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
-                <NavMain items={parameterNavItems} label="Parametrización" />
+                <NavMain items={mainNavItems} label="Gestión" />
+                <NavMain items={parameterNavItems} label="Administración" />
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
