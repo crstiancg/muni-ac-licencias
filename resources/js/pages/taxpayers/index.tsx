@@ -1,27 +1,21 @@
-import { Form, Head, router } from '@inertiajs/react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
-import TaxpayerController from '@/actions/App/Http/Controllers/TaxpayerController';
+import { Head, Link, router } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
 import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
 import SearchInput from '@/components/search-input';
 import SortableHeader from '@/components/sortable-header';
-import TaxpayerFormDialog from '@/components/taxpayer-form-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import { Spinner } from '@/components/ui/spinner';
-import { index } from '@/routes/taxpayers';
-import type { DocumentTypeOption, Paginated, Taxpayer } from '@/types';
+import { create, index, show } from '@/routes/taxpayers';
+import type { Paginated, Taxpayer } from '@/types';
 
 const DEFAULT_SORT = 'name';
+
+const DOCUMENT_LABELS: Record<Taxpayer['document_type'], string> = {
+    dni: 'DNI',
+    ce: 'CE',
+    ruc: 'RUC',
+};
 
 type Filters = { search: string | null; sort: string };
 
@@ -48,17 +42,11 @@ function visit({ search, sort }: Filters) {
 export default function TaxpayerIndex({
     taxpayers,
     filters,
-    documentTypes,
 }: {
     taxpayers: Paginated<Taxpayer>;
     filters: Filters;
-    documentTypes: DocumentTypeOption[];
 }) {
     const sortBy = (sort: string) => visit({ ...filters, sort });
-    const typeLabel = (value: Taxpayer['document_type']) =>
-        value === 'ce'
-            ? 'CE'
-            : documentTypes.find((type) => type.value === value)?.label;
 
     return (
         <>
@@ -71,15 +59,12 @@ export default function TaxpayerIndex({
                         description="Personas naturales y jurídicas que solicitan trámites"
                     />
 
-                    <TaxpayerFormDialog
-                        documentTypes={documentTypes}
-                        trigger={
-                            <Button data-test="create-taxpayer-button">
-                                <Plus />
-                                Registrar contribuyente
-                            </Button>
-                        }
-                    />
+                    <Button asChild data-test="create-taxpayer-button">
+                        <Link href={create()}>
+                            <Plus />
+                            Registrar contribuyente
+                        </Link>
+                    </Button>
                 </div>
 
                 <SearchInput
@@ -122,11 +107,6 @@ export default function TaxpayerIndex({
                                     <th className="px-4 py-3 font-medium">
                                         Teléfono
                                     </th>
-                                    <th className="px-4 py-3">
-                                        <span className="sr-only">
-                                            Acciones
-                                        </span>
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
@@ -138,9 +118,12 @@ export default function TaxpayerIndex({
                                         <td className="px-4 py-3 whitespace-nowrap tabular-nums">
                                             <div>
                                                 <span className="mr-1 text-muted-foreground">
-                                                    {typeLabel(
-                                                        taxpayer.document_type,
-                                                    )}
+                                                    {
+                                                        DOCUMENT_LABELS[
+                                                            taxpayer
+                                                                .document_type
+                                                        ]
+                                                    }
                                                 </span>
                                                 {taxpayer.document_number}
                                             </div>
@@ -151,19 +134,24 @@ export default function TaxpayerIndex({
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div className="font-medium">
+                                            <Link
+                                                href={show(taxpayer.id)}
+                                                className="font-medium hover:underline"
+                                            >
                                                 {taxpayer.name}
-                                            </div>
+                                            </Link>
                                             {taxpayer.document_type === 'ruc' &&
                                                 taxpayer.document_number.startsWith(
                                                     '20',
                                                 ) && (
-                                                    <Badge
-                                                        variant="outline"
-                                                        className="mt-1"
-                                                    >
-                                                        Persona jurídica
-                                                    </Badge>
+                                                    <div>
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="mt-1"
+                                                        >
+                                                            Persona jurídica
+                                                        </Badge>
+                                                    </div>
                                                 )}
                                         </td>
                                         <td className="px-4 py-3 text-muted-foreground">
@@ -173,29 +161,6 @@ export default function TaxpayerIndex({
                                         </td>
                                         <td className="px-4 py-3 text-muted-foreground">
                                             {taxpayer.phone ?? '—'}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex justify-end gap-1">
-                                                <TaxpayerFormDialog
-                                                    taxpayer={taxpayer}
-                                                    documentTypes={
-                                                        documentTypes
-                                                    }
-                                                    trigger={
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            aria-label={`Editar ${taxpayer.name}`}
-                                                        >
-                                                            <Pencil />
-                                                        </Button>
-                                                    }
-                                                />
-
-                                                <DeleteTaxpayer
-                                                    taxpayer={taxpayer}
-                                                />
-                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -207,54 +172,6 @@ export default function TaxpayerIndex({
                 <Pagination paginator={taxpayers} />
             </div>
         </>
-    );
-}
-
-function DeleteTaxpayer({ taxpayer }: { taxpayer: Taxpayer }) {
-    return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Eliminar ${taxpayer.name}`}
-                >
-                    <Trash2 className="text-red-600 dark:text-red-400" />
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogTitle>¿Eliminar este contribuyente?</DialogTitle>
-                <DialogDescription>
-                    Se eliminará a {taxpayer.name} ({taxpayer.document_number}).
-                    Esta acción no se puede deshacer.
-                </DialogDescription>
-
-                <Form
-                    noValidate
-                    {...TaxpayerController.destroy.form(taxpayer.id)}
-                    options={{ preserveScroll: true }}
-                >
-                    {({ processing }) => (
-                        <DialogFooter className="gap-2">
-                            <DialogClose asChild>
-                                <Button type="button" variant="secondary">
-                                    Cancelar
-                                </Button>
-                            </DialogClose>
-
-                            <Button
-                                variant="destructive"
-                                disabled={processing}
-                                data-test="confirm-delete-taxpayer-button"
-                            >
-                                {processing && <Spinner />}
-                                Eliminar
-                            </Button>
-                        </DialogFooter>
-                    )}
-                </Form>
-            </DialogContent>
-        </Dialog>
     );
 }
 

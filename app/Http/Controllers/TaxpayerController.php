@@ -48,8 +48,23 @@ class TaxpayerController extends Controller
                 'search' => $request->input('filter.search'),
                 'sort' => $request->input('sort', 'name'),
             ],
-            'documentTypes' => DocumentType::options(),
         ]);
+    }
+
+    /**
+     * Up to 10 taxpayers matching ?q= (document, RUC or name), for pickers.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $term = trim((string) $request->query('q'));
+
+        return response()->json(
+            mb_strlen($term) < 2 ? [] : Taxpayer::query()
+                ->search($term)
+                ->orderBy('name')
+                ->limit(10)
+                ->get(['id', 'document_type', 'document_number', 'ruc', 'name', 'address'])
+        );
     }
 
     /**
@@ -106,7 +121,40 @@ class TaxpayerController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Contribuyente {$taxpayer->name} registrado."]);
 
-        return back();
+        return to_route('taxpayers.show', $taxpayer);
+    }
+
+    /**
+     * Show the form to register a taxpayer.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('taxpayers/create', [
+            'documentTypes' => DocumentType::options(),
+        ]);
+    }
+
+    /**
+     * The taxpayer's file (ficha): data and establishments.
+     */
+    public function show(Taxpayer $taxpayer): Response
+    {
+        return Inertia::render('taxpayers/show', [
+            'taxpayer' => $taxpayer,
+            'establishments' => $taxpayer->establishments()->latest('id')->get(),
+            'documentTypes' => DocumentType::options(),
+        ]);
+    }
+
+    /**
+     * Show the form to edit the given taxpayer.
+     */
+    public function edit(Taxpayer $taxpayer): Response
+    {
+        return Inertia::render('taxpayers/edit', [
+            'taxpayer' => $taxpayer,
+            'documentTypes' => DocumentType::options(),
+        ]);
     }
 
     /**
@@ -118,7 +166,7 @@ class TaxpayerController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Contribuyente {$taxpayer->name} actualizado."]);
 
-        return back();
+        return to_route('taxpayers.show', $taxpayer);
     }
 
     /**
@@ -126,10 +174,16 @@ class TaxpayerController extends Controller
      */
     public function destroy(Taxpayer $taxpayer): RedirectResponse
     {
+        if ($taxpayer->establishments()->exists()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => "{$taxpayer->name} tiene establecimientos registrados; no se puede eliminar."]);
+
+            return back();
+        }
+
         $taxpayer->delete();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Contribuyente {$taxpayer->name} eliminado."]);
 
-        return back();
+        return to_route('taxpayers.index');
     }
 }

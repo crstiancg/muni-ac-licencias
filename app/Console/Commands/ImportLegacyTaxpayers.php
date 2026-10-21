@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\DocumentType;
 use App\Models\Taxpayer;
+use App\Support\Legacy\LegacyApplicant;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -81,28 +82,13 @@ class ImportLegacyTaxpayers extends Command
     private function attributesFrom(object $row): ?array
     {
         $name = $this->clean($row->tra_nombre);
-        $dni = $this->clean($row->tra_dni_ce);
-        $ruc = $this->clean($row->tra_ruc);
+        $identity = LegacyApplicant::identify($row);
 
-        if ($name === null) {
+        if ($name === null || $identity === null) {
             return null;
         }
 
-        $ruc = $ruc !== null && preg_match(DocumentType::Ruc->pattern(), $ruc) ? $ruc : null;
-
-        [$type, $number, $naturalRuc] = match (true) {
-            // Company, or natural person without DNI (15/17): the RUC is the identity.
-            $ruc !== null && ! str_starts_with($ruc, '10') => [DocumentType::Ruc, $ruc, null],
-            // RUC 10 embeds the DNI: trust it over a mistyped DNI field.
-            $ruc !== null => [DocumentType::Dni, substr($ruc, 2, 8), $ruc],
-            $dni !== null && preg_match(DocumentType::Dni->pattern(), $dni) === 1 => [DocumentType::Dni, $dni, null],
-            $dni !== null && preg_match('/^[A-Z0-9]{9,12}$/', strtoupper($dni)) === 1 => [DocumentType::Ce, strtoupper($dni), null],
-            default => [null, null, null],
-        };
-
-        if ($type === null) {
-            return null;
-        }
+        [$type, $number, $naturalRuc] = $identity;
 
         return [
             'document_type' => $type,
@@ -140,13 +126,8 @@ class ImportLegacyTaxpayers extends Command
         return $parts === [] ? null : mb_substr(implode(' ', $parts), 0, 255);
     }
 
-    /**
-     * Legacy values carry tabs and repeated spaces; "-" and "" mean nothing.
-     */
     private function clean(?string $value): ?string
     {
-        $value = trim(preg_replace('/\s+/u', ' ', (string) $value));
-
-        return in_array($value, ['', '-', '.'], true) ? null : $value;
+        return LegacyApplicant::clean($value);
     }
 }

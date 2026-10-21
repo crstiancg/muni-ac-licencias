@@ -5,6 +5,7 @@ import {
     FolderGit2,
     Landmark,
     LayoutGrid,
+    Store,
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -21,6 +22,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as establishmentsIndex } from '@/routes/establishments';
 import { index as procedureTypesIndex } from '@/routes/procedure-types';
 import { index as taxpayersIndex } from '@/routes/taxpayers';
 import { index as uitsIndex } from '@/routes/uits';
@@ -36,6 +38,11 @@ const mainNavItems: NavItem[] = [
         title: 'Contribuyentes',
         href: taxpayersIndex(),
         icon: Users,
+    },
+    {
+        title: 'Establecimientos',
+        href: establishmentsIndex(),
+        icon: Store,
     },
 ];
 

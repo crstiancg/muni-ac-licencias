@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -55,6 +56,14 @@ class Taxpayer extends Model
             'document_type' => DocumentType::class,
             'legacy_procedure_id' => 'integer',
         ];
+    }
+
+    /**
+     * @return HasMany<Establishment, $this>
+     */
+    public function establishments(): HasMany
+    {
+        return $this->hasMany(Establishment::class);
     }
 
     /**
