@@ -260,7 +260,7 @@ export default function ProcedureTypeFormFields({
                     name="document_type"
                     options={documentTypes}
                     defaultValue={procedureType?.document_type}
-                    emptyLabel="Ninguno (cese, duplicado, otros)"
+                    emptyLabel="Ninguno (cese, otros)"
                     invalid={!!form?.errors.document_type}
                 />
                 <InputError message={form?.errors.document_type} />
@@ -303,7 +303,8 @@ export default function ProcedureTypeFormFields({
                 />
                 <p className="text-xs text-muted-foreground">
                     Transferencia o cambio de giro reemplazan la licencia
-                    anterior; cese la cierra; duplicado la reimprime.
+                    anterior; cese la cierra; duplicado emite una nueva (marcada
+                    como DUPLICADO) y da de baja la anterior.
                 </p>
                 <InputError message={form?.errors.license_effect} />
             </div>

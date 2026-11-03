@@ -150,15 +150,26 @@ class IssueDocuments
         (new ConfirmLicense)->handle($related, "Trámite {$procedure->code}: {$effect->label()}.");
 
         $newNumbers = $issued->pluck('number')->join(', ');
+        $successor = $issued->first();
 
         if ($effect === LicenseEffect::Duplicate) {
-            $related->increment('duplicates');
-            $procedure->log('licencia_duplicado', "{$related->number}: duplicado N° {$related->duplicates}.");
+            // Printed on a new form as a new licence, so the lost paper stops verifying.
+            $successor = $issued->firstWhere('type', $related->type);
 
-            return;
+            if (! $successor) {
+                // Procedure type that issues no document: reprint the same licence.
+                $related->increment('duplicates');
+                $procedure->log('licencia_duplicado', "{$related->number}: duplicado N° {$related->duplicates}.");
+
+                return;
+            }
+
+            $successor->update(['duplicates' => $related->duplicates + 1]);
+            $procedure->log('licencia_duplicado', "{$related->number}: duplicado N° {$successor->duplicates} emitido como {$successor->number}.");
         }
 
         [$status, $reason] = match ($effect) {
+            LicenseEffect::Duplicate => [LicenseStatus::Replaced, "Dada de baja por duplicado: reemplazada por {$successor->number} (trámite {$procedure->code})."],
             LicenseEffect::Replace => [LicenseStatus::Replaced, "Reemplazada por {$newNumbers} (trámite {$procedure->code})."],
             LicenseEffect::Close => [LicenseStatus::Closed, "Cese de actividades (trámite {$procedure->code})."],
             LicenseEffect::TemporaryClose => [LicenseStatus::TemporarilyClosed, "Cierre temporal comunicado (trámite {$procedure->code})."],
@@ -168,7 +179,7 @@ class IssueDocuments
             'status' => $status,
             'status_reason' => $reason,
             'status_changed_at' => now(),
-            'replaced_by_id' => $effect === LicenseEffect::Replace ? $issued->first()?->id : $related->replaced_by_id,
+            'replaced_by_id' => $status === LicenseStatus::Replaced ? $successor?->id : $related->replaced_by_id,
         ]);
         $procedure->log('licencia_'.$status->value, "{$related->number}: {$reason}");
         $related->procedure?->log('licencia_'.$status->value, "{$related->number}: {$reason}");
