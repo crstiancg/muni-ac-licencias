@@ -9,11 +9,13 @@ use App\Actions\Procedures\RegisterProcedure;
 use App\Enums\LicenseStatus;
 use App\Models\Establishment;
 use App\Models\License;
+use App\Models\Procedure;
 use App\Models\ProcedureType;
 use App\Models\Uit;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 /**
@@ -34,19 +36,57 @@ class DuplicateLicenseTest extends TestCase
         $this->establishment = Establishment::factory()->create();
     }
 
-    private function issue(ProcedureType $type, string $series, ?License $related = null): License
+    private function paid(ProcedureType $type, ?Establishment $establishment = null): Procedure
     {
+        $establishment ??= $this->establishment;
+
         $procedure = app(RegisterProcedure::class)->handle([
             'procedure_type_ids' => [$type->id],
-            'taxpayer_id' => $this->establishment->taxpayer_id,
-            'establishment_id' => $this->establishment->id,
+            'taxpayer_id' => $establishment->taxpayer_id,
+            'establishment_id' => $establishment->id,
             'declaration' => ['flammable_materials' => false, 'signage' => true, 'breakers' => true, 'first_aid_kit' => true, 'wiring_conduits' => true, 'sign' => false],
         ]);
 
         $order = app(IssuePaymentOrder::class)->handle($procedure->load('types'));
         app(RegisterPayment::class)->handle($order, '44025', now()->toDateString());
 
-        return app(IssueDocuments::class)->handle($procedure->fresh(), [], null, $related, ['licencia' => $series])->first();
+        return $procedure->fresh();
+    }
+
+    private function issue(ProcedureType $type, string $series, ?License $related = null, ?Establishment $establishment = null): License
+    {
+        return app(IssueDocuments::class)->handle($this->paid($type, $establishment), [], null, $related, ['licencia' => $series])->first();
+    }
+
+    private function licenceType(): ProcedureType
+    {
+        return ProcedureType::factory()->create(['is_active' => true, 'uit_percentage' => 3.7855, 'document_type' => 'licencia']);
+    }
+
+    public function test_the_procedure_already_knows_the_licence_of_its_establishment()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $clerk = User::factory()->create();
+        $clerk->assignRole('Mesa de partes');
+
+        $own = $this->issue($this->licenceType(), '0010234');
+        // Another place of the same taxpayer: never the one acted on.
+        $this->issue($this->licenceType(), '0010235', null, Establishment::factory()->create(['taxpayer_id' => $this->establishment->taxpayer_id]));
+        $duplicate = $this->paid($this->duplicateType());
+        $plain = $this->paid($this->licenceType());
+
+        $this->actingAs($clerk)
+            ->get(route('procedures.show', $duplicate))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('procedure.establishment_license.id', $own->id)
+                ->where('procedure.establishment_license.number', $own->number)
+                ->where('procedure.establishment_license.series', '0010234')
+            );
+
+        // Without an effect on a licence there is nothing to look up.
+        $this->actingAs($clerk)
+            ->get(route('procedures.show', $plain))
+            ->assertInertia(fn (Assert $page) => $page->where('procedure.establishment_license', null));
     }
 
     private function duplicateType(): ProcedureType

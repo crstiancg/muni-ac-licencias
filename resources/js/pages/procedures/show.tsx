@@ -575,7 +575,8 @@ function IssueDocumentsDialog({ procedure }: { procedure: ProcedureDetail }) {
                     noValidate
                     {...ProcedureController.issueDocuments.form(procedure.id)}
                     options={{ preserveScroll: true }}
-                    className="space-y-4"
+                    // min-w-0: a grid item, or long addresses widen the dialog.
+                    className="min-w-0 space-y-4"
                 >
                     {({ processing, errors }) => (
                         <>
@@ -610,11 +611,21 @@ function IssueDocumentsDialog({ procedure }: { procedure: ProcedureDetail }) {
                                     <p className="text-xs text-muted-foreground">
                                         {procedure.license_effects.join(', ')}.
                                     </p>
-                                    <LicensePicker
-                                        name="related_license_id"
-                                        taxpayerId={procedure.taxpayer.id}
-                                        error={errors.related_license_id}
-                                    />
+                                    {procedure.establishment_license ? (
+                                        <OwnLicense
+                                            license={
+                                                procedure.establishment_license
+                                            }
+                                            error={errors.related_license_id}
+                                        />
+                                    ) : (
+                                        // No licence of its own (e.g. a transfer): find the previous owner's.
+                                        <LicensePicker
+                                            name="related_license_id"
+                                            taxpayerId={procedure.taxpayer.id}
+                                            error={errors.related_license_id}
+                                        />
+                                    )}
                                 </fieldset>
                             )}
 
@@ -829,6 +840,35 @@ function Card({
             </div>
             {children}
         </section>
+    );
+}
+
+/**
+ * The licence of the procedure's own place: the one a duplicate or closure
+ * acts on, shown as a fact rather than a choice.
+ */
+function OwnLicense({
+    license,
+    error,
+}: {
+    license: NonNullable<ProcedureDetail['establishment_license']>;
+    error?: string;
+}) {
+    return (
+        <>
+            <input type="hidden" name="related_license_id" value={license.id} />
+            <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                <div className="font-medium tabular-nums">
+                    {license.number}
+                    {license.series && ` · Serie ${license.series}`}
+                </div>
+                <div className="truncate">{license.holder_name}</div>
+                <div className="truncate text-xs text-muted-foreground">
+                    {license.activity} · {license.address}
+                </div>
+            </div>
+            <InputError message={error} />
+        </>
     );
 }
 

@@ -11,6 +11,7 @@ use App\Enums\DocumentType;
 use App\Enums\EconomicSector;
 use App\Enums\IssuedDocumentType;
 use App\Enums\LicenseEffect;
+use App\Enums\LicenseStatus;
 use App\Enums\PaymentOrderStatus;
 use App\Enums\ProcedureStatus;
 use App\Enums\RiskLevel;
@@ -168,6 +169,7 @@ class ProcedureController extends Controller
 
         $currentUit = Uit::query()->firstWhere('year', now()->year);
         $documentTypes = (new IssueDocuments)->documentTypes($procedure);
+        $effects = (new IssueDocuments)->licenseEffects($procedure);
 
         return Inertia::render('procedures/show', [
             'procedure' => [
@@ -192,7 +194,14 @@ class ProcedureController extends Controller
                 'documents_to_issue' => $documentTypes->map(fn (IssuedDocumentType $type) => $type->label()),
                 'document_types_to_issue' => $documentTypes->map(fn (IssuedDocumentType $type) => ['value' => $type->value, 'label' => $type->label()]),
                 'needs_sign_data' => $documentTypes->contains(IssuedDocumentType::SignAuthorization),
-                'license_effects' => (new IssueDocuments)->licenseEffects($procedure)->map(fn (LicenseEffect $effect) => $effect->label()),
+                'license_effects' => $effects->map(fn (LicenseEffect $effect) => $effect->label()),
+                // The licence of the procedure's own place, acted on without picking it.
+                'establishment_license' => $effects->isNotEmpty() ? License::query()
+                    ->where('establishment_id', $procedure->establishment_id)
+                    ->where('type', IssuedDocumentType::OperatingLicense)
+                    ->whereIn('status', [LicenseStatus::Active, LicenseStatus::TemporarilyClosed])
+                    ->latest('issued_at')
+                    ->first(['id', 'number', 'series', 'holder_name', 'address', 'activity']) : null,
                 'related_license' => $procedure->relatedLicense ? [
                     ...$procedure->relatedLicense->only('id', 'number', 'holder_name', 'address'),
                     'status_label' => $procedure->relatedLicense->effectiveStatus()->label(),

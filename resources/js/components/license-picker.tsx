@@ -106,10 +106,12 @@ export default function LicensePicker({
                                 {option.activity} · {option.address}
                             </span>
                         </span>
-                        <LicenseStatusBadge
-                            status={option.status}
-                            label={option.status_label}
-                        />
+                        <span className="shrink-0">
+                            <LicenseStatusBadge
+                                status={option.status}
+                                label={option.status_label}
+                            />
+                        </span>
                     </button>
                 ))}
                 {options.length === 0 && (
