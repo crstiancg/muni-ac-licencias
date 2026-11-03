@@ -84,6 +84,7 @@ export type LicenseSummary = {
     holder_name: string;
     trade_name: string | null;
     activity: string;
+    type: 'licencia' | 'anuncio';
     type_label: string;
     status: LicenseStatusValue;
     status_label: string;

@@ -182,6 +182,7 @@ class ProcedureController extends Controller
                 ] : null,
                 'licenses' => $procedure->licenses->map(fn (License $license) => [
                     ...$license->only('id', 'number', 'issued_at', 'valid_until', 'duplicates', 'holder_name', 'trade_name', 'activity'),
+                    'type' => $license->type->value,
                     'type_label' => $license->type->label(),
                     'status' => $license->status->value,
                     'status_label' => $license->status->label(),

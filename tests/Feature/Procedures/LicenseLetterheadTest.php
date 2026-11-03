@@ -56,6 +56,7 @@ class LicenseLetterheadTest extends TestCase
             ->get(route('procedures.show', $license->procedure_id))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('procedure.licenses.0.number', $license->number)
+                ->where('procedure.licenses.0.type', 'licencia')
                 ->where('procedure.licenses.0.trade_name', 'CARNES DON JOSE')
                 ->where('procedure.licenses.0.activity', 'CARNICERIA')
                 ->where('procedure.licenses.0.holder_name', $license->holder_name)

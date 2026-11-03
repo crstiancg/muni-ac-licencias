@@ -927,9 +927,25 @@ function IssuedDocumentCard({
                         rel="noreferrer"
                     >
                         <Printer />
-                        Imprimir
+                        {license.type === 'licencia'
+                            ? 'Imprimir en hoja membretada'
+                            : 'Imprimir'}
                     </a>
                 </Button>
+                {license.type === 'licencia' && (
+                    <Button size="sm" variant="outline" asChild>
+                        <a
+                            href={printLicense.url(license.id, {
+                                query: { blank: 1 },
+                            })}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <Printer />
+                            Imprimir en hoja blanca
+                        </a>
+                    </Button>
+                )}
                 <Button size="sm" variant="outline" asChild>
                     <Link href={showLicense(license.id)}>
                         <FileCheck />
