@@ -113,7 +113,9 @@ class LicenseLetterheadTest extends TestCase
             ->assertSee('2026-00049928')
             ->assertSee('44025')
             ->assertSeeInOrder(['SERIE - A', '0010234'])
-            ->assertSeeInOrder(['Emisor', 'Sub Gerencia de Actividades'])
+            ->assertSee('<div class="crest-code condensed">C.T. '.$license->procedure->code.'</div>', false)
+            ->assertSeeInOrder([mb_strtoupper(config('licencias.municipality')), 'Gerencia de Desarrollo Económico', 'Subgerencia de Actividades Económicas'])
+            ->assertSeeInOrder(['Emisor', 'Sub Gerencia de Actividades', 'Gerencia de Desarrollo'])
             ->assertDontSee('Turismo')
             ->assertSee('class="qr" src="data:image/svg+xml;base64,', false);
     }

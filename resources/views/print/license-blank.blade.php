@@ -30,18 +30,20 @@
         .heavy { font-family: Anton, Impact, 'Arial Black', sans-serif; font-weight: 400; }
         .condensed { font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif; font-stretch: condensed; }
 
-        .crest { position: absolute; left: 22mm; top: 19mm; width: 29mm; height: 37mm; object-fit: contain; }
+        .crest { position: absolute; left: 22mm; top: 17mm; width: 29mm; height: 35mm; object-fit: contain; }
+        .crest-code { position: absolute; left: 16mm; width: 41mm; top: 52.5mm; text-align: center; font-size: 10pt; font-weight: 700; color: #1f2a44; letter-spacing: .2mm; white-space: nowrap; }
         .photo { position: absolute; left: 161mm; top: 23mm; width: 31mm; height: 39mm; border: .7mm solid #111; background: #fff; box-shadow: .8mm .8mm 0 #1f2937; }
         .serial { position: absolute; left: 88mm; top: 34.5mm; white-space: nowrap; }
         .serial .label { font-size: 23pt; color: #1f2a44; letter-spacing: .3mm; }
         .serial .num { margin-left: 6mm; font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 19pt; color: #e0336f; letter-spacing: .8mm; }
 
-        .entity { position: absolute; left: 30mm; right: 30mm; top: 57mm; text-align: center; text-transform: uppercase; color: #1f2a44; line-height: 1.15; }
+        .entity { position: absolute; left: 30mm; right: 30mm; top: 56mm; text-align: center; text-transform: uppercase; color: #1f2a44; line-height: 1.15; }
         .entity .l1 { font-size: 17.5pt; font-weight: 700; letter-spacing: .1mm; }
-        .entity .l2 { font-size: 13pt; font-weight: 700; margin-top: .8mm; }
+        .entity .l2 { font-size: 11.5pt; font-weight: 700; margin-top: .5mm; }
+        .entity .l3 { font-size: 12pt; font-weight: 700; margin-top: .3mm; }
 
         /* Blue letters with a white inline and a navy outline, as on the form. */
-        .title { position: absolute; left: 0; right: 0; top: 76mm; margin: 0; text-align: center; text-transform: uppercase; font-size: 26pt; line-height: 1; letter-spacing: .45mm; color: #1d63d8; -webkit-text-stroke: .3mm #fff; paint-order: stroke fill;
+        .title { position: absolute; left: 0; right: 0; top: 78mm; margin: 0; text-align: center; text-transform: uppercase; white-space: nowrap; font-size: 22.5pt; line-height: 1; letter-spacing: .3mm; color: #1d63d8; -webkit-text-stroke: .3mm #fff; paint-order: stroke fill;
             text-shadow: .15mm 0 0 #0a2a6e, -.15mm 0 0 #0a2a6e, 0 .15mm 0 #0a2a6e, 0 -.15mm 0 #0a2a6e, .4mm .4mm 0 #0a2a6e; }
 
         .content { position: absolute; left: 19.5mm; width: 171.5mm; top: 91.5mm; }
@@ -120,14 +122,16 @@
             {{-- Bottom: navy sweep from the left, ribbon from the right and soft mist at the foot. --}}
             <path d="M0 268 C55 283 140 285 210 262 L210 297 L0 297 Z" fill="url(#mist)" opacity=".85"/>
             <path d="M0 281 C60 292 150 292 210 276 L210 297 L0 297 Z" fill="#fff" opacity=".55"/>
-            <path d="M0 244 C35 246 75 254 114 262 C74 258 34 257 0 257 Z" fill="url(#navy)"/>
-            <path d="M0 247 C35 249 70 255 104 260.5" fill="none" stroke="#fff" stroke-width=".45" opacity=".7"/>
+            {{-- Kept under the note so the signatures stay on plain white. --}}
+            <path d="M0 266 C35 268 75 274 114 282 C74 279 34 279 0 279 Z" fill="url(#navy)"/>
+            <path d="M0 269 C35 271 70 276 104 280.5" fill="none" stroke="#fff" stroke-width=".45" opacity=".7"/>
             <path d="M100 269 C145 269 182 263 210 254 L210 261 C182 270 146 273 100 269 Z" fill="url(#skyBack)"/>
         </svg>
 
         @if ($hasLogo)
             <img class="crest" src="{{ asset($logo) }}" alt="Escudo">
         @endif
+        <div class="crest-code condensed">C.T. {{ $procedure?->code }}</div>
         <div class="photo"></div>
 
         <div class="serial">
@@ -138,7 +142,8 @@
 
         <div class="entity condensed">
             <div class="l1">{{ mb_strtoupper(config('licencias.municipality')) }}</div>
-            <div class="l2">Subgerencia de Actividades Económicas Ley N° 28976</div>
+            <div class="l2">Gerencia de Desarrollo Económico</div>
+            <div class="l3">Subgerencia de Actividades Económicas Ley N° 28976</div>
         </div>
 
         <h1 class="title heavy">Licencia de funcionamiento para establecimiento</h1>
@@ -180,8 +185,9 @@
         @endif
 
         <div class="signatures">
-            <div style="left:28mm">Emisor</div>
-            <div style="left:100mm">Sub Gerencia de Actividades<br>Económicas</div>
+            <div style="left:14mm">Emisor</div>
+            <div style="left:72mm">Sub Gerencia de Actividades<br>Económicas</div>
+            <div style="left:130mm">Gerencia de Desarrollo<br>Económico</div>
         </div>
         <img class="qr" src="{{ $qr }}" alt="QR de verificación">
 
