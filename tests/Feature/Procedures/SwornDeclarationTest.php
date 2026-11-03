@@ -235,4 +235,31 @@ class SwornDeclarationTest extends TestCase
             ->put(route('procedures.reception', $procedure), ['file_number' => '1'])
             ->assertForbidden();
     }
+
+    public function test_an_existing_establishment_brings_back_its_last_declaration_to_confirm()
+    {
+        $establishment = Establishment::factory()->create();
+        $empty = Establishment::factory()->create(['taxpayer_id' => $establishment->taxpayer_id]);
+        $type = ProcedureType::factory()->create(['is_active' => true]);
+        $register = fn (array $declaration) => app(RegisterProcedure::class)->handle([
+            'procedure_type_ids' => [$type->id],
+            'taxpayer_id' => $establishment->taxpayer_id,
+            'establishment_id' => $establishment->id,
+            'declaration' => $this->declaration($declaration),
+        ]);
+
+        $register(['length' => 8]);
+        $last = $register(['length' => 12, 'construction_material' => 'adobe', 'representative_name' => 'PEREZ LUIS']);
+        $register(['length' => 99])->update(['status' => 'anulado']);
+
+        $this->actingAs($this->clerk)
+            ->getJson(route('taxpayers.establishments', $establishment->taxpayer_id))
+            ->assertOk()
+            ->assertJsonPath('0.id', $empty->id)
+            ->assertJsonPath('0.last_declaration', null)
+            ->assertJsonPath('1.last_declaration.procedure_code', $last->code)
+            ->assertJsonPath('1.last_declaration.declaration.length', 12)
+            ->assertJsonPath('1.last_declaration.declaration.construction_material', 'adobe')
+            ->assertJsonMissingPath('1.last_declaration.declaration.representative_name');
+    }
 }

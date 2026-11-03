@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DocumentType;
+use App\Enums\ProcedureStatus;
 use App\Exceptions\DocumentLookupUnavailable;
 use App\Http\Requests\StoreTaxpayerRequest;
 use App\Http\Requests\UpdateTaxpayerRequest;
@@ -76,9 +77,27 @@ class TaxpayerController extends Controller
      */
     public function establishments(Taxpayer $taxpayer): JsonResponse
     {
-        return response()->json(
-            $taxpayer->establishments()->latest('id')->get()
-        );
+        $establishments = $taxpayer->establishments()->latest('id')->get();
+
+        // The last sworn declaration of each one, to confirm instead of retyping.
+        $declarations = Procedure::query()
+            ->whereIn('establishment_id', $establishments->modelKeys())
+            ->whereNotNull('declaration')
+            ->where('status', '!=', ProcedureStatus::Cancelled)
+            ->latest('id')
+            ->get(['id', 'code', 'establishment_id', 'declaration', 'created_at'])
+            ->unique('establishment_id')
+            ->keyBy('establishment_id');
+
+        return response()->json($establishments->map(fn (Establishment $establishment) => [
+            ...$establishment->toArray(),
+            'last_declaration' => ($procedure = $declarations->get($establishment->id)) ? [
+                'procedure_code' => $procedure->code,
+                'date' => $procedure->created_at->toDateString(),
+                // The representative belongs to the applicant (step 2), not to the place.
+                'declaration' => collect($procedure->declaration)->reject(fn ($value, string $key) => str_starts_with($key, 'representative_')),
+            ] : null,
+        ]));
     }
 
     /**

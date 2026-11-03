@@ -7,8 +7,12 @@ import FormSelect from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import type { Establishment } from '@/types';
-import type { Applicant, NewEstablishment, WizardOptions } from './types';
+import type {
+    Applicant,
+    NewEstablishment,
+    PickedEstablishment,
+    WizardOptions,
+} from './types';
 import { WizardField, WizardInput } from './wizard-field';
 
 /**
@@ -30,12 +34,14 @@ export default function EstablishmentStep({
     newEstablishment: NewEstablishment | null;
     options: WizardOptions;
     errors: Record<string, string | undefined>;
-    onPick: (establishment: Establishment) => void;
+    onPick: (establishment: PickedEstablishment) => void;
     onNew: () => void;
     onChangeNew: (field: keyof NewEstablishment, value: string) => void;
 }) {
     const { areaPerPerson } = usePage().props;
-    const [establishments, setEstablishments] = useState<Establishment[]>([]);
+    const [establishments, setEstablishments] = useState<PickedEstablishment[]>(
+        [],
+    );
     const [loading, setLoading] = useState(applicant !== null);
 
     useEffect(() => {

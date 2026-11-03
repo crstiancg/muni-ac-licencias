@@ -1,5 +1,6 @@
 import type {
     DocumentTypeValue,
+    Establishment,
     EstablishmentOptions,
     TaxpayerSummary,
 } from '@/types';
@@ -64,6 +65,17 @@ export type StoredDeclaration = {
     [K in keyof Declaration]: Declaration[K] extends string
         ? string | number | null
         : Declaration[K];
+};
+
+/** An establishment's last sworn declaration, to confirm instead of retyping. */
+export type LastDeclaration = {
+    procedure_code: string;
+    date: string;
+    declaration: Partial<StoredDeclaration>;
+};
+
+export type PickedEstablishment = Establishment & {
+    last_declaration?: LastDeclaration | null;
 };
 
 export type WizardData = {
@@ -215,7 +227,7 @@ export const emptyDeclaration = (): Declaration => ({
 
 /** A stored declaration back into form values (editing a procedure). */
 export const declarationFrom = (
-    stored: StoredDeclaration | null,
+    stored: Partial<StoredDeclaration> | null,
 ): Declaration => {
     const empty = emptyDeclaration();
 

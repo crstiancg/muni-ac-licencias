@@ -1,5 +1,5 @@
 import { Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, History } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -19,12 +19,15 @@ import {
     ESTABLISHMENT_FIELDS,
     REPRESENTATIVE_FIELDS,
     TAXPAYER_FIELDS,
+    declarationFrom,
+    emptyDeclaration,
     emptyEstablishment,
     representativeOf,
 } from './types';
 import type {
     Applicant,
     Declaration,
+    LastDeclaration,
     NewEstablishment,
     NewTaxpayer,
     WizardData,
@@ -37,6 +40,22 @@ const STEPS = [
     { title: 'Solicitante', hint: 'Quién lo solicita' },
     { title: 'Establecimiento', hint: 'Dónde y declaración jurada' },
 ];
+
+const date = new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium' });
+
+const formatDate = (value: string) =>
+    date.format(new Date(`${value}T12:00:00`));
+
+/** The place's declaration with the representative typed in step 2. */
+const keepRepresentative = (
+    declaration: Declaration,
+    current: Declaration,
+): Declaration => ({
+    ...declaration,
+    ...Object.fromEntries(
+        REPRESENTATIVE_FIELDS.map((key) => [key, current[key]]),
+    ),
+});
 
 /** Step an error key belongs to, to jump there when the server rejects. */
 const stepOf = (key: string) =>
@@ -83,6 +102,8 @@ export default function ProcedureWizard({
     const form = useForm<WizardData>(action, initial);
     const [step, setStep] = useState(0);
     const [applicant, setApplicant] = useState(initialApplicant);
+    const [declarationSource, setDeclarationSource] =
+        useState<LastDeclaration | null>(null);
     const errors = form.errors as Record<string, string | undefined>;
 
     useEffect(() => {
@@ -320,24 +341,69 @@ export default function ProcedureWizard({
                             newEstablishment={form.data.establishment}
                             options={options}
                             errors={errors}
-                            onPick={(establishment) =>
+                            onPick={(establishment) => {
+                                const last =
+                                    establishment.last_declaration ?? null;
+
+                                setDeclarationSource(last);
                                 form.setData((data) => ({
                                     ...data,
                                     establishment_id: establishment.id,
                                     establishment: null,
-                                }))
-                            }
-                            onNew={() =>
+                                    // Its last declaration to confirm; data from
+                                    // another place's declaration is not kept.
+                                    declaration: last
+                                        ? keepRepresentative(
+                                              declarationFrom(last.declaration),
+                                              data.declaration,
+                                          )
+                                        : declarationSource
+                                          ? keepRepresentative(
+                                                emptyDeclaration(),
+                                                data.declaration,
+                                            )
+                                          : data.declaration,
+                                }));
+                            }}
+                            onNew={() => {
+                                setDeclarationSource(null);
                                 form.setData((data) => ({
                                     ...data,
                                     establishment_id: null,
                                     establishment:
                                         data.establishment ??
                                         emptyEstablishment(),
-                                }))
-                            }
+                                    declaration: declarationSource
+                                        ? keepRepresentative(
+                                              emptyDeclaration(),
+                                              data.declaration,
+                                          )
+                                        : data.declaration,
+                                }));
+                            }}
                             onChangeNew={setEstablishmentField}
                         />
+
+                        {declarationSource &&
+                            form.data.establishment_id !== null && (
+                                <div className="flex items-start gap-3 rounded-lg border border-sky-500/40 bg-sky-500/5 p-4 text-sm">
+                                    <History className="mt-0.5 size-5 shrink-0 text-sky-600" />
+                                    <div>
+                                        <div className="font-medium">
+                                            Datos de la última declaración
+                                            jurada: trámite{' '}
+                                            {declarationSource.procedure_code}{' '}
+                                            del{' '}
+                                            {formatDate(declarationSource.date)}
+                                        </div>
+                                        <p className="text-muted-foreground">
+                                            Confirma con el solicitante que el
+                                            local sigue tal cual. Si algo
+                                            cambió, corrígelo abajo.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                         {(form.data.establishment_id !== null ||
                             form.data.establishment !== null) && (
