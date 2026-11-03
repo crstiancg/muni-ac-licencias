@@ -67,7 +67,7 @@ export default function LicensePicker({
     }, [term, taxpayerId]);
 
     return (
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-2">
             <input type="hidden" name={name} value={selected ?? ''} />
             <div className="relative">
                 <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -79,7 +79,7 @@ export default function LicensePicker({
                     className="pl-9"
                 />
             </div>
-            <div className="max-h-60 space-y-1 overflow-y-auto">
+            <div className="max-h-60 space-y-1 overflow-y-auto pr-1">
                 {options.map((option) => (
                     <button
                         key={option.id}

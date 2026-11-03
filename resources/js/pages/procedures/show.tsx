@@ -604,7 +604,8 @@ function IssueDocumentsDialog({ procedure }: { procedure: ProcedureDetail }) {
                             ))}
 
                             {procedure.license_effects.length > 0 && (
-                                <fieldset className="space-y-2">
+                                // min-w-0: fieldsets default to min-content width.
+                                <fieldset className="min-w-0 space-y-2">
                                     <legend className="mb-1 text-sm font-semibold">
                                         Licencia afectada
                                     </legend>
