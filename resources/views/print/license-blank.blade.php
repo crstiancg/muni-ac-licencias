@@ -5,7 +5,8 @@
     $area = $license->area ? rtrim(rtrim(number_format((float) $license->area, 2, '.', ''), '0'), '.') : '';
     $logo = config('licencias.logo');
     $hasLogo = $logo && file_exists(public_path($logo));
-    $serial = $license->series ?? $license->number;
+    // The forms are "SERIE - A": drop the letter if it was typed with the number.
+    $serial = $license->series ? preg_replace('/^A[\s-]*/i', '', $license->series) : $license->number;
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -15,7 +16,7 @@
     <title>{{ $license->type->label() }} {{ $license->number }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         @page { size: A4; margin: 0; }
         * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -26,22 +27,25 @@
 
         .sheet { position: relative; width: 210mm; height: 297mm; margin: 0 auto 16px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.2); overflow: hidden; }
         .waves { position: absolute; inset: 0; width: 100%; height: 100%; }
-        .condensed { font-family: Oswald, 'Arial Narrow', 'Roboto Condensed', Impact, sans-serif; font-stretch: condensed; }
+        .heavy { font-family: Anton, Impact, 'Arial Black', sans-serif; font-weight: 400; }
+        .condensed { font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif; font-stretch: condensed; }
 
         .crest { position: absolute; left: 22mm; top: 19mm; width: 29mm; height: 37mm; object-fit: contain; }
-        .photo { position: absolute; left: 161mm; top: 23mm; width: 31mm; height: 39mm; border: .6mm solid #111; background: #fff; }
-        .serial { position: absolute; left: 88mm; top: 35mm; white-space: nowrap; }
-        .serial .label { font-weight: 700; font-size: 21pt; color: #1f2937; letter-spacing: .2mm; }
-        .serial .num { margin-left: 5mm; font-family: 'Courier New', monospace; font-size: 19pt; color: #d6336c; letter-spacing: .6mm; }
+        .photo { position: absolute; left: 161mm; top: 23mm; width: 31mm; height: 39mm; border: .7mm solid #111; background: #fff; box-shadow: .8mm .8mm 0 #1f2937; }
+        .serial { position: absolute; left: 88mm; top: 34.5mm; white-space: nowrap; }
+        .serial .label { font-size: 23pt; color: #1f2a44; letter-spacing: .3mm; }
+        .serial .num { margin-left: 6mm; font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 19pt; color: #e0336f; letter-spacing: .8mm; }
 
-        .entity { position: absolute; left: 30mm; right: 30mm; top: 56mm; text-align: center; text-transform: uppercase; color: #1f2937; line-height: 1.12; }
-        .entity .l1 { font-size: 17pt; font-weight: 500; }
-        .entity .l2, .entity .l3 { font-size: 12.5pt; font-weight: 500; }
+        .entity { position: absolute; left: 30mm; right: 30mm; top: 57mm; text-align: center; text-transform: uppercase; color: #1f2a44; line-height: 1.15; }
+        .entity .l1 { font-size: 17.5pt; font-weight: 700; letter-spacing: .1mm; }
+        .entity .l2 { font-size: 13pt; font-weight: 700; margin-top: .8mm; }
 
-        .title { position: absolute; left: 0; right: 0; top: 77mm; margin: 0; text-align: center; text-transform: uppercase; font-size: 25pt; font-weight: 700; line-height: 1; letter-spacing: .1mm; color: #2563eb; -webkit-text-stroke: .35mm #fff; paint-order: stroke fill; text-shadow: .3mm .3mm 0 #0b2a6b, -.15mm -.15mm 0 #0b2a6b, .15mm -.15mm 0 #0b2a6b, -.15mm .15mm 0 #0b2a6b; }
+        /* Blue letters with a white inline and a navy outline, as on the form. */
+        .title { position: absolute; left: 0; right: 0; top: 76mm; margin: 0; text-align: center; text-transform: uppercase; font-size: 26pt; line-height: 1; letter-spacing: .45mm; color: #1d63d8; -webkit-text-stroke: .3mm #fff; paint-order: stroke fill;
+            text-shadow: .15mm 0 0 #0a2a6e, -.15mm 0 0 #0a2a6e, 0 .15mm 0 #0a2a6e, 0 -.15mm 0 #0a2a6e, .4mm .4mm 0 #0a2a6e; }
 
         .content { position: absolute; left: 19.5mm; width: 171.5mm; top: 91.5mm; }
-        .box { border: .3mm solid #111; border-radius: 3mm; overflow: hidden; }
+        .box { border: .35mm solid #111; border-radius: 3mm; overflow: hidden; background: #fff; }
         .box .label { padding: 1mm 4mm 0; height: 6.5mm; font-family: 'Times New Roman', Times, serif; font-size: 12.5pt; border-bottom: .3mm solid #111; white-space: nowrap; }
         .box .value { padding: 2mm 4mm 2mm 18mm; min-height: 10.5mm; font-weight: 700; font-size: 10.5pt; text-transform: uppercase; border-bottom: .3mm solid #111; }
         .box .value.obs { min-height: 19mm; padding-left: 19mm; padding-right: 28mm; font-size: 8.5pt; line-height: 1.3; }
@@ -55,8 +59,8 @@
         .dates td:first-child { width: 42mm; }
 
         .warn { position: absolute; left: 20mm; top: 130mm; right: 20mm; text-align: center; font-size: 26pt; font-weight: 700; color: #b91c1c; border: 3px solid #b91c1c; transform: rotate(-8deg); opacity: .8; }
-        .signatures { position: absolute; left: 0; top: 252mm; width: 100%; font-size: 7.5pt; text-align: center; color: #1f2937; }
-        .signatures div { position: absolute; width: 39mm; border-top: .3mm solid #111; padding-top: .8mm; line-height: 1.25; }
+        .signatures { position: absolute; left: 0; top: 252mm; width: 100%; font-size: 8pt; text-align: center; color: #1f2937; }
+        .signatures div { position: absolute; width: 50mm; border-top: .3mm solid #111; padding-top: .8mm; line-height: 1.25; }
         .qr { position: absolute; left: 186mm; top: 236mm; width: 21mm; height: 21mm; }
         .note { position: absolute; left: 30mm; right: 30mm; top: 262mm; text-align: center; font-size: 7.5pt; font-weight: 700; line-height: 1.3; }
 
@@ -82,28 +86,43 @@
     </div>
 
     <div class="sheet">
-        {{-- Decorative blue swooshes of the official form, in mm (viewBox = A4). --}}
+        {{-- Blue ribbons of the official form, in mm (viewBox = A4). --}}
         <svg class="waves" viewBox="0 0 210 297" preserveAspectRatio="none" aria-hidden="true">
             <defs>
-                <linearGradient id="deep" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0" stop-color="#9cc4f2"/>
-                    <stop offset=".6" stop-color="#3b82e0"/>
-                    <stop offset="1" stop-color="#1d5fc4"/>
+                <linearGradient id="navy" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stop-color="#5b9bea"/>
+                    <stop offset=".45" stop-color="#1f63d1"/>
+                    <stop offset="1" stop-color="#0b3c9c"/>
                 </linearGradient>
-                <linearGradient id="light" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" stop-color="#cfe2fa"/>
-                    <stop offset="1" stop-color="#eaf2fd"/>
+                <linearGradient id="sky" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stop-color="#bcd8fa" stop-opacity="0"/>
+                    <stop offset=".35" stop-color="#8dbcf3"/>
+                    <stop offset="1" stop-color="#2f78e0"/>
+                </linearGradient>
+                <linearGradient id="skyBack" x1="1" y1="0" x2="0" y2="0">
+                    <stop offset="0" stop-color="#2f78e0"/>
+                    <stop offset=".5" stop-color="#7fb2f0"/>
+                    <stop offset="1" stop-color="#cfe3fb"/>
+                </linearGradient>
+                <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#9fc5f4"/>
+                    <stop offset="1" stop-color="#e3eefc"/>
                 </linearGradient>
             </defs>
-            {{-- Top --}}
-            <path d="M92 17 C125 3 170 -1 210 3 L210 30 C186 15 142 8 92 17 Z" fill="url(#deep)"/>
-            <path d="M0 70 C55 61 115 33 210 26 L210 29.5 C118 37 58 65 0 72.5 Z" fill="#a9cbf3"/>
-            <path d="M0 70 C55 61 115 33 210 26" fill="none" stroke="#2f6fd6" stroke-width=".7"/>
-            {{-- Bottom --}}
-            <path d="M0 272 C50 281 125 283 210 268 L210 297 L0 297 Z" fill="url(#light)"/>
-            <path d="M0 246 C25 249 50 258 75 268 C50 262 25 259 0 259 Z" fill="url(#deep)"/>
-            <path d="M95 275 C140 273 180 267 210 257 L210 263 C178 273 140 278 95 275 Z" fill="url(#deep)"/>
-            <path d="M0 287 C60 284 140 290 210 284 L210 297 L0 297 Z" fill="#a9cbf3" opacity=".6"/>
+
+            {{-- Top: wide ribbon into the right corner, a lighter one under it and the long sweep from the left. --}}
+            <path d="M84 19 C115 4 165 -2 210 1 L210 19 C178 8 130 7 84 19 Z" fill="url(#navy)"/>
+            <path d="M92 18.5 C130 8 172 6 210 9" fill="none" stroke="#fff" stroke-width=".5" opacity=".7"/>
+            <path d="M104 23 C140 13 180 15 210 27 L210 34 C182 21 142 17 104 23 Z" fill="url(#skyBack)"/>
+            <path d="M0 70.5 C48 63 98 45 158 28.5 C178 23.5 195 21 210 20.5 L210 25 C195 26 178 28 158 33 C98 50 48 67.5 0 73.5 Z" fill="url(#sky)"/>
+            <path d="M0 70.5 C48 63 98 45 158 28.5 C178 23.5 195 21 210 20.5" fill="none" stroke="#1f63d1" stroke-width=".55"/>
+
+            {{-- Bottom: navy sweep from the left, ribbon from the right and soft mist at the foot. --}}
+            <path d="M0 268 C55 283 140 285 210 262 L210 297 L0 297 Z" fill="url(#mist)" opacity=".85"/>
+            <path d="M0 281 C60 292 150 292 210 276 L210 297 L0 297 Z" fill="#fff" opacity=".55"/>
+            <path d="M0 244 C35 246 75 254 114 262 C74 258 34 257 0 257 Z" fill="url(#navy)"/>
+            <path d="M0 247 C35 249 70 255 104 260.5" fill="none" stroke="#fff" stroke-width=".45" opacity=".7"/>
+            <path d="M100 269 C145 269 182 263 210 254 L210 261 C182 270 146 273 100 269 Z" fill="url(#skyBack)"/>
         </svg>
 
         @if ($hasLogo)
@@ -111,19 +130,18 @@
         @endif
         <div class="photo"></div>
 
-        <div class="serial condensed">
-            <span class="label">{{ $license->series ? 'SERIE' : 'N°' }}</span>
+        <div class="serial">
+            <span class="label heavy">{{ $license->series ? 'SERIE - A' : 'N°' }}</span>
             {{-- Shrinks so a long series never runs into the photo box. --}}
             <span class="num" @if (mb_strlen($serial) > 9) style="font-size:{{ max(10, 19 - (mb_strlen($serial) - 9) * 1.6) }}pt;letter-spacing:0" @endif>{{ $serial }}</span>
         </div>
 
         <div class="entity condensed">
             <div class="l1">{{ mb_strtoupper(config('licencias.municipality')) }}</div>
-            <div class="l2">Gerencia de Turismo y Desarrollo Económico</div>
-            <div class="l3">Subgerencia de Actividades Económicas Ley N° 28976</div>
+            <div class="l2">Subgerencia de Actividades Económicas Ley N° 28976</div>
         </div>
 
-        <h1 class="title condensed">Licencia de funcionamiento para establecimiento</h1>
+        <h1 class="title heavy">Licencia de funcionamiento para establecimiento</h1>
 
         <div class="content">
             <div class="box">
@@ -162,9 +180,8 @@
         @endif
 
         <div class="signatures">
-            <div style="left:18.5mm">Emisor</div>
-            <div style="left:77mm">Sub Gerencia de Actividades<br>Económicas</div>
-            <div style="left:135mm">Gerencia de Turismo y<br>Desarrollo Económico</div>
+            <div style="left:28mm">Emisor</div>
+            <div style="left:100mm">Sub Gerencia de Actividades<br>Económicas</div>
         </div>
         <img class="qr" src="{{ $qr }}" alt="QR de verificación">
 

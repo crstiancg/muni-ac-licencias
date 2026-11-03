@@ -112,7 +112,9 @@ class LicenseLetterheadTest extends TestCase
             ->assertSeeInOrder(['208.20', 'DOSCIENTOS OCHO CON 20/100', 'SOLES'])
             ->assertSee('2026-00049928')
             ->assertSee('44025')
-            ->assertSeeInOrder(['Emisor', 'Sub Gerencia de Actividades', 'Gerencia de Turismo'])
+            ->assertSeeInOrder(['SERIE - A', '0010234'])
+            ->assertSeeInOrder(['Emisor', 'Sub Gerencia de Actividades'])
+            ->assertDontSee('Turismo')
             ->assertSee('class="qr" src="data:image/svg+xml;base64,', false);
     }
 }
