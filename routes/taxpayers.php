@@ -67,6 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($view, $manage, 
         Route::resource('licenses', LicenseController::class)->only(['index', 'show']);
     });
     Route::post('licenses/{license}/status', [LicenseController::class, 'changeStatus'])->middleware($manage)->name('licenses.status');
+    Route::put('licenses/{license}/series', [LicenseController::class, 'updateSeries'])->middleware($manage)->name('licenses.series');
     // Mesa de partes or Fiscalización: checked in the controller.
     Route::post('licenses/{license}/confirm', [LicenseController::class, 'confirm'])->name('licenses.confirm');
 

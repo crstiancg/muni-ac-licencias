@@ -78,6 +78,8 @@ export type LicenseStatusValue =
 export type LicenseSummary = {
     id: number;
     number: string;
+    /** Number printed on the pre-printed form, typed when issuing. */
+    series: string | null;
     issued_at: string;
     valid_until: string | null;
     duplicates: number;

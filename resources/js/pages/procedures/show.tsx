@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import ProcedureController from '@/actions/App/Http/Controllers/ProcedureController';
+import EditLicenseSeries from '@/components/edit-license-series';
 import FormSelect from '@/components/form-select';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -85,6 +86,7 @@ const EVENT_LABELS: Record<string, string> = {
     licencia_caducada: 'Licencia caducada',
     licencia_duplicado: 'Duplicado de licencia',
     licencia_confirmada: 'Vigencia de licencia confirmada',
+    licencia_serie: 'Serie del formato corregida',
 };
 
 const textareaClassName =
@@ -900,6 +902,13 @@ function IssuedDocumentCard({
                                     ? `hasta ${formatDate(license.valid_until)}`
                                     : 'Indeterminada'}
                             </dd>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <dt className="text-muted-foreground">Serie</dt>
+                            <dd className="tabular-nums">
+                                {license.series ?? '—'}
+                            </dd>
+                            <EditLicenseSeries license={license} />
                         </div>
                     </dl>
                 </div>

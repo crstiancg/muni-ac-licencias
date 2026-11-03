@@ -251,6 +251,31 @@ class LicenseController extends Controller
     }
 
     /**
+     * Correct the pre-printed form series typed when issuing. The system
+     * number stays: it is correlative and the QR verifies it.
+     */
+    public function updateSeries(Request $request, License $license): RedirectResponse
+    {
+        $series = $request->validate([
+            'series' => ['required', 'string', 'max:30', Rule::unique('licenses', 'series')->where('type', $license->type->value)->ignore($license->id)],
+        ], attributes: ['series' => 'serie'])['series'];
+
+        $previous = $license->series;
+
+        if ($series !== $previous) {
+            DB::transaction(function () use ($license, $series, $previous) {
+                $license->update(['series' => $series]);
+
+                $license->procedure?->log('licencia_serie', "{$license->number}: serie ".($previous ?? 'sin registrar')." → {$series}.");
+            });
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Serie de {$license->number} actualizada."]);
+
+        return back();
+    }
+
+    /**
      * @return QueryBuilder<License>
      */
     private function query(): QueryBuilder

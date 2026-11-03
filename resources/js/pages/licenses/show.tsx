@@ -11,6 +11,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import LicenseController from '@/actions/App/Http/Controllers/LicenseController';
 import FormSelect from '@/components/form-select';
+import EditLicenseSeries from '@/components/edit-license-series';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import LicenseStatusBadge from '@/components/license-status-badge';
@@ -241,9 +242,14 @@ export default function LicenseShow({ license }: Props) {
                             ? `Hasta el ${formatDate(license.valid_until)}`
                             : 'Indeterminada'}
                     </Field>
-                    {license.series && (
+                    {(license.series || license.procedure) && (
                         <Field label="Serie del formato">
-                            {license.series}
+                            <span className="inline-flex items-center gap-2">
+                                {license.series ?? '—'}
+                                {license.procedure && (
+                                    <EditLicenseSeries license={license} />
+                                )}
+                            </span>
                         </Field>
                     )}
                     {license.sign_kind && (
