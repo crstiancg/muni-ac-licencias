@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { Plus, Store } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import TaxpayerController from '@/actions/App/Http/Controllers/TaxpayerController';
@@ -33,6 +34,7 @@ export default function EstablishmentStep({
     onNew: () => void;
     onChangeNew: (field: keyof NewEstablishment, value: string) => void;
 }) {
+    const { areaPerPerson } = usePage().props;
     const [establishments, setEstablishments] = useState<Establishment[]>([]);
     const [loading, setLoading] = useState(applicant !== null);
 
@@ -195,7 +197,7 @@ export default function EstablishmentStep({
                         </div>
                         <WizardInput
                             {...field('capacity')}
-                            label="Aforo"
+                            label={`Aforo (${areaPerPerson} m²/pers.)`}
                             type="number"
                             inputMode="numeric"
                         />

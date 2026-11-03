@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $payment_order_id
  * @property int $procedure_type_id
  * @property string $description
- * @property string $uit_percentage
+ * @property string|null $uit_percentage null for a fixed fee
  * @property string $amount
  */
 #[Fillable(['procedure_type_id', 'description', 'uit_percentage', 'amount'])]

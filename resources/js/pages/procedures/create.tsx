@@ -1,6 +1,10 @@
 import { Head } from '@inertiajs/react';
 import ProcedureController from '@/actions/App/Http/Controllers/ProcedureController';
 import ProcedureWizard from '@/components/procedure-wizard';
+import {
+    emptyDeclaration,
+    representativeOf,
+} from '@/components/procedure-wizard/types';
 import type {
     Applicant,
     WizardOptions,
@@ -34,7 +38,7 @@ export default function ProcedureCreate({
 
             <ProcedureWizard
                 title="Nuevo trámite"
-                description="Paso a paso: qué solicita, quién, dónde y los datos de mesa de partes."
+                description="Paso a paso: qué solicita, quién y dónde. Al registrar se genera el código y la declaración jurada para firmar."
                 action={ProcedureController.store()}
                 initial={{
                     procedure_type_ids: [],
@@ -42,9 +46,10 @@ export default function ProcedureCreate({
                     taxpayer: null,
                     establishment_id: taxpayer ? establishmentId : null,
                     establishment: null,
-                    file_number: '',
-                    folios: '',
-                    notes: '',
+                    declaration: {
+                        ...emptyDeclaration(),
+                        ...representativeOf(taxpayer),
+                    },
                 }}
                 initialApplicant={taxpayer}
                 procedureTypes={procedureTypes}
@@ -52,7 +57,7 @@ export default function ProcedureCreate({
                 documentTypes={documentTypes}
                 options={establishmentOptions}
                 cancelHref={taxpayer ? show(taxpayer.id).url : index().url}
-                submitLabel="Registrar trámite"
+                submitLabel="Registrar y generar DJ"
             />
         </>
     );

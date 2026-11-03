@@ -1,10 +1,11 @@
-import { useFormContext } from '@inertiajs/react';
+import { useFormContext, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import AreaInput from '@/components/area-input';
 import FormSelect from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useCapacityFor } from '@/hooks/use-capacity';
 import type { Establishment, EstablishmentOptions } from '@/types';
 
 type EstablishmentFormData = Omit<
@@ -37,6 +38,20 @@ export default function EstablishmentFormFields({
 }) {
     const form = useFormContext<EstablishmentFormData>();
     const [area, setArea] = useState(establishment?.area ?? '');
+    const [capacity, setCapacity] = useState(
+        establishment?.capacity?.toString() ?? '',
+    );
+    const capacityFor = useCapacityFor();
+    const { areaPerPerson } = usePage().props;
+
+    // A new area re-suggests the capacity unless the clerk typed one.
+    function changeArea(next: string) {
+        if (capacity === '' || capacity === capacityFor(area)) {
+            setCapacity(capacityFor(next));
+        }
+
+        setArea(next);
+    }
 
     const text = (
         field: TextField,
@@ -132,19 +147,24 @@ export default function EstablishmentFormFields({
                         id="area"
                         name="area"
                         value={area}
-                        onChange={setArea}
+                        onChange={changeArea}
                         onBlur={() => form?.validate('area')}
                         error={form?.errors.area}
                     />
 
                     <div className="grid gap-2">
-                        <Label htmlFor="capacity">Aforo (personas)</Label>
+                        <Label htmlFor="capacity">
+                            Aforo ({areaPerPerson} m²/persona)
+                        </Label>
                         <Input
                             id="capacity"
                             type="number"
                             name="capacity"
                             inputMode="numeric"
-                            defaultValue={establishment?.capacity ?? ''}
+                            value={capacity}
+                            onChange={(event) =>
+                                setCapacity(event.target.value)
+                            }
                             onBlur={() => form?.validate('capacity')}
                             aria-invalid={
                                 form?.errors.capacity ? true : undefined

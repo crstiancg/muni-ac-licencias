@@ -220,9 +220,15 @@ export default function ProcedureTypeIndex({
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
-                                            {Number(
-                                                type.uit_percentage,
-                                            ).toFixed(4)}
+                                            {type.fixed_amount !== null ? (
+                                                <Badge variant="secondary">
+                                                    Fijo
+                                                </Badge>
+                                            ) : (
+                                                Number(
+                                                    type.uit_percentage,
+                                                ).toFixed(4)
+                                            )}
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
                                             {type.fee === null

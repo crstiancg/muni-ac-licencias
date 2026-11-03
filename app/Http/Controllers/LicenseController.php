@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Licenses\ConfirmLicense;
 use App\Enums\IssuedDocumentType;
 use App\Enums\LicenseStatus;
+use App\Enums\Permission;
 use App\Models\License;
 use App\Support\QrCode;
 use Illuminate\Contracts\View\View;
@@ -11,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Number;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,7 +27,8 @@ class LicenseController extends Controller
      * Licences and sign authorizations (the old "Reporte de licencias" and
      * "Reporte de letreros"), filterable and exportable to CSV.
      *
-     * Query string: ?filter[search]=&filter[type]=&filter[status]=&filter[year]=&sort=issued_at|number&page=
+     * Query string: ?filter[search]=&filter[type]=&filter[status]=&filter[year]=
+     *               &filter[confirmation]=pending&sort=issued_at|number&page=
      */
     public function index(Request $request): Response|RedirectResponse
     {
@@ -47,6 +51,7 @@ class LicenseController extends Controller
                 'type' => $request->input('filter.type'),
                 'status' => $request->input('filter.status'),
                 'year' => $request->input('filter.year'),
+                'confirmation' => $request->input('filter.confirmation'),
                 'sort' => $request->input('sort', '-issued_at'),
             ],
             'types' => IssuedDocumentType::options(),
@@ -118,16 +123,20 @@ class LicenseController extends Controller
      */
     public function show(License $license): Response
     {
-        $license->load('procedure:id,code', 'taxpayer:id,name', 'establishment:id,taxpayer_id');
+        $license->load('procedure:id,code', 'taxpayer:id,name', 'establishment:id,taxpayer_id', 'confirmedBy:id,name');
 
         return Inertia::render('licenses/show', [
             'license' => [
                 ...$this->row($license),
-                ...$license->only('valid_until', 'status_reason', 'status_changed_at', 'area', 'capacity', 'risk_level', 'sign_kind', 'sign_faces', 'sign_material', 'sign_width', 'sign_height', 'taxpayer_id', 'establishment_id', 'legacy_id'),
+                ...$license->only('valid_until', 'series', 'status_reason', 'status_changed_at', 'area', 'capacity', 'risk_level', 'sign_kind', 'sign_faces', 'sign_material', 'sign_width', 'sign_height', 'taxpayer_id', 'establishment_id', 'legacy_id'),
                 'procedure' => $license->procedure?->only('id', 'code'),
                 'duplicates' => $license->duplicates,
                 'replaced_by' => $license->replacedBy?->only('id', 'number'),
                 'verification_url' => $license->verificationUrl(),
+                'is_legacy' => $license->isLegacy(),
+                'confirmed_at' => $license->confirmed_at,
+                'confirmation_note' => $license->confirmation_note,
+                'confirmed_by' => $license->confirmedBy?->name,
                 'transitions' => array_map(fn (LicenseStatus $status) => ['value' => $status->value, 'label' => $status->label()], $license->status->transitions()),
             ],
         ]);
@@ -135,13 +144,81 @@ class LicenseController extends Controller
 
     /**
      * Printable licence / authorization with its verification QR.
+     *
+     * The operating licence goes on the municipality's pre-printed sheet, or
+     * with ?blank=1 draws the whole form itself on a plain A4 sheet.
      */
-    public function print(License $license): View
+    public function print(Request $request, License $license): View
     {
-        return view('print.license', [
+        $qr = QrCode::svg($license->verificationUrl());
+
+        if ($license->type !== IssuedDocumentType::OperatingLicense) {
+            return view('print.license', ['license' => $license, 'qr' => $qr]);
+        }
+
+        $license->load('procedure.paymentOrder');
+        $order = $license->procedure?->paymentOrder;
+
+        return view($request->boolean('blank') ? 'print.license-blank' : 'print.license-letterhead', [
             'license' => $license,
-            'qr' => QrCode::svg($license->verificationUrl()),
+            'procedure' => $license->procedure,
+            'order' => $order,
+            'amountInWords' => $order ? self::amountInWords((float) $order->total) : null,
+            'observations' => self::observations($license),
+            'qr' => $qr,
         ]);
+    }
+
+    /**
+     * The fixed warning plus duplicate and validity notes, as one paragraph.
+     */
+    private static function observations(License $license): string
+    {
+        return trim(implode(' ', array_filter([
+            config('licencias.license_observations'),
+            $license->duplicates > 0 ? 'DUPLICADO'.($license->duplicates > 1 ? " N° {$license->duplicates}" : '').'.' : null,
+            $license->valid_until ? 'VIGENCIA HASTA EL '.$license->valid_until->format('d/m/Y').'.' : null,
+        ])));
+    }
+
+    /**
+     * "DOSCIENTOS OCHO CON 20/100 SOLES", as written on receipts.
+     */
+    private static function amountInWords(float $amount): string
+    {
+        $soles = (int) floor($amount);
+        $cents = (int) round(($amount - $soles) * 100);
+
+        return mb_strtoupper(Number::spell($soles, locale: 'es')).sprintf(' CON %02d/100 SOLES', $cents);
+    }
+
+    /**
+     * Confirm an imported licence is still in force (Mesa de partes or
+     * Fiscalización), with the basis: inspection, documents shown...
+     */
+    public function confirm(Request $request, License $license, ConfirmLicense $confirm): RedirectResponse
+    {
+        abort_unless(
+            $request->user()->can(Permission::ProceduresManage->value) || $request->user()->can(Permission::Itse->value),
+            403,
+        );
+
+        $data = $request->validate(
+            ['confirmation_note' => ['required', 'string', 'min:5', 'max:255']],
+            attributes: ['confirmation_note' => 'sustento'],
+        );
+
+        if (! $license->needsConfirmation()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => "La licencia {$license->number} no requiere confirmación."]);
+
+            return back();
+        }
+
+        $confirm->handle($license, $data['confirmation_note']);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Vigencia de la licencia {$license->number} confirmada."]);
+
+        return back();
     }
 
     /**
@@ -184,6 +261,8 @@ class LicenseController extends Controller
                 AllowedFilter::exact('type'),
                 AllowedFilter::exact('status'),
                 AllowedFilter::exact('year'),
+                // Imported licences in force still to be confirmed.
+                AllowedFilter::callback('confirmation', fn ($query, $value) => $value === 'pending' ? $query->pendingConfirmation() : null),
             )
             ->allowedSorts('issued_at', 'number')
             ->defaultSort('-issued_at')
@@ -201,6 +280,7 @@ class LicenseController extends Controller
             'type_label' => $license->type->label(),
             'status' => $license->effectiveStatus()->value,
             'status_label' => $license->effectiveStatus()->label(),
+            'needs_confirmation' => $license->needsConfirmation(),
         ];
     }
 }

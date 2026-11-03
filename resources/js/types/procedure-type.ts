@@ -12,6 +12,8 @@ export type ProcedureType = {
     name: string;
     description: string | null;
     uit_percentage: string;
+    /** Fixed fee in soles; null when the fee follows the UIT of the year. */
+    fixed_amount: string | null;
     risk_level: RiskLevelValue | null;
     document_type: 'licencia' | 'anuncio' | null;
     validity_months: number | null;

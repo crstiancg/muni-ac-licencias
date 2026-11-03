@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
  * @property int $taxpayer_id
  * @property int $establishment_id
  * @property int|null $related_license_id
+ * @property array<string, mixed>|null $declaration
  * @property ProcedureStatus $status
  * @property string|null $file_number
  * @property int|null $folios
@@ -38,7 +39,7 @@ use Illuminate\Support\Facades\Auth;
  * @property Carbon|null $updated_at
  */
 #[Fillable([
-    'year', 'sequence', 'code', 'taxpayer_id', 'establishment_id', 'related_license_id', 'status',
+    'year', 'sequence', 'code', 'taxpayer_id', 'establishment_id', 'related_license_id', 'declaration', 'status',
     'file_number', 'folios', 'notes', 'cancelled_at', 'cancellation_reason',
     'registered_by', 'legacy_id',
 ])]
@@ -53,6 +54,7 @@ class Procedure extends Model
     {
         return [
             'status' => ProcedureStatus::class,
+            'declaration' => 'array',
             'year' => 'integer',
             'sequence' => 'integer',
             'folios' => 'integer',

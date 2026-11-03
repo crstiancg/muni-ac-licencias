@@ -30,8 +30,9 @@ return new class extends Migration
             $table->foreignId('procedure_type_id')->nullable()->change();
         });
 
-        // Existing orders belong to procedures: snapshot their payer.
-        DB::table('payment_orders')
+        // Existing orders belong to procedures: snapshot their payer. Skipped on
+        // an empty table (fresh/test SQLite databases can't UPDATE ... JOIN).
+        DB::table('payment_orders')->exists() && DB::table('payment_orders')
             ->join('procedures', 'procedures.id', '=', 'payment_orders.procedure_id')
             ->join('taxpayers', 'taxpayers.id', '=', 'procedures.taxpayer_id')
             ->update([

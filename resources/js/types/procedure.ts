@@ -1,9 +1,14 @@
+import type { StoredDeclaration } from '@/components/procedure-wizard/types';
 import type { Establishment, TaxpayerSummary } from './establishment';
 import type { RiskLevelValue } from './procedure-type';
 import type { Taxpayer } from './taxpayer';
 
 export type ProcedureStatusValue =
-    'registrado' | 'liquidado' | 'pagado' | 'emitido' | 'anulado';
+    | 'registrado'
+    | 'liquidado'
+    | 'pagado'
+    | 'emitido'
+    | 'anulado';
 
 export type ProcedureTypeOption = {
     id: number;
@@ -30,6 +35,7 @@ export type Procedure = {
     taxpayer_id: number;
     establishment_id: number;
     status: ProcedureStatusValue;
+    declaration: StoredDeclaration | null;
     file_number: string | null;
     folios: number | null;
     notes: string | null;
@@ -73,9 +79,18 @@ export type LicenseSummary = {
     id: number;
     number: string;
     issued_at: string;
+    valid_until: string | null;
+    duplicates: number;
+    holder_name: string;
+    trade_name: string | null;
+    activity: string;
     type_label: string;
     status: LicenseStatusValue;
     status_label: string;
+    /** Public page the printed QR opens. */
+    verification_url: string;
+    /** QR as an SVG data URI. */
+    qr: string;
 };
 
 export type ProcedureDetail = Omit<Procedure, 'types' | 'taxpayer'> & {
@@ -85,6 +100,7 @@ export type ProcedureDetail = Omit<Procedure, 'types' | 'taxpayer'> & {
     payment_order: PaymentOrder | null;
     licenses: LicenseSummary[];
     documents_to_issue: string[];
+    document_types_to_issue: { value: string; label: string }[];
     needs_sign_data: boolean;
     license_effects: string[];
     related_license: {

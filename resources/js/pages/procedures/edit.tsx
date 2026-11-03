@@ -1,6 +1,10 @@
 import { Head } from '@inertiajs/react';
 import ProcedureController from '@/actions/App/Http/Controllers/ProcedureController';
 import ProcedureWizard from '@/components/procedure-wizard';
+import {
+    declarationFrom,
+    representativeOf,
+} from '@/components/procedure-wizard/types';
 import type {
     Applicant,
     WizardOptions,
@@ -47,12 +51,16 @@ export default function ProcedureEdit({
                     taxpayer: null,
                     establishment_id: procedure.establishment_id,
                     establishment: null,
-                    file_number: procedure.file_number ?? '',
-                    folios: procedure.folios?.toString() ?? '',
-                    notes: procedure.notes ?? '',
+                    declaration: {
+                        ...declarationFrom(procedure.declaration),
+                        // DJs registered before the representative was declared.
+                        ...(procedure.declaration &&
+                        'representative_name' in procedure.declaration
+                            ? {}
+                            : representativeOf(procedure.taxpayer)),
+                    },
                 }}
                 initialApplicant={procedure.taxpayer}
-                initialEstablishmentLabel={`${procedure.establishment.activity} · ${procedure.establishment.full_address}`}
                 procedureTypes={procedureTypes}
                 currentUit={currentUit}
                 documentTypes={documentTypes}

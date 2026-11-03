@@ -72,6 +72,7 @@ class ProcedureTypeController extends Controller
     {
         $data = $request->validated();
         $data['position'] ??= (int) ProcedureType::query()->max('position') + 1;
+        $data['uit_percentage'] ??= 0;
 
         $type = ProcedureType::create($data);
 
@@ -87,6 +88,7 @@ class ProcedureTypeController extends Controller
     {
         $data = $request->validated();
         $data['position'] ??= $procedureType->position;
+        $data['uit_percentage'] ??= $procedureType->uit_percentage;
 
         $procedureType->update($data);
 

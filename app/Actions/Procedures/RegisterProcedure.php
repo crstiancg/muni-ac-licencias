@@ -4,13 +4,15 @@ namespace App\Actions\Procedures;
 
 use App\Enums\ProcedureStatus;
 use App\Models\Procedure;
+use App\Support\SwornDeclaration;
 use App\Support\YearlySequence;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Registers a procedure with the next code of the year (2026-00001),
- * creating the taxpayer and establishment in the same transaction when new.
+ * creating the taxpayer and establishment in the same transaction when new,
+ * and keeps the applicant's sworn declaration to print it.
  */
 class RegisterProcedure
 {
@@ -30,9 +32,7 @@ class RegisterProcedure
                 'sequence' => $sequence,
                 'code' => sprintf('%d-%05d', $year, $sequence),
                 'status' => ProcedureStatus::Registered,
-                'file_number' => $data['file_number'] ?? null,
-                'folios' => $data['folios'] ?? null,
-                'notes' => $data['notes'] ?? null,
+                'declaration' => SwornDeclaration::normalize($data['declaration']),
                 'registered_by' => Auth::id(),
             ]);
 

@@ -6,6 +6,7 @@ import InputError from '@/components/input-error';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
     Select,
     SelectContent,
@@ -21,6 +22,7 @@ type ProcedureTypeFormData = Pick<
     | 'name'
     | 'description'
     | 'uit_percentage'
+    | 'fixed_amount'
     | 'risk_level'
     | 'document_type'
     | 'validity_months'
@@ -64,6 +66,10 @@ export default function ProcedureTypeFormFields({
     const [isActive, setIsActive] = useState(procedureType?.is_active ?? true);
     const [percentage, setPercentage] = useState(
         procedureType?.uit_percentage ?? '',
+    );
+    // Some TUPA fees are a fixed amount; the rest follow the UIT of the year.
+    const [feeMode, setFeeMode] = useState<'uit' | 'fijo'>(
+        procedureType?.fixed_amount != null ? 'fijo' : 'uit',
     );
 
     const selectedRisk = riskLevels.find((level) => level.value === riskLevel);
@@ -118,30 +124,86 @@ export default function ProcedureTypeFormFields({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-                <div className="grid gap-2">
-                    <Label htmlFor="uit_percentage">% de la UIT</Label>
-                    <Input
-                        id="uit_percentage"
-                        type="number"
-                        name="uit_percentage"
-                        inputMode="decimal"
-                        step="0.0001"
-                        value={percentage}
-                        onChange={(event) => setPercentage(event.target.value)}
-                        onBlur={() => form?.validate('uit_percentage')}
-                        aria-invalid={
-                            form?.errors.uit_percentage ? true : undefined
+                <div className="grid content-start gap-2">
+                    <Label htmlFor="fee_mode">Derecho de trámite</Label>
+                    <ToggleGroup
+                        id="fee_mode"
+                        type="single"
+                        variant="outline"
+                        value={feeMode}
+                        onValueChange={(value) =>
+                            value && setFeeMode(value as 'uit' | 'fijo')
                         }
-                        placeholder="4.5196"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                        {uitAmount === null
-                            ? 'Registra la UIT del año para ver el monto.'
-                            : fee === null
-                              ? `UIT vigente: S/ ${uitAmount}`
-                              : `Monto: S/ ${fee.toFixed(2)} (UIT S/ ${uitAmount})`}
-                    </p>
-                    <InputError message={form?.errors.uit_percentage} />
+                        className="justify-start"
+                    >
+                        <ToggleGroupItem value="uit" className="px-3">
+                            % de la UIT
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="fijo" className="px-3">
+                            Monto fijo
+                        </ToggleGroupItem>
+                    </ToggleGroup>
+
+                    {feeMode === 'uit' ? (
+                        <>
+                            {/* Clears a previous fixed amount on update. */}
+                            <input type="hidden" name="fixed_amount" value="" />
+                            <Input
+                                id="uit_percentage"
+                                type="number"
+                                name="uit_percentage"
+                                inputMode="decimal"
+                                step="0.0001"
+                                value={percentage}
+                                onChange={(event) =>
+                                    setPercentage(event.target.value)
+                                }
+                                onBlur={() => form?.validate('uit_percentage')}
+                                aria-invalid={
+                                    form?.errors.uit_percentage
+                                        ? true
+                                        : undefined
+                                }
+                                aria-label="% de la UIT"
+                                placeholder="4.5196"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                {uitAmount === null
+                                    ? 'Registra la UIT del año para ver el monto.'
+                                    : fee === null
+                                      ? `UIT vigente: S/ ${uitAmount}`
+                                      : `Monto: S/ ${fee.toFixed(2)} (UIT S/ ${uitAmount}). Cambia cada año con la UIT.`}
+                            </p>
+                            <InputError message={form?.errors.uit_percentage} />
+                        </>
+                    ) : (
+                        <>
+                            <Input
+                                id="fixed_amount"
+                                type="number"
+                                name="fixed_amount"
+                                inputMode="decimal"
+                                step="0.01"
+                                min="0"
+                                defaultValue={procedureType?.fixed_amount ?? ''}
+                                onBlur={() => form?.validate('fixed_amount')}
+                                aria-invalid={
+                                    form?.errors.fixed_amount ? true : undefined
+                                }
+                                aria-label="Monto fijo en soles"
+                                placeholder="208.20"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Monto en soles. No cambia con la UIT.
+                            </p>
+                            <InputError
+                                message={
+                                    form?.errors.fixed_amount ??
+                                    form?.errors.uit_percentage
+                                }
+                            />
+                        </>
+                    )}
                 </div>
 
                 <div className="grid gap-2">

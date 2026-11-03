@@ -22,10 +22,13 @@ use App\Models\Procedure;
 use App\Models\ProcedureType;
 use App\Models\Taxpayer;
 use App\Models\Uit;
+use App\Support\QrCode;
+use App\Support\SwornDeclaration;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -83,7 +86,7 @@ class ProcedureController extends Controller
     {
         return Inertia::render('procedures/create', [
             'taxpayer' => $request->integer('taxpayer')
-                ? Taxpayer::query()->find($request->integer('taxpayer'), ['id', 'document_type', 'document_number', 'ruc', 'name', 'address', 'phone'])
+                ? Taxpayer::query()->find($request->integer('taxpayer'), ['id', 'document_type', 'document_number', 'ruc', 'name', 'address', 'phone', ...SwornDeclaration::REPRESENTATIVE])
                 : null,
             // "Copiar datos de licencia": same owner and establishment.
             'establishmentId' => $request->integer('establishment') ?: null,
@@ -92,15 +95,59 @@ class ProcedureController extends Controller
     }
 
     /**
-     * Register the procedure and open its file.
+     * Register the procedure, open its file and print its sworn declaration
+     * for the applicant to sign and file at mesa de partes.
      */
     public function store(ProcedureRequest $request, RegisterProcedure $register): RedirectResponse
     {
         $procedure = $register->handle($request->validated());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Trámite {$procedure->code} registrado."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Trámite {$procedure->code} registrado: imprime la declaración jurada."]);
+        Inertia::flash('open', route('procedures.declaration.print', $procedure));
 
         return to_route('procedures.show', $procedure);
+    }
+
+    /**
+     * Printable sworn declaration (DJ) with the procedure code and the fee.
+     */
+    public function printDeclaration(Procedure $procedure): View
+    {
+        $procedure->load('taxpayer', 'establishment', 'types', 'paymentOrder');
+        $uit = Uit::query()->firstWhere('year', $procedure->year);
+
+        return view('print.declaration', [
+            'procedure' => $procedure,
+            'declaration' => $procedure->declaration ?? [],
+            'fee' => $uit ? $procedure->types->sum(fn (ProcedureType $type) => (float) $type->feeFor($uit)) : null,
+        ]);
+    }
+
+    /**
+     * Mesa de partes receives the signed DJ: file number, folios and notes.
+     */
+    public function reception(Request $request, Procedure $procedure): RedirectResponse
+    {
+        $data = $request->validate([
+            'file_number' => ['required', 'string', 'max:50'],
+            'folios' => ['nullable', 'integer', 'min:1', 'max:9999'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ], attributes: ['file_number' => 'N° de expediente', 'folios' => 'folios', 'notes' => 'observaciones']);
+
+        if ($procedure->status === ProcedureStatus::Cancelled) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => "El trámite {$procedure->code} está anulado."]);
+
+            return back();
+        }
+
+        DB::transaction(function () use ($procedure, $data) {
+            $procedure->update($data);
+            $procedure->log('recepcionado', "Expediente {$data['file_number']}");
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Expediente {$data['file_number']} registrado."]);
+
+        return back();
     }
 
     /**
@@ -134,12 +181,15 @@ class ProcedureController extends Controller
                     'status_label' => $procedure->paymentOrder->status->label(),
                 ] : null,
                 'licenses' => $procedure->licenses->map(fn (License $license) => [
-                    ...$license->only('id', 'number', 'issued_at'),
+                    ...$license->only('id', 'number', 'issued_at', 'valid_until', 'duplicates', 'holder_name', 'trade_name', 'activity'),
                     'type_label' => $license->type->label(),
                     'status' => $license->status->value,
                     'status_label' => $license->status->label(),
+                    'verification_url' => $license->verificationUrl(),
+                    'qr' => QrCode::svg($license->verificationUrl()),
                 ]),
                 'documents_to_issue' => $documentTypes->map(fn (IssuedDocumentType $type) => $type->label()),
+                'document_types_to_issue' => $documentTypes->map(fn (IssuedDocumentType $type) => ['value' => $type->value, 'label' => $type->label()]),
                 'needs_sign_data' => $documentTypes->contains(IssuedDocumentType::SignAuthorization),
                 'license_effects' => (new IssueDocuments)->licenseEffects($procedure)->map(fn (LicenseEffect $effect) => $effect->label()),
                 'related_license' => $procedure->relatedLicense ? [
@@ -192,7 +242,16 @@ class ProcedureController extends Controller
      */
     public function issueDocuments(Request $request, Procedure $procedure, IssueDocuments $issue): RedirectResponse
     {
-        $needsSign = $issue->documentTypes($procedure->load('types'))->contains(IssuedDocumentType::SignAuthorization);
+        $documentTypes = $issue->documentTypes($procedure->load('types'));
+        $needsSign = $documentTypes->contains(IssuedDocumentType::SignAuthorization);
+
+        // Every document is printed on a pre-printed form: its series is mandatory and unique per type.
+        $series = $request->validate(
+            $documentTypes->mapWithKeys(fn (IssuedDocumentType $type) => ["series.{$type->value}" => [
+                'required', 'string', 'max:30', Rule::unique('licenses', 'series')->where('type', $type->value),
+            ]])->all(),
+            attributes: $documentTypes->mapWithKeys(fn (IssuedDocumentType $type) => ["series.{$type->value}" => "serie de {$type->label()}"])->all(),
+        )['series'] ?? [];
 
         $sign = $needsSign ? $request->validate([
             'sign_kind' => ['required', 'in:simple,luminoso,iluminado'],
@@ -219,7 +278,7 @@ class ProcedureController extends Controller
             attributes: ['related_license_id' => 'licencia'],
         )['related_license_id'] ?? null;
 
-        $licenses = $issue->handle($procedure, $sign, $validUntil, $relatedId ? License::find($relatedId) : null);
+        $licenses = $issue->handle($procedure, $sign, $validUntil, $relatedId ? License::find($relatedId) : null, $series);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => $licenses->isEmpty()
             ? "Trámite {$procedure->code} atendido."
@@ -251,7 +310,7 @@ class ProcedureController extends Controller
 
         return Inertia::render('procedures/edit', [
             'procedure' => $procedure->load([
-                'taxpayer:id,document_type,document_number,ruc,name,address,phone',
+                'taxpayer:id,document_type,document_number,ruc,name,address,phone,'.implode(',', SwornDeclaration::REPRESENTATIVE),
                 'establishment',
                 'types:id',
             ]),
@@ -273,9 +332,7 @@ class ProcedureController extends Controller
 
             $procedure->update([
                 ...$parties->handle($data),
-                'file_number' => $data['file_number'] ?? null,
-                'folios' => $data['folios'] ?? null,
-                'notes' => $data['notes'] ?? null,
+                'declaration' => SwornDeclaration::normalize($data['declaration']),
             ]);
             $procedure->types()->sync($data['procedure_type_ids']);
             $procedure->log('actualizado');
@@ -339,7 +396,7 @@ class ProcedureController extends Controller
             'procedureTypes' => ProcedureType::query()
                 ->where('is_active', true)
                 ->orderBy('position')
-                ->get(['id', 'tupa_code', 'name', 'uit_percentage', 'risk_level'])
+                ->get(['id', 'tupa_code', 'name', 'uit_percentage', 'fixed_amount', 'risk_level'])
                 ->map(fn (ProcedureType $type) => [
                     ...$type->toArray(),
                     'fee' => $currentUit ? $type->feeFor($currentUit) : null,

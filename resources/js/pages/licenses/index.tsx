@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Download } from 'lucide-react';
 import LicenseController from '@/actions/App/Http/Controllers/LicenseController';
 import FormSelect from '@/components/form-select';
+import { Badge } from '@/components/ui/badge';
 import type { SelectOption } from '@/components/form-select';
 import Heading from '@/components/heading';
 import LicenseStatusBadge from '@/components/license-status-badge';
@@ -30,6 +31,8 @@ type LicenseRow = {
     type_label: string;
     status: LicenseStatusValue;
     status_label: string;
+    /** Imported from the old system and not yet confirmed in force. */
+    needs_confirmation: boolean;
 };
 
 type Filters = {
@@ -37,12 +40,17 @@ type Filters = {
     type: string | null;
     status: string | null;
     year: string | null;
+    confirmation: string | null;
     sort: string;
 };
 
-function params({ search, type, status, year, sort }: Filters) {
+const CONFIRMATION_OPTIONS = [
+    { value: 'pending', label: 'Por confirmar (sistema anterior)' },
+];
+
+function params({ search, type, status, year, confirmation, sort }: Filters) {
     const filter = Object.fromEntries(
-        Object.entries({ search, type, status, year }).filter(
+        Object.entries({ search, type, status, year, confirmation }).filter(
             ([, value]) => value,
         ),
     );
@@ -133,6 +141,21 @@ export default function LicenseIndex({
                             emptyLabel="Todos los estados"
                             onValueChange={(status) =>
                                 visit({ ...filters, status: status || null })
+                            }
+                        />
+                    </div>
+                    <div className="w-64">
+                        <FormSelect
+                            id="confirmation"
+                            name="confirmation"
+                            options={CONFIRMATION_OPTIONS}
+                            defaultValue={filters.confirmation}
+                            emptyLabel="Confirmadas y sin confirmar"
+                            onValueChange={(confirmation) =>
+                                visit({
+                                    ...filters,
+                                    confirmation: confirmation || null,
+                                })
                             }
                         />
                     </div>
@@ -238,10 +261,21 @@ export default function LicenseIndex({
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <LicenseStatusBadge
-                                                status={license.status}
-                                                label={license.status_label}
-                                            />
+                                            <div className="flex flex-wrap gap-1">
+                                                <LicenseStatusBadge
+                                                    status={license.status}
+                                                    label={license.status_label}
+                                                />
+                                                {license.needs_confirmation && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="border-amber-500/40 text-amber-700 dark:text-amber-300"
+                                                        title="Del sistema anterior: confirmar si sigue funcionando"
+                                                    >
+                                                        Sin confirmar
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                                             {date.format(

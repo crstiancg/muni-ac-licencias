@@ -2,6 +2,7 @@
 
 namespace App\Actions\Procedures;
 
+use App\Actions\Licenses\ConfirmLicense;
 use App\Enums\IssuedDocumentType;
 use App\Enums\LicenseEffect;
 use App\Enums\LicenseStatus;
@@ -27,9 +28,10 @@ class IssueDocuments
      * @param  array{sign_kind?: ?string, sign_faces?: ?int, sign_material?: ?string, sign_width?: ?string, sign_height?: ?string}  $sign
      * @param  string|null  $validUntil  temporary licence requested by the applicant (Ley 28976 art. 11)
      * @param  License|null  $related  existing licence the procedure replaces, closes or duplicates
+     * @param  array<string, string>  $series  pre-printed form series, keyed by document type
      * @return Collection<int, License>
      */
-    public function handle(Procedure $procedure, array $sign = [], ?string $validUntil = null, ?License $related = null): Collection
+    public function handle(Procedure $procedure, array $sign = [], ?string $validUntil = null, ?License $related = null, array $series = []): Collection
     {
         if ($procedure->status !== ProcedureStatus::Paid) {
             throw ValidationException::withMessages(['documents' => 'Solo se emiten documentos de un trámite pagado.']);
@@ -44,8 +46,8 @@ class IssueDocuments
 
         $this->ensurePriorItse($procedure);
 
-        return DB::transaction(function () use ($procedure, $sign, $validUntil, $related, $effects) {
-            $licenses = $this->documentTypes($procedure)->map(function (IssuedDocumentType $type) use ($procedure, $sign, $validUntil) {
+        return DB::transaction(function () use ($procedure, $sign, $validUntil, $related, $effects, $series) {
+            $licenses = $this->documentTypes($procedure)->map(function (IssuedDocumentType $type) use ($procedure, $sign, $validUntil, $series) {
                 ['year' => $year, 'sequence' => $sequence] = YearlySequence::next(
                     License::class,
                     fn ($query) => $query->where('type', $type),
@@ -59,6 +61,7 @@ class IssueDocuments
                     'year' => $year,
                     'sequence' => $sequence,
                     'number' => sprintf('%s-%d-%05d', $type->prefix(), $year, $sequence),
+                    'series' => $series[$type->value] ?? null,
                     'procedure_id' => $procedure->id,
                     'taxpayer_id' => $taxpayer->id,
                     'establishment_id' => $establishment->id,
@@ -143,6 +146,9 @@ class IssueDocuments
      */
     private function apply(LicenseEffect $effect, License $related, Procedure $procedure, Collection $issued): void
     {
+        // The holder came to the municipality about it: it was still in force.
+        (new ConfirmLicense)->handle($related, "Trámite {$procedure->code}: {$effect->label()}.");
+
         $newNumbers = $issued->pluck('number')->join(', ');
 
         if ($effect === LicenseEffect::Duplicate) {

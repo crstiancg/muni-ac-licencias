@@ -47,6 +47,8 @@ Route::middleware(['auth', 'verified'])->group(function () use ($view, $manage, 
 
     Route::controller(ProcedureController::class)->prefix('procedures/{procedure}')->name('procedures.')->group(function () use ($view, $manage, $collect) {
         Route::post('cancel', 'cancel')->middleware($manage)->name('cancel');
+        Route::get('declaration/print', 'printDeclaration')->middleware($view)->name('declaration.print');
+        Route::put('reception', 'reception')->middleware($manage)->name('reception');
         Route::post('payment-order', 'issuePaymentOrder')->middleware($manage)->name('payment-order.store');
         Route::get('payment-order/print', 'printPaymentOrder')->middleware($view)->name('payment-order.print');
         Route::post('payment', 'registerPayment')->middleware($collect)->name('payment.store');
@@ -65,6 +67,8 @@ Route::middleware(['auth', 'verified'])->group(function () use ($view, $manage, 
         Route::resource('licenses', LicenseController::class)->only(['index', 'show']);
     });
     Route::post('licenses/{license}/status', [LicenseController::class, 'changeStatus'])->middleware($manage)->name('licenses.status');
+    // Mesa de partes or Fiscalización: checked in the controller.
+    Route::post('licenses/{license}/confirm', [LicenseController::class, 'confirm'])->name('licenses.confirm');
 
     Route::middleware($collect)->group(function () {
         Route::post('payment-orders/{paymentOrder}/payment', [PaymentOrderController::class, 'registerPayment'])->name('payment-orders.payment');

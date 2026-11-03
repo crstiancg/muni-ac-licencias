@@ -39,7 +39,7 @@ class IssuePaymentOrder
             $items = $procedure->types->map(fn (ProcedureType $type) => [
                 'procedure_type_id' => $type->id,
                 'description' => $type->name,
-                'uit_percentage' => $type->uit_percentage,
+                'uit_percentage' => $type->isFixed() ? null : $type->uit_percentage,
                 'amount' => $type->feeFor($uit),
             ]);
 

@@ -50,6 +50,8 @@ class HandleInertiaRequests extends Middleware
                     : [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // m² per person to suggest an establishment's capacity (aforo).
+            'areaPerPerson' => (float) config('licencias.area_per_person'),
         ];
     }
 }

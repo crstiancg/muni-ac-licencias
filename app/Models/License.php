@@ -52,12 +52,15 @@ use Illuminate\Support\Str;
  * @property-read Procedure|null $procedure
  * @property-read Taxpayer $taxpayer
  * @property-read Establishment $establishment
+ * @property Carbon|null $confirmed_at
+ * @property int|null $confirmed_by
+ * @property string|null $confirmation_note
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 #[Fillable([
-    'type', 'year', 'sequence', 'number', 'procedure_id', 'taxpayer_id', 'establishment_id',
-    'issued_at', 'valid_until', 'status', 'status_reason', 'status_changed_at', 'duplicates', 'replaced_by_id', 'qr_token',
+    'type', 'year', 'sequence', 'number', 'series', 'procedure_id', 'taxpayer_id', 'establishment_id',
+    'issued_at', 'valid_until', 'status', 'status_reason', 'status_changed_at', 'confirmed_at', 'confirmed_by', 'confirmation_note', 'duplicates', 'replaced_by_id', 'qr_token',
     'holder_name', 'holder_document', 'trade_name', 'activity', 'address', 'area', 'capacity', 'risk_level',
     'sign_kind', 'sign_faces', 'sign_material', 'sign_width', 'sign_height',
     'issued_by', 'legacy_id',
@@ -81,6 +84,7 @@ class License extends Model
             'issued_at' => 'date',
             'valid_until' => 'date',
             'status_changed_at' => 'datetime',
+            'confirmed_at' => 'datetime',
             'area' => 'decimal:2',
             'sign_width' => 'decimal:2',
             'sign_height' => 'decimal:2',
@@ -120,6 +124,25 @@ class License extends Model
     }
 
     /**
+     * Imported from dblicencias: no yearly sequence of this system.
+     */
+    public function isLegacy(): bool
+    {
+        return $this->sequence === null;
+    }
+
+    /**
+     * An imported licence that says "vigente" only because nobody recorded
+     * its closure, until the municipality confirms it is still in force.
+     */
+    public function needsConfirmation(): bool
+    {
+        return $this->isLegacy()
+            && $this->confirmed_at === null
+            && $this->effectiveStatus() === LicenseStatus::Active;
+    }
+
+    /**
      * Public URL the QR points to.
      */
     public function verificationUrl(): string
@@ -144,6 +167,14 @@ class License extends Model
     }
 
     /**
+     * @return BelongsTo<User, $this>
+     */
+    public function confirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
+    /**
      * @return BelongsTo<Taxpayer, $this>
      */
     public function taxpayer(): BelongsTo
@@ -164,6 +195,20 @@ class License extends Model
      *
      * @param  Builder<self>  $query
      */
+    /**
+     * Imported licences in force not yet confirmed (fiscalización's worklist).
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function pendingConfirmation(Builder $query): void
+    {
+        $query->whereNull('sequence')
+            ->whereNull('confirmed_at')
+            ->where('status', LicenseStatus::Active)
+            ->where(fn (Builder $query) => $query->whereNull('valid_until')->orWhereDate('valid_until', '>=', today()));
+    }
+
     #[Scope]
     protected function search(Builder $query, ?string $term): void
     {

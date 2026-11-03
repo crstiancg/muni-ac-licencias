@@ -1,5 +1,13 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { Copy, ExternalLink, Printer, RefreshCw } from 'lucide-react';
+import {
+    BadgeCheck,
+    CircleAlert,
+    Copy,
+    ExternalLink,
+    Printer,
+    RefreshCw,
+} from 'lucide-react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import LicenseController from '@/actions/App/Http/Controllers/LicenseController';
 import FormSelect from '@/components/form-select';
@@ -36,6 +44,7 @@ type LicenseDetail = {
     number: string;
     issued_at: string;
     valid_until: string | null;
+    series: string | null;
     holder_name: string;
     holder_document: string;
     trade_name: string | null;
@@ -62,6 +71,11 @@ type LicenseDetail = {
     duplicates: number;
     replaced_by: { id: number; number: string } | null;
     verification_url: string;
+    is_legacy: boolean;
+    needs_confirmation: boolean;
+    confirmed_at: string | null;
+    confirmation_note: string | null;
+    confirmed_by: string | null;
     transitions: { value: LicenseStatusValue; label: string }[];
 };
 
@@ -93,9 +107,26 @@ export default function LicenseShow({ license }: Props) {
                                 rel="noreferrer"
                             >
                                 <Printer />
-                                Imprimir
+                                {license.type === 'licencia'
+                                    ? 'Imprimir en hoja membretada'
+                                    : 'Imprimir'}
                             </a>
                         </Button>
+                        {license.type === 'licencia' && (
+                            <Button variant="outline" asChild>
+                                <a
+                                    href={LicenseController.print.url(
+                                        license.id,
+                                        { query: { blank: 1 } },
+                                    )}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    <Printer />
+                                    Imprimir en hoja blanca
+                                </a>
+                            </Button>
+                        )}
                         <Button variant="outline" asChild>
                             <a
                                 href={license.verification_url}
@@ -124,6 +155,45 @@ export default function LicenseShow({ license }: Props) {
                         )}
                     </div>
                 </div>
+
+                {license.needs_confirmation && (
+                    <div className="flex flex-wrap items-start gap-4 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+                        <CircleAlert className="mt-0.5 size-5 shrink-0 text-amber-600" />
+                        <div className="min-w-0 flex-1 space-y-1">
+                            <div className="font-medium">
+                                Vigencia sin confirmar
+                            </div>
+                            <p className="text-muted-foreground">
+                                Licencia del sistema anterior, donde casi nunca
+                                se registraban los cierres. Su QR advierte que
+                                puede no estar actualizada hasta que la
+                                municipalidad confirme si el local sigue
+                                funcionando. Si cerró, usa{' '}
+                                <strong>Cambiar estado</strong>.
+                            </p>
+                        </div>
+                        <ConfirmLicense license={license} />
+                    </div>
+                )}
+
+                {license.confirmed_at && (
+                    <div className="flex items-start gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-4 text-sm">
+                        <BadgeCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" />
+                        <div>
+                            <div className="font-medium">
+                                Vigencia confirmada el{' '}
+                                {formatDate(license.confirmed_at)}
+                                {license.confirmed_by &&
+                                    ` por ${license.confirmed_by}`}
+                            </div>
+                            {license.confirmation_note && (
+                                <div className="text-muted-foreground">
+                                    {license.confirmation_note}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {license.status !== 'vigente' && license.status_reason && (
                     <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
@@ -171,6 +241,11 @@ export default function LicenseShow({ license }: Props) {
                             ? `Hasta el ${formatDate(license.valid_until)}`
                             : 'Indeterminada'}
                     </Field>
+                    {license.series && (
+                        <Field label="Serie del formato">
+                            {license.series}
+                        </Field>
+                    )}
                     {license.sign_kind && (
                         <Field label="Anuncio">
                             {`${license.sign_kind}, ${license.sign_faces} cara(s), ${license.sign_width} × ${license.sign_height} m${license.sign_material ? ` · ${license.sign_material}` : ''}`}
@@ -212,6 +287,78 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
             <div className="text-xs text-muted-foreground">{label}</div>
             <div className="text-sm">{children || '—'}</div>
         </div>
+    );
+}
+
+/**
+ * Confirms an imported licence is still in force, with its basis.
+ */
+function ConfirmLicense({ license }: { license: LicenseDetail }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button size="sm">
+                    <BadgeCheck />
+                    Confirmar vigencia
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>
+                    Confirmar vigencia de {license.number}
+                </DialogTitle>
+                <DialogDescription>
+                    Confirma que el establecimiento sigue funcionando. Desde
+                    ahora su QR mostrará la licencia como vigente sin
+                    advertencias.
+                </DialogDescription>
+                <Form
+                    noValidate
+                    {...LicenseController.confirm.form(license.id)}
+                    options={{ preserveScroll: true }}
+                    onSuccess={() => setOpen(false)}
+                    className="space-y-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <div className="grid gap-2">
+                                <Label htmlFor="confirmation_note">
+                                    Sustento
+                                </Label>
+                                <textarea
+                                    id="confirmation_note"
+                                    name="confirmation_note"
+                                    rows={3}
+                                    maxLength={255}
+                                    placeholder="Inspección de fiscalización del 28/10/2026: local en funcionamiento."
+                                    aria-invalid={
+                                        errors.confirmation_note
+                                            ? true
+                                            : undefined
+                                    }
+                                    className="flex min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive md:text-sm"
+                                />
+                                <InputError
+                                    message={errors.confirmation_note}
+                                />
+                            </div>
+                            <DialogFooter className="gap-2">
+                                <DialogClose asChild>
+                                    <Button type="button" variant="secondary">
+                                        Cancelar
+                                    </Button>
+                                </DialogClose>
+                                <Button disabled={processing}>
+                                    {processing && <Spinner />}
+                                    Confirmar
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
+                </Form>
+            </DialogContent>
+        </Dialog>
     );
 }
 

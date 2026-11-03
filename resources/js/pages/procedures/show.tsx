@@ -1,13 +1,18 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import {
     Ban,
+    CalendarCheck,
     Check,
+    ExternalLink,
     FileCheck,
+    FileSignature,
+    Inbox,
     Pencil,
     Printer,
     Receipt,
     Store,
 } from 'lucide-react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import ProcedureController from '@/actions/App/Http/Controllers/ProcedureController';
 import FormSelect from '@/components/form-select';
@@ -31,7 +36,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { show as showLicense } from '@/routes/licenses';
+import LicenseStatusBadge from '@/components/license-status-badge';
+import { print as printLicense, show as showLicense } from '@/routes/licenses';
 import { edit, index, show } from '@/routes/procedures';
 import { show as showTaxpayer } from '@/routes/taxpayers';
 import type {
@@ -65,6 +71,7 @@ const STEPS: { status: ProcedureStatusValue; label: string }[] = [
 
 const EVENT_LABELS: Record<string, string> = {
     registrado: 'Trámite registrado',
+    recepcionado: 'Recibido en mesa de partes',
     actualizado: 'Datos actualizados',
     liquidado: 'Orden de pago emitida',
     pagado: 'Pago registrado',
@@ -77,6 +84,7 @@ const EVENT_LABELS: Record<string, string> = {
     licencia_reemplazada: 'Licencia reemplazada',
     licencia_caducada: 'Licencia caducada',
     licencia_duplicado: 'Duplicado de licencia',
+    licencia_confirmada: 'Vigencia de licencia confirmada',
 };
 
 const textareaClassName =
@@ -119,7 +127,19 @@ export default function ProcedureShow({ procedure, currentUit }: Props) {
                         />
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" asChild>
+                            <a
+                                href={ProcedureController.printDeclaration.url(
+                                    procedure.id,
+                                )}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                <FileSignature />
+                                Declaración jurada
+                            </a>
+                        </Button>
                         {procedure.is_editable && (
                             <Button variant="outline" asChild>
                                 <Link href={edit(procedure.id)}>
@@ -317,33 +337,36 @@ export default function ProcedureShow({ procedure, currentUit }: Props) {
                 )}
 
                 {procedure.licenses.length > 0 && (
-                    <Card title="Documentos emitidos">
-                        <ul className="divide-y">
+                    <section className="space-y-3">
+                        <h2 className="text-sm font-semibold text-muted-foreground">
+                            Documentos emitidos
+                        </h2>
+                        <div className="grid gap-4 xl:grid-cols-2">
                             {procedure.licenses.map((license) => (
-                                <li key={license.id}>
-                                    <Link
-                                        href={showLicense(license.id)}
-                                        className="flex items-center justify-between gap-3 py-2 text-sm hover:underline"
-                                    >
-                                        <span className="flex items-center gap-2">
-                                            <FileCheck className="size-4 text-muted-foreground" />
-                                            {license.type_label}{' '}
-                                            <span className="font-medium tabular-nums">
-                                                {license.number}
-                                            </span>
-                                        </span>
-                                        <Badge variant="outline">
-                                            {license.status_label}
-                                        </Badge>
-                                    </Link>
-                                </li>
+                                <IssuedDocumentCard
+                                    key={license.id}
+                                    license={license}
+                                />
                             ))}
-                        </ul>
-                    </Card>
+                        </div>
+                    </section>
                 )}
 
                 <div className="grid gap-4 lg:grid-cols-2">
-                    <Card title="Mesa de partes">
+                    <Card
+                        title="Mesa de partes"
+                        action={
+                            procedure.status !== 'anulado' && (
+                                <ReceptionDialog procedure={procedure} />
+                            )
+                        }
+                    >
+                        {!procedure.file_number && (
+                            <p className="mb-3 text-sm text-muted-foreground">
+                                Pendiente: el solicitante debe presentar la
+                                declaración jurada firmada.
+                            </p>
+                        )}
                         <dl className="grid grid-cols-2 gap-2 text-sm">
                             <dt className="text-muted-foreground">
                                 N° de expediente
@@ -554,6 +577,29 @@ function IssueDocumentsDialog({ procedure }: { procedure: ProcedureDetail }) {
                 >
                     {({ processing, errors }) => (
                         <>
+                            {procedure.document_types_to_issue.map((type) => (
+                                <div key={type.value} className="grid gap-2">
+                                    <Label htmlFor={`series_${type.value}`}>
+                                        Serie del formato · {type.label}
+                                    </Label>
+                                    <Input
+                                        id={`series_${type.value}`}
+                                        name={`series[${type.value}]`}
+                                        required
+                                        maxLength={30}
+                                        placeholder="N° impreso en el formato"
+                                        aria-invalid={
+                                            errors[`series.${type.value}`]
+                                                ? true
+                                                : undefined
+                                        }
+                                    />
+                                    <InputError
+                                        message={errors[`series.${type.value}`]}
+                                    />
+                                </div>
+                            ))}
+
                             {procedure.license_effects.length > 0 && (
                                 <fieldset className="space-y-2">
                                     <legend className="mb-1 text-sm font-semibold">
@@ -781,6 +827,217 @@ function Card({
             </div>
             {children}
         </section>
+    );
+}
+
+/**
+ * The procedure's outcome: the issued licence or authorization with its
+ * status, validity and verification QR, one click from printing it.
+ */
+function IssuedDocumentCard({
+    license,
+}: {
+    license: ProcedureDetail['licenses'][number];
+}) {
+    const active = license.status === 'vigente';
+
+    return (
+        <article
+            className={cn(
+                'flex flex-col overflow-hidden rounded-xl border',
+                active
+                    ? 'border-emerald-500/40 bg-emerald-500/[0.03]'
+                    : 'border-sidebar-border/70 dark:border-sidebar-border',
+            )}
+        >
+            <div className="flex gap-4 p-5">
+                <div className="min-w-0 flex-1 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                            {license.type_label}
+                        </span>
+                        <LicenseStatusBadge
+                            status={license.status}
+                            label={license.status_label}
+                        />
+                        {license.duplicates > 0 && (
+                            <Badge variant="secondary">
+                                Duplicado
+                                {license.duplicates > 1 &&
+                                    ` N° ${license.duplicates}`}
+                            </Badge>
+                        )}
+                    </div>
+
+                    <div className="text-2xl font-semibold tracking-tight tabular-nums">
+                        {license.number}
+                    </div>
+
+                    <div className="space-y-0.5 text-sm">
+                        <div className="font-medium">
+                            {license.trade_name ?? license.activity}
+                        </div>
+                        {license.trade_name && (
+                            <div className="text-muted-foreground">
+                                {license.activity}
+                            </div>
+                        )}
+                        <div className="text-muted-foreground">
+                            {license.holder_name}
+                        </div>
+                    </div>
+
+                    <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                        <div className="flex items-center gap-1.5">
+                            <CalendarCheck className="size-4 text-muted-foreground" />
+                            <dt className="text-muted-foreground">Emitida</dt>
+                            <dd>{formatDate(license.issued_at)}</dd>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <dt className="text-muted-foreground">Vigencia</dt>
+                            <dd>
+                                {license.valid_until
+                                    ? `hasta ${formatDate(license.valid_until)}`
+                                    : 'Indeterminada'}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <a
+                    href={license.verification_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Abrir la verificación pública"
+                    className="hidden shrink-0 self-start rounded-lg border bg-white p-1.5 transition-shadow hover:shadow-md sm:block"
+                >
+                    <img
+                        src={license.qr}
+                        alt={`QR de verificación de ${license.number}`}
+                        className="size-24"
+                    />
+                </a>
+            </div>
+
+            <div className="mt-auto flex flex-wrap gap-2 border-t bg-muted/30 px-5 py-3">
+                <Button size="sm" asChild>
+                    <a
+                        href={printLicense.url(license.id)}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        <Printer />
+                        Imprimir
+                    </a>
+                </Button>
+                <Button size="sm" variant="outline" asChild>
+                    <Link href={showLicense(license.id)}>
+                        <FileCheck />
+                        Ver licencia
+                    </Link>
+                </Button>
+                <Button size="sm" variant="ghost" asChild>
+                    <a
+                        href={license.verification_url}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        <ExternalLink />
+                        Verificar
+                    </a>
+                </Button>
+            </div>
+        </article>
+    );
+}
+
+/**
+ * Mesa de partes receives the signed sworn declaration: expediente,
+ * folios and notes, recorded after the procedure was registered.
+ */
+function ReceptionDialog({ procedure }: { procedure: ProcedureDetail }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                    <Inbox />
+                    {procedure.file_number ? 'Editar' : 'Recibir DJ'}
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>Recepción en mesa de partes</DialogTitle>
+                <DialogDescription>
+                    Registra el expediente cuando el solicitante presenta la
+                    declaración jurada firmada del trámite {procedure.code}.
+                </DialogDescription>
+
+                <Form
+                    {...ProcedureController.reception.form(procedure.id)}
+                    options={{ preserveScroll: true }}
+                    onSuccess={() => setOpen(false)}
+                    className="space-y-4"
+                >
+                    {({ errors, processing }) => (
+                        <>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="file_number">
+                                        N° de expediente
+                                    </Label>
+                                    <Input
+                                        id="file_number"
+                                        name="file_number"
+                                        defaultValue={
+                                            procedure.file_number ?? ''
+                                        }
+                                        required
+                                        autoFocus
+                                    />
+                                    <InputError message={errors.file_number} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="folios">Folios</Label>
+                                    <Input
+                                        id="folios"
+                                        name="folios"
+                                        type="number"
+                                        inputMode="numeric"
+                                        min={1}
+                                        defaultValue={procedure.folios ?? ''}
+                                    />
+                                    <InputError message={errors.folios} />
+                                </div>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="notes">Observaciones</Label>
+                                <textarea
+                                    id="notes"
+                                    name="notes"
+                                    rows={4}
+                                    defaultValue={procedure.notes ?? ''}
+                                    className={textareaClassName}
+                                />
+                                <InputError message={errors.notes} />
+                            </div>
+
+                            <DialogFooter className="gap-2">
+                                <DialogClose asChild>
+                                    <Button type="button" variant="secondary">
+                                        Cancelar
+                                    </Button>
+                                </DialogClose>
+                                <Button disabled={processing}>
+                                    {processing && <Spinner />}
+                                    Guardar
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
+                </Form>
+            </DialogContent>
+        </Dialog>
     );
 }
 

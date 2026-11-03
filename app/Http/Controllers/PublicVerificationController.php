@@ -26,8 +26,9 @@ class PublicVerificationController extends Controller
                 'status_label' => $status->label(),
                 'is_valid' => $status === LicenseStatus::Active,
                 'valid_until' => $license->valid_until?->toDateString(),
-                // Imported from dblicencias (no yearly sequence): its closures were rarely recorded.
-                'is_legacy' => $license->sequence === null,
+                // Imported from dblicencias and not yet confirmed: its closures were rarely recorded.
+                'is_legacy' => $license->needsConfirmation(),
+                'confirmed_at' => $license->confirmed_at?->toDateString(),
                 'status_changed_at' => match (true) {
                     $status === LicenseStatus::Active => null,
                     $license->status === LicenseStatus::Active => $license->valid_until->toDateString(),

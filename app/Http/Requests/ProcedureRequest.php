@@ -6,6 +6,7 @@ use App\Enums\DocumentType;
 use App\Models\Establishment;
 use App\Models\ProcedureType;
 use App\Models\Taxpayer;
+use App\Support\SwornDeclaration;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -58,10 +59,9 @@ class ProcedureRequest extends FormRequest
                     ...EstablishmentRequest::rulesFor('establishment.'),
                 ]),
 
-            // Step 4: mesa de partes.
-            'file_number' => ['nullable', 'string', 'max:50'],
-            'folios' => ['nullable', 'integer', 'min:1', 'max:9999'],
-            'notes' => ['nullable', 'string', 'max:2000'],
+            // Also step 3: the sworn declaration printed when registering.
+            // Mesa de partes data comes later, when the signed DJ is filed.
+            ...SwornDeclaration::rulesFor(),
         ];
     }
 
@@ -105,11 +105,10 @@ class ProcedureRequest extends FormRequest
             'taxpayer_id' => 'contribuyente',
             'establishment_id' => 'establecimiento',
             'procedure_type_ids' => 'tipos de trámite',
-            'file_number' => 'N° de expediente',
-            'folios' => 'folios',
-            'notes' => 'observaciones',
+            'declaration' => 'declaración jurada',
             ...TaxpayerRequest::attributesFor('taxpayer.'),
             ...EstablishmentRequest::attributesFor('establishment.'),
+            ...SwornDeclaration::attributesFor(),
         ];
     }
 }

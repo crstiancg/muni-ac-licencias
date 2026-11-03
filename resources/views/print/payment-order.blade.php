@@ -38,7 +38,7 @@
             @foreach ($order->items as $item)
                 <tr>
                     <td>{{ $item->description }}</td>
-                    @if ($order->procedure)<td class="right">{{ number_format((float) $item->uit_percentage, 4) }}</td>@endif
+                    @if ($order->procedure)<td class="right">{{ $item->uit_percentage === null ? 'Fijo' : number_format((float) $item->uit_percentage, 4) }}</td>@endif
                     <td class="right">{{ number_format((float) $item->amount, 2) }}</td>
                 </tr>
             @endforeach

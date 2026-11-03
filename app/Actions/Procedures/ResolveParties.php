@@ -4,6 +4,8 @@ namespace App\Actions\Procedures;
 
 use App\Models\Establishment;
 use App\Models\Taxpayer;
+use App\Support\SwornDeclaration;
+use Illuminate\Support\Arr;
 
 /**
  * Returns the taxpayer and establishment of a procedure, creating them when
@@ -18,7 +20,11 @@ class ResolveParties
      */
     public function handle(array $data): array
     {
-        $taxpayerId = $data['taxpayer_id'] ?? Taxpayer::create($data['taxpayer'])->id;
+        // A new taxpayer keeps the representative declared in its first DJ.
+        $taxpayerId = $data['taxpayer_id'] ?? Taxpayer::create([
+            ...$data['taxpayer'],
+            ...array_filter(Arr::only(SwornDeclaration::normalize($data['declaration'] ?? []), SwornDeclaration::REPRESENTATIVE)),
+        ])->id;
 
         $establishmentId = $data['establishment_id']
             ?? Establishment::create([...$data['establishment'], 'taxpayer_id' => $taxpayerId])->id;

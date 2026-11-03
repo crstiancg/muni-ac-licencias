@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { CircleAlert, CircleCheck, CircleX } from 'lucide-react';
+import { BadgeCheck, CircleAlert, CircleCheck, CircleX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type VerifiedLicense = {
@@ -8,7 +8,9 @@ type VerifiedLicense = {
     status: string;
     status_label: string;
     is_valid: boolean;
+    /** Imported from the old system and not yet confirmed in force. */
     is_legacy: boolean;
+    confirmed_at: string | null;
     status_changed_at: string | null;
     issued_at: string;
     valid_until: string | null;
@@ -83,6 +85,14 @@ export default function Verify({
                                     el establecimiento cerró, puede no estar
                                     actualizado: confirme su vigencia en la
                                     municipalidad.
+                                </p>
+                            )}
+
+                            {license.confirmed_at && license.is_valid && (
+                                <p className="flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm">
+                                    <BadgeCheck className="size-5 shrink-0 text-emerald-600" />
+                                    Vigencia confirmada por la municipalidad el{' '}
+                                    {formatDate(license.confirmed_at)}.
                                 </p>
                             )}
 

@@ -29,7 +29,9 @@ trait ProcedureTypeValidationRules
             ],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'uit_percentage' => ['required', 'numeric', 'decimal:0,4', 'min:0', 'max:100'],
+            // Either a share of the UIT of the year or a fixed amount in soles.
+            'uit_percentage' => ['nullable', 'required_without:fixed_amount', 'numeric', 'decimal:0,4', 'min:0', 'max:100'],
+            'fixed_amount' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:99999'],
             'risk_level' => ['nullable', Rule::enum(RiskLevel::class)],
             'document_type' => ['nullable', Rule::enum(IssuedDocumentType::class)],
             'validity_months' => ['nullable', 'integer', 'min:1', 'max:120'],
@@ -53,6 +55,7 @@ trait ProcedureTypeValidationRules
             'name' => 'nombre',
             'description' => 'descripción',
             'uit_percentage' => 'porcentaje de UIT',
+            'fixed_amount' => 'monto fijo',
             'risk_level' => 'nivel de riesgo',
             'document_type' => 'documento que emite',
             'validity_months' => 'vigencia',

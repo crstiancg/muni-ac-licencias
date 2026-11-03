@@ -12,13 +12,20 @@ import type {
     DocumentTypeValue,
 } from '@/types';
 import { emptyTaxpayer } from './types';
-import type { Applicant, NewTaxpayer } from './types';
+import type {
+    Applicant,
+    Declaration,
+    NewTaxpayer,
+    RepresentativeField,
+} from './types';
 import { WizardField, WizardInput } from './wizard-field';
 
 /**
  * Step 2: who asks. Search by DNI/RUC; a registered taxpayer is picked, an
  * unknown one is filled from RENIEC/SUNAT right here (created with the
- * procedure, no detour to another screen).
+ * procedure, no detour to another screen). Once chosen, the legal
+ * representative or attorney (DJ sections 20-23) is declared for this
+ * procedure, prefilled from the taxpayer's file.
  */
 export default function ApplicantStep({
     applicant,
@@ -29,9 +36,13 @@ export default function ApplicantStep({
     onNew,
     onChangeNew,
     onClear,
+    representative,
+    onChangeRepresentative,
 }: {
     applicant: Applicant | null;
     newTaxpayer: NewTaxpayer | null;
+    representative: Pick<Declaration, RepresentativeField>;
+    onChangeRepresentative: (field: RepresentativeField, value: string) => void;
     documentTypes: DocumentTypeOption[];
     errors: Record<string, string | undefined>;
     onPick: (applicant: Applicant) => void;
@@ -111,28 +122,63 @@ export default function ApplicantStep({
         }
     }
 
+    const representativeFields = (
+        <fieldset className="space-y-4 rounded-lg border p-4">
+            <legend className="px-1 text-sm font-semibold">
+                Representante legal o apoderado (opcional)
+            </legend>
+            <div className="grid gap-4 md:grid-cols-4">
+                {(
+                    [
+                        ['representative_name', 'Apellidos y nombres'],
+                        ['representative_document', 'N° de DNI o CE'],
+                        ['representative_sunarp', 'N° de partida (SUNARP)'],
+                        ['representative_phone', 'Teléfono'],
+                    ] as const
+                ).map(([key, label]) => (
+                    <WizardInput
+                        key={key}
+                        id={`declaration_${key}`}
+                        label={label}
+                        value={representative[key]}
+                        onChange={(value) => onChangeRepresentative(key, value)}
+                        error={errors[`declaration.${key}`]}
+                        className={
+                            key === 'representative_name'
+                                ? 'md:col-span-4'
+                                : undefined
+                        }
+                    />
+                ))}
+            </div>
+        </fieldset>
+    );
+
     if (applicant) {
         return (
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4">
-                <div className="flex items-center gap-3">
-                    <CircleCheck className="size-6 text-emerald-600" />
-                    <div>
-                        <div className="font-medium">{applicant.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                            {applicant.document_type.toUpperCase()}{' '}
-                            {applicant.document_number}
-                            {applicant.ruc && ` · RUC ${applicant.ruc}`}
-                            {applicant.address && ` · ${applicant.address}`}
-                        </div>
-                        <div className="text-xs text-emerald-700 dark:text-emerald-300">
-                            Contribuyente registrado
+            <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4">
+                    <div className="flex items-center gap-3">
+                        <CircleCheck className="size-6 text-emerald-600" />
+                        <div>
+                            <div className="font-medium">{applicant.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                                {applicant.document_type.toUpperCase()}{' '}
+                                {applicant.document_number}
+                                {applicant.ruc && ` · RUC ${applicant.ruc}`}
+                                {applicant.address && ` · ${applicant.address}`}
+                            </div>
+                            <div className="text-xs text-emerald-700 dark:text-emerald-300">
+                                Contribuyente registrado
+                            </div>
                         </div>
                     </div>
+                    <Button type="button" variant="outline" onClick={onClear}>
+                        <X />
+                        Cambiar solicitante
+                    </Button>
                 </div>
-                <Button type="button" variant="outline" onClick={onClear}>
-                    <X />
-                    Cambiar solicitante
-                </Button>
+                {representativeFields}
             </div>
         );
     }
@@ -211,24 +257,7 @@ export default function ApplicantStep({
                     />
                 </div>
 
-                {isCompany && (
-                    <div className="grid gap-4 md:grid-cols-4">
-                        <WizardInput
-                            {...field('representative_name')}
-                            label="Representante legal"
-                            className="md:col-span-2"
-                        />
-                        <WizardInput
-                            {...field('representative_document')}
-                            label="DNI del representante"
-                            inputMode="numeric"
-                        />
-                        <WizardInput
-                            {...field('representative_sunarp')}
-                            label="Partida registral (SUNARP)"
-                        />
-                    </div>
-                )}
+                {representativeFields}
             </div>
         );
     }

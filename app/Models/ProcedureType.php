@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string|null $description
  * @property string $uit_percentage
+ * @property string|null $fixed_amount
  * @property RiskLevel|null $risk_level
  * @property IssuedDocumentType|null $document_type
  * @property int|null $validity_months
@@ -36,7 +37,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  */
 #[Fillable([
-    'tupa_code', 'name', 'description', 'uit_percentage', 'risk_level', 'document_type', 'validity_months', 'license_effect',
+    'tupa_code', 'name', 'description', 'uit_percentage', 'fixed_amount', 'risk_level', 'document_type', 'validity_months', 'license_effect',
     'processing_days', 'legal_basis', 'position', 'is_active',
     'legacy_id', 'legacy_amount',
 ])]
@@ -56,6 +57,7 @@ class ProcedureType extends Model
     {
         return [
             'uit_percentage' => 'decimal:4',
+            'fixed_amount' => 'decimal:2',
             'risk_level' => RiskLevel::class,
             'document_type' => IssuedDocumentType::class,
             'validity_months' => 'integer',
@@ -69,10 +71,23 @@ class ProcedureType extends Model
     }
 
     /**
+     * Whether the fee is a fixed amount in soles instead of a share of the UIT.
+     */
+    public function isFixed(): bool
+    {
+        return $this->fixed_amount !== null;
+    }
+
+    /**
      * Fee (derecho de trámite) in soles for the given UIT, rounded to cents.
+     * A fixed fee ignores the UIT.
      */
     public function feeFor(Uit $uit): string
     {
+        if ($this->isFixed()) {
+            return number_format((float) $this->fixed_amount, 2, '.', '');
+        }
+
         return number_format(round((float) $this->uit_percentage * (float) $uit->amount / 100, 2), 2, '.', '');
     }
 
