@@ -6,6 +6,7 @@ use App\Enums\RiskLevel;
 use App\Models\ProcedureType;
 use App\Models\Uit;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -14,14 +15,32 @@ class ProcedureTypeManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function admin(): User
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $user = User::factory()->create();
+        $user->givePermissionTo('parameters.manage');
+
+        return $user;
+    }
+
     public function test_guests_are_redirected_to_the_login_page()
     {
         $this->get(route('procedure-types.index'))->assertRedirect(route('login'));
     }
 
+    public function test_users_without_the_parameters_permission_are_forbidden()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $clerk = User::factory()->create();
+        $clerk->assignRole('Mesa de partes');
+
+        $this->actingAs($clerk)->get(route('procedure-types.index'))->assertForbidden();
+    }
+
     public function test_active_procedure_types_are_paginated_by_position()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         ProcedureType::factory()->count(12)->sequence(fn ($sequence) => ['position' => 12 - $sequence->index])->create();
         ProcedureType::factory()->inactive()->create(['position' => 0]);
 
@@ -42,7 +61,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_fee_is_computed_with_the_uit_of_the_current_year()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->create(['year' => now()->year - 1, 'amount' => 5150]);
         Uit::factory()->create(['year' => now()->year, 'amount' => 5350]);
         ProcedureType::factory()->create(['uit_percentage' => '4.5196']);
@@ -59,7 +78,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_fee_is_null_when_the_current_year_has_no_uit()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->create(['year' => now()->year - 1]);
         ProcedureType::factory()->create();
 
@@ -73,7 +92,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_procedure_types_can_be_filtered_by_status()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         ProcedureType::factory()->count(2)->create();
         ProcedureType::factory()->inactive()->count(3)->create();
 
@@ -94,7 +113,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_procedure_types_can_be_searched_by_name_or_tupa_code()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         ProcedureType::factory()->create(['name' => 'CESE DE ACTIVIDADES', 'tupa_code' => 'PA-13']);
         ProcedureType::factory()->create(['name' => 'DUPLICADO DE LICENCIA', 'tupa_code' => 'PA-11']);
 
@@ -116,7 +135,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_procedure_types_can_be_sorted_by_allowed_columns()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         ProcedureType::factory()->create(['name' => 'B', 'uit_percentage' => 1]);
         ProcedureType::factory()->create(['name' => 'A', 'uit_percentage' => 7]);
         ProcedureType::factory()->create(['name' => 'C', 'uit_percentage' => 3]);
@@ -138,7 +157,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_sorting_or_filtering_by_not_allowed_fields_is_rejected()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)
             ->get(route('procedure-types.index', ['sort' => 'legacy_amount']))
@@ -151,7 +170,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_requesting_a_page_beyond_the_last_redirects_to_the_last_page()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         ProcedureType::factory()->count(12)->create();
 
         $this->actingAs($user)
@@ -161,7 +180,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_procedure_type_can_be_created()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)
             ->from(route('procedure-types.index', ['page' => 2]))
@@ -191,7 +210,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_only_name_and_percentage_are_required()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         ProcedureType::factory()->create(['position' => 7]);
 
         $this->actingAs($user)
@@ -208,7 +227,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_tupa_code_must_be_unique()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         ProcedureType::factory()->create(['tupa_code' => 'PA-01']);
 
         $this->actingAs($user)
@@ -220,7 +239,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_invalid_data_is_rejected()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)
             ->post(route('procedure-types.store'), [
@@ -251,19 +270,20 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_validation_messages_are_in_spanish()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)
             ->post(route('procedure-types.store'), [])
             ->assertSessionHasErrors([
                 'name' => 'El campo nombre es obligatorio.',
-                'uit_percentage' => 'El campo porcentaje de UIT es obligatorio.',
+                // Optional when the type has a fixed amount instead.
+                'uit_percentage' => 'El campo porcentaje de UIT es obligatorio cuando monto fijo no está presente.',
             ]);
     }
 
     public function test_procedure_type_can_be_updated()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         $type = ProcedureType::factory()->create(['tupa_code' => 'PA-01', 'risk_level' => RiskLevel::Low]);
 
         $this->actingAs($user)
@@ -290,7 +310,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_update_cannot_take_the_tupa_code_of_another_type()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         ProcedureType::factory()->create(['tupa_code' => 'PA-01']);
         $type = ProcedureType::factory()->create(['tupa_code' => 'PA-02']);
 
@@ -303,7 +323,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_procedure_type_can_be_deleted()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         $type = ProcedureType::factory()->create();
 
         $this->actingAs($user)
@@ -316,7 +336,7 @@ class ProcedureTypeManagementTest extends TestCase
 
     public function test_precognitive_request_validates_without_persisting()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)
             ->withPrecognition()

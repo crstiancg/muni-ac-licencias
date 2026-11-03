@@ -4,6 +4,7 @@ namespace Tests\Feature\Uits;
 
 use App\Models\Uit;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\UitDevSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -13,14 +14,32 @@ class UitManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function admin(): User
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $user = User::factory()->create();
+        $user->givePermissionTo('parameters.manage');
+
+        return $user;
+    }
+
     public function test_guests_are_redirected_to_the_login_page()
     {
         $this->get(route('uits.index'))->assertRedirect(route('login'));
     }
 
+    public function test_users_without_the_parameters_permission_are_forbidden()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $cashier = User::factory()->create();
+        $cashier->assignRole('Caja');
+
+        $this->actingAs($cashier)->get(route('uits.index'))->assertForbidden();
+    }
+
     public function test_uits_are_paginated_on_the_server_from_the_most_recent_year()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->count(25)->sequence(fn ($sequence) => ['year' => 2001 + $sequence->index])->create();
 
         $this->actingAs($user)
@@ -47,7 +66,7 @@ class UitManagementTest extends TestCase
 
     public function test_uits_can_be_searched_by_year_or_legal_basis()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->create(['year' => 2024, 'legal_basis' => 'D.S. N° 309-2023-EF']);
         Uit::factory()->create(['year' => 2025, 'legal_basis' => 'D.S. N° 260-2024-EF']);
 
@@ -68,7 +87,7 @@ class UitManagementTest extends TestCase
 
     public function test_search_containing_commas_is_not_split_into_several_values()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->create(['year' => 2025, 'legal_basis' => 'D.S. N° 260-2024-EF']);
 
         $this->actingAs($user)
@@ -82,7 +101,7 @@ class UitManagementTest extends TestCase
 
     public function test_uits_can_be_sorted_by_allowed_columns()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->create(['year' => 2024, 'amount' => 5150]);
         Uit::factory()->create(['year' => 2025, 'amount' => 4950]);
         Uit::factory()->create(['year' => 2023, 'amount' => 5350]);
@@ -104,7 +123,7 @@ class UitManagementTest extends TestCase
 
     public function test_sorting_or_filtering_by_not_allowed_fields_is_rejected()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)
             ->get(route('uits.index', ['sort' => 'created_at']))
@@ -117,7 +136,7 @@ class UitManagementTest extends TestCase
 
     public function test_pagination_shows_one_page_on_each_side_of_the_current_one()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->count(100)->sequence(fn ($sequence) => ['year' => 1927 + $sequence->index])->create();
 
         // ‹ 1 2 … 4 5 6 … 9 10 ›
@@ -133,7 +152,7 @@ class UitManagementTest extends TestCase
 
     public function test_requesting_a_page_beyond_the_last_redirects_to_the_last_page()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->count(12)->sequence(fn ($sequence) => ['year' => 2001 + $sequence->index])->create();
 
         $this->actingAs($user)
@@ -143,7 +162,7 @@ class UitManagementTest extends TestCase
 
     public function test_uit_can_be_created()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)
             ->from(route('uits.index', ['page' => 2]))
@@ -164,7 +183,7 @@ class UitManagementTest extends TestCase
 
     public function test_legal_basis_is_optional()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)
             ->post(route('uits.store'), ['year' => 2025, 'amount' => 5350])
@@ -175,7 +194,7 @@ class UitManagementTest extends TestCase
 
     public function test_year_must_be_unique()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->create(['year' => 2025]);
 
         $this->actingAs($user)
@@ -187,7 +206,7 @@ class UitManagementTest extends TestCase
 
     public function test_invalid_data_is_rejected()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         $this->actingAs($user)
             ->post(route('uits.store'), [
@@ -210,7 +229,7 @@ class UitManagementTest extends TestCase
 
     public function test_validation_messages_are_in_spanish()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->create(['year' => 2025]);
 
         $this->actingAs($user)
@@ -223,7 +242,7 @@ class UitManagementTest extends TestCase
 
     public function test_uit_can_be_updated()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         $uit = Uit::factory()->create(['year' => 2025, 'amount' => 5000]);
 
         $this->actingAs($user)
@@ -242,7 +261,7 @@ class UitManagementTest extends TestCase
 
     public function test_update_cannot_take_the_year_of_another_uit()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         Uit::factory()->create(['year' => 2024]);
         $uit = Uit::factory()->create(['year' => 2025]);
 
@@ -255,7 +274,7 @@ class UitManagementTest extends TestCase
 
     public function test_uit_can_be_deleted()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
         $uit = Uit::factory()->create();
 
         $this->actingAs($user)
@@ -268,7 +287,7 @@ class UitManagementTest extends TestCase
 
     public function test_precognitive_request_validates_without_persisting()
     {
-        $user = User::factory()->create();
+        $user = $this->admin();
 
         // The Precognition client sends "Accept: application/json".
         $this->actingAs($user)
