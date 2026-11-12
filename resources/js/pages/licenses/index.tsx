@@ -31,6 +31,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { ago, toDate } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { index, show } from '@/routes/licenses';
 import type { LicenseStatusValue, Paginated } from '@/types';
@@ -38,26 +39,6 @@ import type { LicenseStatusValue, Paginated } from '@/types';
 const DEFAULT_SORT = '-issued_at';
 
 const date = new Intl.DateTimeFormat('es-PE', { dateStyle: 'medium' });
-const relative = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
-
-const toDate = (value: string) => new Date(`${value.slice(0, 10)}T12:00:00`);
-
-/**
- * "hace 23 días", "hace 2 meses": how old the licence is at a glance.
- */
-function ago(value: string): string {
-    const days = Math.round((Date.now() - toDate(value).getTime()) / 864e5);
-
-    if (days < 30) {
-        return relative.format(-Math.max(days, 0), 'day');
-    }
-
-    if (days < 365) {
-        return relative.format(-Math.round(days / 30), 'month');
-    }
-
-    return relative.format(-Math.round(days / 365), 'year');
-}
 
 type LicenseRow = {
     id: number;

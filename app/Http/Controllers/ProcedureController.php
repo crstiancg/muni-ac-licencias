@@ -53,8 +53,14 @@ class ProcedureController extends Controller
             ->allowedFilters(
                 AllowedFilter::scope('search')->delimiter(''),
                 AllowedFilter::exact('status'),
+                AllowedFilter::callback('type', fn ($query, $value) => $query->whereHas(
+                    'types',
+                    fn ($types) => $types->whereKey((int) $value),
+                )),
+                AllowedFilter::callback('from', fn ($query, $value) => $query->whereDate('created_at', '>=', $value)),
+                AllowedFilter::callback('to', fn ($query, $value) => $query->whereDate('created_at', '<=', $value)),
             )
-            ->allowedSorts('created_at')
+            ->allowedSorts('created_at', 'code')
             ->defaultSort('-created_at')
             ->orderByDesc('id')
             ->paginate(10)
@@ -73,9 +79,23 @@ class ProcedureController extends Controller
             'filters' => [
                 'search' => $request->input('filter.search'),
                 'status' => $request->input('filter.status'),
+                'type' => $request->input('filter.type'),
+                'from' => $request->input('filter.from'),
+                'to' => $request->input('filter.to'),
                 'sort' => $request->input('sort', '-created_at'),
             ],
             'statuses' => ProcedureStatus::options(),
+            // How many procedures wait at each step, for the status tabs.
+            'status_counts' => Procedure::query()
+                ->toBase()
+                ->selectRaw('status, count(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status')
+                ->map(fn ($total) => (int) $total),
+            'types' => ProcedureType::query()
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (ProcedureType $type) => ['value' => (string) $type->id, 'label' => $type->name]),
         ]);
     }
 
