@@ -44,7 +44,12 @@ QUEUE_CONNECTION=sync     # hoy no se encola nada: sin worker
 INERTIA_SSR_ENABLED=false
 
 LICENCIAS_VERIFICATION_URL=   # URL pública de los QR; vacío = APP_URL
+
+APIS_NET_TOKEN=           # consulta RENIEC/SUNAT al registrar contribuyentes
 ```
+
+No hacen falta en producción: `LEGACY_DB_*` (importadores del sistema
+anterior) ni `SESSION_DOMAIN`.
 
 `APP_KEY` no se cambia nunca más: cifra los secretos de la verificación en
 dos pasos y las sesiones.
@@ -60,7 +65,21 @@ dos pasos y las sesiones.
 4. **Dominio**: en *Domains*, servicio `app`, puerto `8080`, HTTPS activado.
 5. **Deploy**. El primer arranque crea el esquema (`migrate --force`).
    Verificar `https://<dominio>/up` → 200.
-6. **Datos** (una sola vez, con la app ya desplegada):
+6. **Primer acceso**: en Dokploy, abrir la terminal del contenedor `app` y
+   correr:
+   ```bash
+   php artisan db:seed --force        # roles y permisos (no crea usuarios)
+   php artisan app:create-admin       # pide nombre, correo y contraseña
+   ```
+   La contraseña se escribe oculta y en producción exige 12 caracteres con
+   mayúsculas, minúsculas, números y símbolos. El resto del personal se crea
+   desde la pantalla Usuarios.
+7. **Datos** (una sola vez, con la app ya desplegada). Ojo: pgloader vacía
+   las tablas y copia las de tu MySQL, **incluidos los usuarios**: el
+   administrador creado en el paso 6 se reemplaza por los locales, y entre
+   ellos viaja el usuario de desarrollo `password@gmail.com` con contraseña
+   `password`. Después de copiar, desactivalo o borralo y volvé a correr
+   `php artisan app:create-admin` si hace falta.
    ```bash
    cd docker/pgloader
    cp mysql-to-postgres.load.example mysql-to-postgres.load   # completar URLs
@@ -69,8 +88,22 @@ dos pasos y las sesiones.
    ```
    Postgres tiene que ser alcanzable desde tu máquina: exponer el puerto
    temporalmente en Dokploy o usar un túnel SSH, y cerrarlo al terminar.
-7. **Verificar** que los conteos coinciden (licencias, trámites,
+8. **Verificar** que los conteos coinciden (licencias, trámites,
    contribuyentes, usuarios) y entrar con un usuario real.
+
+## Si el dominio responde 502 Bad Gateway
+
+Traefik no llega al contenedor. En orden de probabilidad:
+
+1. **Puerto del dominio**: en *Domains* tiene que ser `8080` (la imagen no
+   escucha en 80).
+2. **El contenedor se reinicia**: mirar *Logs* del servicio `app`.
+   - `could not connect to server` / `SQLSTATE[08006]`: `DB_HOST` mal (usar
+     el host interno del Postgres de Dokploy) o credenciales.
+   - `No application encryption key`: falta `APP_KEY`.
+   - Error en una migración: copiar el mensaje completo.
+3. **Todavía construye**: el primer build tarda varios minutos (Composer,
+   npm y Vite).
 
 ## Deploys siguientes
 
