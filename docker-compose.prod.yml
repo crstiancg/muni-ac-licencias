@@ -19,6 +19,16 @@ x-app: &app
   env_file:
     - path: .env
       required: false
+  # default: reaches legacy-tunnel. dokploy-network: where Dokploy's
+  # Postgres (DB_HOST) and Traefik live; compose services are not on it
+  # unless declared.
+  networks:
+    - default
+    - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
 
 services:
   app:

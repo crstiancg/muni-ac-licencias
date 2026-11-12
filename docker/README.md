@@ -173,6 +173,22 @@ Traefik no llega al contenedor. En orden de probabilidad:
 3. **Todavía construye**: el primer build tarda varios minutos (Composer,
    npm y Vite).
 
+## Si el servicio se creó como *Application* (Dockerfile)
+
+Una *Application* solo usa el `Dockerfile` e ignora el compose: no corre el
+`scheduler` (las licencias no caducan solas) ni el túnel. Para pasar a
+*Compose* sin perder datos (Postgres es otro servicio y no se toca):
+
+1. En el proyecto: *Create Service → Compose*, mismo repositorio y rama,
+   *Compose Path* `./docker-compose.prod.yml`.
+2. *Environment*: copiar todas las variables de la Application.
+3. *Deploy* y esperar que `app` quede *healthy* en los logs.
+4. Quitar el dominio de la Application y agregarlo en el Compose: servicio
+   `app`, puerto `8080`, HTTPS. (Dos servicios con el mismo dominio se
+   pisan en Traefik.)
+5. Verificar `https://<dominio>/up` y entrar; recién entonces detener y
+   borrar la Application.
+
 ## Deploys siguientes
 
 Push a la rama configurada → Dokploy reconstruye. Las migraciones nuevas
