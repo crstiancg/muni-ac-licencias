@@ -1,5 +1,8 @@
 import { Head } from '@inertiajs/react';
 import { BadgeCheck, CircleAlert, CircleCheck, CircleX } from 'lucide-react';
+import type { ReactNode } from 'react';
+import MunicipalCrest from '@/components/municipal-crest';
+import SteppedBand from '@/components/stepped-band';
 import { cn } from '@/lib/utils';
 
 type VerifiedLicense = {
@@ -42,19 +45,23 @@ export default function Verify({
         <>
             <Head title="Verificación de licencia" />
 
-            <main className="flex min-h-svh flex-col items-center bg-muted/40 px-4 py-8">
+            <main className="flex min-h-svh flex-col items-center bg-background px-4 py-8">
                 <div className="w-full max-w-md space-y-4">
-                    <div className="text-center">
-                        <div className="text-sm font-semibold tracking-wide uppercase">
-                            {municipality}
+                    <header className="flex flex-col items-center gap-3 text-center">
+                        <MunicipalCrest className="size-16 rounded-2xl p-1.5" />
+                        <div>
+                            <p className="font-display text-lg font-bold">
+                                {municipality}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                Verificación de documentos emitidos
+                            </p>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                            Verificación de documentos emitidos
-                        </div>
-                    </div>
+                        <SteppedBand className="max-w-56" />
+                    </header>
 
                     {license === null ? (
-                        <Banner
+                        <Verdict
                             tone="error"
                             icon={<CircleX className="size-8" />}
                             title="Documento no encontrado"
@@ -62,7 +69,7 @@ export default function Verify({
                         />
                     ) : (
                         <>
-                            <Banner
+                            <Verdict
                                 tone={license.is_valid ? 'ok' : 'warning'}
                                 icon={
                                     license.is_valid ? (
@@ -80,7 +87,7 @@ export default function Verify({
                             />
 
                             {license.is_legacy && license.is_valid && (
-                                <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+                                <p className="rounded-2xl border border-dashed border-[#c9851a] bg-[#fffaf0] p-4 text-sm text-[#6e4a10] dark:border-amber-400/50 dark:bg-amber-400/10 dark:text-amber-200">
                                     Documento emitido en el sistema anterior. Si
                                     el establecimiento cerró, puede no estar
                                     actualizado: confirme su vigencia en la
@@ -89,55 +96,60 @@ export default function Verify({
                             )}
 
                             {license.confirmed_at && license.is_valid && (
-                                <p className="flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm">
-                                    <BadgeCheck className="size-5 shrink-0 text-emerald-600" />
+                                <p className="flex items-center gap-2 rounded-2xl border border-[#bfe3d2] bg-[#e3f3ec] p-4 text-sm text-[#0b6b4f] dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-300">
+                                    <BadgeCheck className="size-5 shrink-0" />
                                     Vigencia confirmada por la municipalidad el{' '}
                                     {formatDate(license.confirmed_at)}.
                                 </p>
                             )}
 
-                            <section className="space-y-3 rounded-xl border bg-background p-5">
+                            <section className="space-y-4 rounded-2xl border bg-card p-5">
                                 <div>
-                                    <div className="text-xs text-muted-foreground">
+                                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                         {license.type_label}
-                                    </div>
-                                    <div className="text-lg font-semibold tabular-nums">
+                                    </p>
+                                    <p className="font-mono text-2xl font-semibold">
                                         N° {license.number}
-                                    </div>
+                                    </p>
                                 </div>
-                                <Row
-                                    label="Titular"
-                                    value={license.holder_name}
-                                />
-                                {license.trade_name && (
+                                <dl className="space-y-3">
                                     <Row
-                                        label="Nombre comercial"
-                                        value={license.trade_name}
+                                        label="Titular"
+                                        value={license.holder_name}
                                     />
-                                )}
-                                <Row label="Giro" value={license.activity} />
-                                <Row
-                                    label="Dirección"
-                                    value={license.address}
-                                />
-                                {license.area && (
+                                    {license.trade_name && (
+                                        <Row
+                                            label="Nombre comercial"
+                                            value={license.trade_name}
+                                        />
+                                    )}
                                     <Row
-                                        label="Área"
-                                        value={`${Number(license.area).toLocaleString('es-PE')} m²`}
+                                        label="Giro"
+                                        value={license.activity}
                                     />
-                                )}
-                                <Row
-                                    label="Fecha de emisión"
-                                    value={formatDate(license.issued_at)}
-                                />
-                                <Row
-                                    label="Vigencia"
-                                    value={
-                                        license.valid_until
-                                            ? `Hasta el ${formatDate(license.valid_until)}`
-                                            : 'Indeterminada'
-                                    }
-                                />
+                                    <Row
+                                        label="Dirección"
+                                        value={license.address}
+                                    />
+                                    {license.area && (
+                                        <Row
+                                            label="Área"
+                                            value={`${Number(license.area).toLocaleString('es-PE')} m²`}
+                                        />
+                                    )}
+                                    <Row
+                                        label="Fecha de emisión"
+                                        value={formatDate(license.issued_at)}
+                                    />
+                                    <Row
+                                        label="Vigencia"
+                                        value={
+                                            license.valid_until
+                                                ? `Hasta el ${formatDate(license.valid_until)}`
+                                                : 'Indeterminada'
+                                        }
+                                    />
+                                </dl>
                             </section>
                         </>
                     )}
@@ -151,30 +163,34 @@ export default function Verify({
     );
 }
 
-function Banner({
+/**
+ * The answer the citizen came for, readable at arm's length: valid, not in
+ * force, or not found.
+ */
+function Verdict({
     tone,
     icon,
     title,
     text,
 }: {
     tone: 'ok' | 'warning' | 'error';
-    icon: React.ReactNode;
+    icon: ReactNode;
     title: string;
     text: string;
 }) {
     return (
         <div
             className={cn(
-                'flex items-center gap-4 rounded-xl p-5 text-white',
-                tone === 'ok' && 'bg-emerald-600',
-                tone === 'warning' && 'bg-amber-600',
-                tone === 'error' && 'bg-red-600',
+                'flex items-center gap-4 rounded-2xl p-5 text-white',
+                tone === 'ok' && 'bg-[#0b6b4f]',
+                tone === 'warning' && 'bg-[#85520a]',
+                tone === 'error' && 'bg-[#a3261c]',
             )}
         >
             {icon}
             <div>
-                <div className="text-xl font-bold">{title}</div>
-                <div className="text-sm opacity-90">{text}</div>
+                <p className="font-display text-2xl font-bold">{title}</p>
+                <p className="text-sm opacity-90">{text}</p>
             </div>
         </div>
     );
@@ -183,8 +199,10 @@ function Banner({
 function Row({ label, value }: { label: string; value: string }) {
     return (
         <div>
-            <div className="text-xs text-muted-foreground">{label}</div>
-            <div className="text-sm">{value}</div>
+            <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                {label}
+            </dt>
+            <dd className="text-sm">{value}</dd>
         </div>
     );
 }

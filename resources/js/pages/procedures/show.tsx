@@ -20,10 +20,11 @@ import FormSelect from '@/components/form-select';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import LicensePicker from '@/components/license-picker';
+import PaymentOrderStatusBadge from '@/components/payment-order-status-badge';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import RegisterPaymentDialog from '@/components/register-payment-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogClose,
@@ -116,8 +117,8 @@ export default function ProcedureShow({ procedure, currentUit }: Props) {
         <>
             <Head title={`Trámite ${procedure.code}`} />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <div className="space-y-2">
                         <Heading
                             title={`Trámite ${procedure.code}`}
@@ -157,7 +158,7 @@ export default function ProcedureShow({ procedure, currentUit }: Props) {
                 </div>
 
                 {procedure.status === 'anulado' ? (
-                    <div className="rounded-xl border border-red-500/40 bg-red-500/5 p-4 text-sm">
+                    <div className="rounded-xl border border-[#f3c9c4] bg-[#fce9e7] p-4 text-sm dark:border-red-400/30 dark:bg-red-400/10">
                         <div className="font-medium text-red-700 dark:text-red-300">
                             Anulado
                             {procedure.cancelled_at &&
@@ -182,10 +183,7 @@ export default function ProcedureShow({ procedure, currentUit }: Props) {
                     <Card title="Contribuyente">
                         <Link
                             href={showTaxpayer(procedure.taxpayer.id)}
-                            className={buttonVariants({
-                                variant: 'outline',
-                                size: 'sm',
-                            })}
+                            className="font-semibold hover:text-link hover:underline"
                         >
                             {procedure.taxpayer.name}
                         </Link>
@@ -244,19 +242,10 @@ export default function ProcedureShow({ procedure, currentUit }: Props) {
                         }
                     >
                         <div className="mb-2">
-                            <Badge
-                                variant="outline"
-                                className={cn(
-                                    order.status === 'pagada' &&
-                                        'border-emerald-500/40 text-emerald-700 dark:text-emerald-300',
-                                    order.status === 'pendiente' &&
-                                        'border-amber-500/40 text-amber-700 dark:text-amber-300',
-                                    order.status === 'anulada' &&
-                                        'border-red-500/40 text-red-700 dark:text-red-300',
-                                )}
-                            >
-                                {order.status_label}
-                            </Badge>
+                            <PaymentOrderStatusBadge
+                                status={order.status}
+                                label={order.status_label}
+                            />
                         </div>
                         <ul className="divide-y">
                             {order.items.map((item) => (
@@ -832,7 +821,7 @@ function Card({
     children: ReactNode;
 }) {
     return (
-        <section className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+        <section className="rounded-2xl border bg-card p-5">
             <div className="mb-3 flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-muted-foreground">
                     {title}
@@ -890,7 +879,7 @@ function IssuedDocumentCard({
                 'flex flex-col overflow-hidden rounded-xl border',
                 active
                     ? 'border-emerald-500/40 bg-emerald-500/[0.03]'
-                    : 'border-sidebar-border/70 dark:border-sidebar-border',
+                    : 'border-border',
             )}
         >
             <div className="flex gap-4 p-5">

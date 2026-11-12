@@ -61,8 +61,8 @@ export default function MarketIndex({ markets }: { markets: MarketRow[] }) {
         <>
             <Head title="Mercados" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Mercados"
                         description="Puestos, cuotas de alquiler y deuda de los comerciantes"
@@ -81,7 +81,7 @@ export default function MarketIndex({ markets }: { markets: MarketRow[] }) {
                     {markets.map((market) => (
                         <section
                             key={market.id}
-                            className="relative flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-5 transition-colors hover:bg-muted/30 dark:border-sidebar-border"
+                            className="relative flex flex-col gap-4 rounded-2xl border bg-card p-5 transition-colors hover:bg-muted/30"
                         >
                             <StatusDot
                                 active={market.is_active}

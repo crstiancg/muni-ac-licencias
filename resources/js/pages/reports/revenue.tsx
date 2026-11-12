@@ -52,8 +52,8 @@ export default function RevenueReport({
         <>
             <Head title="Recaudación" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-end justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Recaudación"
                         description="Órdenes de pago pagadas en Caja por fecha de pago"
@@ -115,7 +115,7 @@ export default function RevenueReport({
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-2">
-                    <section className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                    <section className="rounded-2xl border bg-card p-5">
                         <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
                             Por tipo de trámite
                         </h2>
@@ -125,7 +125,7 @@ export default function RevenueReport({
                             </p>
                         ) : (
                             <table className="w-full text-sm">
-                                <thead className="text-left text-muted-foreground">
+                                <thead className="text-left text-xs tracking-wide text-muted-foreground uppercase">
                                     <tr>
                                         <th className="py-2 font-medium">
                                             Concepto
@@ -159,7 +159,7 @@ export default function RevenueReport({
                         )}
                     </section>
 
-                    <section className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                    <section className="rounded-2xl border bg-card p-5">
                         <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
                             Por día
                         </h2>
@@ -213,7 +213,7 @@ function Stat({
     hint?: string;
 }) {
     return (
-        <div className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+        <div className="rounded-2xl border bg-card p-5">
             <div className="text-sm text-muted-foreground">{label}</div>
             <div className="mt-2 text-2xl font-semibold tabular-nums">
                 {value}

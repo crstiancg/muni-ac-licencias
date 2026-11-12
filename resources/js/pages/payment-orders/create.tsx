@@ -75,8 +75,8 @@ export default function PaymentOrderCreate({
         <>
             <Head title="Orden por otros conceptos" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Orden de pago por otros conceptos"
                         description="Bambalinas, vallas, multas y demás cobros que no salen de un trámite."
@@ -89,7 +89,7 @@ export default function PaymentOrderCreate({
                         event.preventDefault();
                         form.submit(PaymentOrderController.store());
                     }}
-                    className="space-y-6 rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border"
+                    className="space-y-6 rounded-2xl border bg-card p-6"
                 >
                     <fieldset className="space-y-3">
                         <legend className="mb-2 text-sm font-semibold">

@@ -6,7 +6,7 @@ import Pagination from '@/components/pagination';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import SearchInput from '@/components/search-input';
 import SortableHeader from '@/components/sortable-header';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { create, index, show } from '@/routes/procedures';
 import type { Paginated, Procedure, ProcedureStatusValue } from '@/types';
 
@@ -57,8 +57,8 @@ export default function ProcedureIndex({
         <>
             <Head title="Trámites" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Trámites"
                         description="Solicitudes de licencias, autorizaciones y demás procedimientos del TUPA"
@@ -96,26 +96,26 @@ export default function ProcedureIndex({
                 </div>
 
                 {procedures.data.length === 0 ? (
-                    <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                    <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
                         {filters.search || filters.status
                             ? 'No hay trámites con esos filtros.'
                             : 'Aún no hay trámites registrados.'}
                     </div>
                 ) : (
-                    <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                    <div className="overflow-x-auto rounded-2xl border bg-card">
                         <table className="w-full text-sm">
-                            <thead className="bg-muted text-left text-foreground">
+                            <thead className="border-b bg-muted/60 text-left text-xs tracking-wide text-muted-foreground uppercase">
                                 <tr>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Código
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Contribuyente / establecimiento
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Procedimientos
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Estado
                                     </th>
                                     <SortableHeader
@@ -138,11 +138,7 @@ export default function ProcedureIndex({
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <Link
                                                 href={show(procedure.id)}
-                                                className={buttonVariants({
-                                                    variant: 'outline',
-                                                    size: 'sm',
-                                                    className: 'tabular-nums',
-                                                })}
+                                                className="font-mono font-semibold tabular-nums hover:text-link hover:underline"
                                             >
                                                 {procedure.code}
                                             </Link>

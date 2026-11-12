@@ -2,13 +2,11 @@ import { Form, Head, Link } from '@inertiajs/react';
 import { Ban, Printer } from 'lucide-react';
 import PaymentOrderController from '@/actions/App/Http/Controllers/PaymentOrderController';
 import Heading from '@/components/heading';
+import PaymentOrderStatusBadge from '@/components/payment-order-status-badge';
 import RegisterPaymentDialog from '@/components/register-payment-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { ORDER_STATUS_STYLES } from '@/lib/payment-orders';
 import type { PaymentOrderRow } from '@/lib/payment-orders';
-import { cn } from '@/lib/utils';
 import { index, show } from '@/routes/payment-orders';
 import { show as showProcedure } from '@/routes/procedures';
 import { show as showTaxpayer } from '@/routes/taxpayers';
@@ -32,19 +30,17 @@ export default function PaymentOrderShow({ order }: Props) {
         <>
             <Head title={`Orden ${order.code}`} />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <div className="space-y-2">
                         <Heading
                             title={`Orden de pago ${order.code}`}
                             description={`${order.kind_label}${order.issued_by ? ` · emitida por ${order.issued_by}` : ''}`}
                         />
-                        <Badge
-                            variant="outline"
-                            className={cn(ORDER_STATUS_STYLES[order.status])}
-                        >
-                            {order.status_label}
-                        </Badge>
+                        <PaymentOrderStatusBadge
+                            status={order.status}
+                            label={order.status_label}
+                        />
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" asChild>
@@ -94,7 +90,7 @@ export default function PaymentOrderShow({ order }: Props) {
                     </div>
                 </div>
 
-                <section className="grid gap-4 rounded-xl border border-sidebar-border/70 p-6 sm:grid-cols-3 dark:border-sidebar-border">
+                <section className="grid gap-4 rounded-2xl border bg-card p-6 sm:grid-cols-3">
                     <div>
                         <div className="text-xs text-muted-foreground">
                             Contribuyente
@@ -102,10 +98,7 @@ export default function PaymentOrderShow({ order }: Props) {
                         {order.taxpayer_id ? (
                             <Link
                                 href={showTaxpayer(order.taxpayer_id)}
-                                className={buttonVariants({
-                                    variant: 'outline',
-                                    size: 'sm',
-                                })}
+                                className="font-semibold hover:text-link hover:underline"
                             >
                                 {order.payer_name}
                             </Link>
@@ -124,10 +117,7 @@ export default function PaymentOrderShow({ order }: Props) {
                             {order.procedure ? (
                                 <Link
                                     href={showProcedure(order.procedure.id)}
-                                    className={buttonVariants({
-                                        variant: 'outline',
-                                        size: 'sm',
-                                    })}
+                                    className="font-semibold hover:text-link hover:underline"
                                 >
                                     Trámite {order.procedure.code}
                                 </Link>
@@ -148,7 +138,7 @@ export default function PaymentOrderShow({ order }: Props) {
                     </div>
                 </section>
 
-                <section className="rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
+                <section className="rounded-2xl border bg-card p-6">
                     <ul className="divide-y">
                         {order.items.map((item) => (
                             <li

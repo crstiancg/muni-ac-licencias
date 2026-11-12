@@ -65,8 +65,8 @@ export default function UitIndex({
         <>
             <Head title="UIT" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Unidad Impositiva Tributaria"
                         description="Valor de la UIT por año, usado para calcular los derechos de trámite"
@@ -92,15 +92,15 @@ export default function UitIndex({
                 />
 
                 {uits.data.length === 0 ? (
-                    <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                    <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
                         {filters.search
                             ? `No hay UIT que coincidan con “${filters.search}”.`
                             : 'Aún no hay UIT registradas.'}
                     </div>
                 ) : (
-                    <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                    <div className="overflow-x-auto rounded-2xl border bg-card">
                         <table className="w-full text-sm">
-                            <thead className="bg-muted text-left text-foreground">
+                            <thead className="border-b bg-muted/60 text-left text-xs tracking-wide text-muted-foreground uppercase">
                                 <tr>
                                     <SortableHeader
                                         column="year"
@@ -117,7 +117,7 @@ export default function UitIndex({
                                     >
                                         Valor
                                     </SortableHeader>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Base legal
                                     </th>
                                     <th className="px-4 py-3">
@@ -133,7 +133,7 @@ export default function UitIndex({
                                         key={uit.id}
                                         className="hover:bg-muted/30"
                                     >
-                                        <td className="px-4 py-3 font-medium">
+                                        <td className="px-4 py-3 font-semibold">
                                             <span className="flex items-center gap-2">
                                                 {uit.year}
                                                 {uit.year === currentYear && (

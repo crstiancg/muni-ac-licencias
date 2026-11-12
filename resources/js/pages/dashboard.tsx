@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import {
+    ArrowRight,
     BadgeCheck,
     FilePlus,
     FileText,
@@ -11,6 +12,7 @@ import type { ReactNode } from 'react';
 import Heading from '@/components/heading';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as itseIndex } from '@/routes/itse';
 import { index as licensesIndex } from '@/routes/licenses';
@@ -58,10 +60,10 @@ export default function Dashboard({
 }) {
     return (
         <>
-            <Head title="Dashboard" />
+            <Head title="Panel" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Panel"
                         description="Lo que está pendiente en cada paso del trámite"
@@ -74,7 +76,10 @@ export default function Dashboard({
                     </Button>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <section
+                    aria-label="Trámites en curso"
+                    className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                >
                     <Stat
                         icon={<FileText />}
                         label="Por liquidar"
@@ -112,24 +117,26 @@ export default function Dashboard({
                         label="Recaudado este mes"
                         value={currency.format(Number(stats.revenue_month))}
                         hint={`${stats.payments_month} pagos registrados`}
+                        featured
                     />
-                </div>
+                </section>
 
-                <div className="grid gap-4 lg:grid-cols-3">
-                    <section className="rounded-xl border border-sidebar-border/70 p-5 lg:col-span-2 dark:border-sidebar-border">
-                        <div className="mb-3 flex items-center justify-between">
-                            <h2 className="text-sm font-semibold text-muted-foreground">
+                <div className="grid gap-5 lg:grid-cols-3">
+                    <section className="flex flex-col rounded-2xl border bg-card lg:col-span-2">
+                        <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+                            <h2 className="text-lg font-bold">
                                 Últimos trámites
                             </h2>
                             <Link
                                 href={index()}
-                                className="text-sm underline-offset-4 hover:underline"
+                                className="inline-flex items-center gap-1 text-sm font-semibold text-link hover:underline"
                             >
                                 Ver todos
+                                <ArrowRight className="size-4" />
                             </Link>
                         </div>
                         {recent.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="px-5 py-10 text-center text-sm text-muted-foreground">
                                 Aún no hay trámites en el sistema nuevo.
                             </p>
                         ) : (
@@ -138,15 +145,23 @@ export default function Dashboard({
                                     <li key={procedure.id}>
                                         <Link
                                             href={show(procedure.id)}
-                                            className="flex items-center justify-between gap-3 py-2 text-sm hover:underline"
+                                            className="flex items-center justify-between gap-4 px-5 py-3.5 transition-colors hover:bg-muted/40"
                                         >
-                                            <span className="min-w-0 truncate">
-                                                <span className="font-medium tabular-nums">
+                                            <span className="min-w-0">
+                                                <span className="block font-mono text-sm font-semibold">
                                                     {procedure.code}
-                                                </span>{' '}
-                                                {procedure.taxpayer}
+                                                </span>
+                                                <span className="block truncate text-sm text-muted-foreground">
+                                                    {procedure.taxpayer}
+                                                </span>
                                             </span>
-                                            <span className="flex shrink-0 items-center gap-2">
+                                            <span className="flex shrink-0 flex-col items-end gap-1">
+                                                <ProcedureStatusBadge
+                                                    status={procedure.status}
+                                                    label={
+                                                        procedure.status_label
+                                                    }
+                                                />
                                                 <span className="text-xs text-muted-foreground">
                                                     {dateTime.format(
                                                         new Date(
@@ -154,12 +169,6 @@ export default function Dashboard({
                                                         ),
                                                     )}
                                                 </span>
-                                                <ProcedureStatusBadge
-                                                    status={procedure.status}
-                                                    label={
-                                                        procedure.status_label
-                                                    }
-                                                />
                                             </span>
                                         </Link>
                                     </li>
@@ -168,7 +177,10 @@ export default function Dashboard({
                         )}
                     </section>
 
-                    <section className="flex flex-col gap-4">
+                    <section
+                        aria-label="Licencias e ITSE"
+                        className="flex flex-col gap-4"
+                    >
                         <Stat
                             icon={<BadgeCheck />}
                             label="Licencias vigentes"
@@ -206,37 +218,83 @@ export default function Dashboard({
     );
 }
 
+/**
+ * One figure of the day. "Featured" is the graphite tile with the gold
+ * signature, reserved for the month's revenue.
+ */
 function Stat({
     icon,
     label,
     value,
     hint,
     href,
+    featured = false,
 }: {
     icon: ReactNode;
     label: string;
     value: ReactNode;
     hint: string;
     href?: string;
+    featured?: boolean;
 }) {
     const content = (
         <>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
-                {icon}
-                {label}
+            <div className="flex items-center justify-between gap-3">
+                <span
+                    className={cn(
+                        'text-sm font-semibold',
+                        featured
+                            ? 'text-sidebar-foreground'
+                            : 'text-muted-foreground',
+                    )}
+                >
+                    {label}
+                </span>
+                <span
+                    className={cn(
+                        'flex size-9 items-center justify-center rounded-xl [&_svg]:size-4',
+                        featured
+                            ? 'bg-sidebar-accent text-gold'
+                            : 'bg-accent text-link',
+                    )}
+                >
+                    {icon}
+                </span>
             </div>
-            <div className="mt-2 text-2xl font-semibold tabular-nums">
+            <div
+                className={cn(
+                    'mt-3 font-display text-3xl font-bold tabular-nums',
+                    featured && 'text-white',
+                )}
+            >
                 {value}
             </div>
-            <div className="text-xs text-muted-foreground">{hint}</div>
+            <div
+                className={cn(
+                    'mt-1 text-sm',
+                    featured
+                        ? 'text-sidebar-foreground'
+                        : 'text-muted-foreground',
+                )}
+            >
+                {hint}
+            </div>
         </>
     );
 
-    const className =
-        'block rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border';
+    const className = cn(
+        'block rounded-2xl p-5',
+        featured ? 'bg-sidebar' : 'border bg-card',
+    );
 
     return href ? (
-        <Link href={href} className={`${className} hover:bg-muted/30`}>
+        <Link
+            href={href}
+            className={cn(
+                className,
+                'transition-colors hover:border-gold-strong',
+            )}
+        >
             {content}
         </Link>
     ) : (

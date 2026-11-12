@@ -157,7 +157,7 @@ export default function ApplicantStep({
     if (applicant) {
         return (
             <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[#bfe3d2] bg-[#e3f3ec] p-4 dark:border-emerald-400/30 dark:bg-emerald-400/10">
                     <div className="flex items-center gap-3">
                         <CircleCheck className="size-6 text-emerald-600" />
                         <div>
@@ -196,7 +196,7 @@ export default function ApplicantStep({
 
         return (
             <div className="space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-sky-500/40 bg-sky-500/5 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[#c9d9f3] bg-[#e6eefb] p-4 dark:border-sky-400/30 dark:bg-sky-400/10">
                     <div className="flex items-center gap-3">
                         <UserPlus className="size-6 text-sky-600" />
                         <div>

@@ -69,8 +69,8 @@ export default function StallShow({ stall, charges, debt }: Props) {
         <>
             <Head title={`Puesto ${stall.code}`} />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <div className="space-y-2">
                         <Heading
                             title={`Puesto ${stall.code}`}
@@ -95,7 +95,7 @@ export default function StallShow({ stall, charges, debt }: Props) {
                     </Button>
                 </div>
 
-                <section className="grid gap-4 rounded-xl border border-sidebar-border/70 p-6 sm:grid-cols-4 dark:border-sidebar-border">
+                <section className="grid gap-4 rounded-2xl border bg-card p-6 sm:grid-cols-4">
                     <div>
                         <div className="text-xs text-muted-foreground">
                             Titular
@@ -103,10 +103,7 @@ export default function StallShow({ stall, charges, debt }: Props) {
                         {stall.taxpayer ? (
                             <Link
                                 href={showTaxpayer(stall.taxpayer.id)}
-                                className={buttonVariants({
-                                    variant: 'outline',
-                                    size: 'sm',
-                                })}
+                                className="font-semibold hover:text-link hover:underline"
                             >
                                 {stall.taxpayer.name}
                             </Link>
@@ -151,7 +148,7 @@ export default function StallShow({ stall, charges, debt }: Props) {
                     )}
                 </section>
 
-                <section className="rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border">
+                <section className="rounded-2xl border bg-card p-5">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                         <h2 className="text-sm font-semibold text-muted-foreground">
                             Cuotas ({charges.length})
@@ -199,7 +196,7 @@ export default function StallShow({ stall, charges, debt }: Props) {
                         </p>
                     ) : (
                         <table className="w-full text-sm">
-                            <thead className="text-left text-muted-foreground">
+                            <thead className="text-left text-xs tracking-wide text-muted-foreground uppercase">
                                 <tr>
                                     <th className="w-8 py-2" />
                                     <th className="py-2 font-medium">

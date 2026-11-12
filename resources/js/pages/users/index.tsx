@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
 import SearchInput from '@/components/search-input';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { create, edit, index } from '@/routes/users';
 import type { Paginated } from '@/types';
 
@@ -26,8 +26,8 @@ export default function UserIndex({
         <>
             <Head title="Usuarios" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Usuarios"
                         description="Personal que usa el sistema y su rol"
@@ -59,24 +59,24 @@ export default function UserIndex({
                 />
 
                 {users.data.length === 0 ? (
-                    <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                    <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
                         No hay usuarios que coincidan.
                     </div>
                 ) : (
-                    <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                    <div className="overflow-x-auto rounded-2xl border bg-card">
                         <table className="w-full text-sm">
-                            <thead className="bg-muted text-left text-foreground">
+                            <thead className="border-b bg-muted/60 text-left text-xs tracking-wide text-muted-foreground uppercase">
                                 <tr>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Nombre
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Correo
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Rol
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Estado
                                     </th>
                                     <th className="px-4 py-3" />
@@ -88,7 +88,7 @@ export default function UserIndex({
                                         key={user.id}
                                         className="hover:bg-muted/30"
                                     >
-                                        <td className="px-4 py-3 font-medium">
+                                        <td className="px-4 py-3 font-semibold">
                                             {user.name}
                                         </td>
                                         <td className="px-4 py-3 text-muted-foreground">
@@ -118,10 +118,7 @@ export default function UserIndex({
                                         <td className="px-4 py-3 text-right">
                                             <Link
                                                 href={edit(user.id)}
-                                                className={buttonVariants({
-                                                    variant: 'outline',
-                                                    size: 'sm',
-                                                })}
+                                                className="font-semibold hover:text-link hover:underline"
                                             >
                                                 Editar
                                             </Link>

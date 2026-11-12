@@ -24,8 +24,8 @@ export default function RoleIndex({ roles }: { roles: RoleRow[] }) {
         <>
             <Head title="Roles y permisos" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Roles y permisos"
                         description="Cada usuario tiene un rol; el rol define qué módulos puede usar."
@@ -43,7 +43,7 @@ export default function RoleIndex({ roles }: { roles: RoleRow[] }) {
                     {roles.map((role) => (
                         <section
                             key={role.id}
-                            className="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-5 dark:border-sidebar-border"
+                            className="flex flex-col gap-4 rounded-2xl border bg-card p-5"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div>

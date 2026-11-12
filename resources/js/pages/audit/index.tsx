@@ -70,8 +70,8 @@ export default function AuditIndex({
         <>
             <Head title="Auditoría" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Auditoría"
                         description="Quién cambió qué y cuándo en contribuyentes, establecimientos, licencias, ITSE, órdenes de pago y catálogos"
@@ -136,7 +136,7 @@ export default function AuditIndex({
                 </div>
 
                 {activities.data.length === 0 ? (
-                    <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                    <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
                         No hay cambios registrados con esos filtros.
                     </div>
                 ) : (
@@ -144,7 +144,7 @@ export default function AuditIndex({
                         {activities.data.map((activity) => (
                             <li
                                 key={activity.id}
-                                className="rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
+                                className="rounded-2xl border bg-card p-4"
                             >
                                 <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                                     <span>
@@ -163,7 +163,7 @@ export default function AuditIndex({
                                 </div>
                                 {activity.changes.length > 0 && (
                                     <table className="mt-3 w-full text-xs">
-                                        <thead className="text-left text-muted-foreground">
+                                        <thead className="text-left text-xs tracking-wide text-muted-foreground uppercase">
                                             <tr>
                                                 <th className="py-1 pr-3 font-medium">
                                                     Campo

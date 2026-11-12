@@ -39,7 +39,7 @@ export default function SortableHeader({
                       : 'none'
             }
             className={cn(
-                'px-4 py-3 font-medium',
+                'px-4 py-3 font-semibold',
                 align === 'right' && 'text-right',
             )}
         >

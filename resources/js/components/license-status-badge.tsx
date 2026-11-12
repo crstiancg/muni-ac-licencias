@@ -1,14 +1,16 @@
+import { Clock } from 'lucide-react';
+import StatusPill from '@/components/status-pill';
+import type { StatusTone } from '@/components/status-pill';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 import type { LicenseStatusValue } from '@/types';
 
-const STYLES: Record<LicenseStatusValue, string> = {
-    vigente: 'border-emerald-500/40 text-emerald-700 dark:text-emerald-300',
-    cese_temporal: 'border-amber-500/40 text-amber-700 dark:text-amber-300',
-    cese_definitivo: 'border-zinc-500/40 text-zinc-600 dark:text-zinc-300',
-    anulada: 'border-red-500/40 text-red-700 dark:text-red-300',
-    caducada: 'border-zinc-500/40 text-zinc-600 dark:text-zinc-300',
-    reemplazada: 'border-sky-500/40 text-sky-700 dark:text-sky-300',
+const TONES: Record<LicenseStatusValue, StatusTone> = {
+    vigente: 'success',
+    cese_temporal: 'warning',
+    cese_definitivo: 'neutral',
+    anulada: 'danger',
+    caducada: 'rust',
+    reemplazada: 'violet',
 };
 
 export default function LicenseStatusBadge({
@@ -18,9 +20,22 @@ export default function LicenseStatusBadge({
     status: LicenseStatusValue;
     label: string;
 }) {
+    return <StatusPill tone={TONES[status]}>{label}</StatusPill>;
+}
+
+/**
+ * Imported from the old system and not yet confirmed in force: a dashed
+ * outline so it reads as "pending", never as a status of its own.
+ */
+export function LicensePendingBadge() {
     return (
-        <Badge variant="outline" className={cn(STYLES[status])}>
-            {label}
+        <Badge
+            variant="outline"
+            title="Del sistema anterior: confirmar si sigue funcionando"
+            className="rounded-full border-dashed border-[#c9851a] bg-[#fffaf0] px-2.5 font-semibold text-[#85520a] dark:border-amber-400/60 dark:bg-amber-400/10 dark:text-amber-300"
+        >
+            <Clock />
+            Por confirmar
         </Badge>
     );
 }

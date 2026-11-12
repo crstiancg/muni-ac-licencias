@@ -32,8 +32,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="flex flex-col gap-6 p-4 md:p-6">
-            <div className="-mx-4 -mt-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+        <div className="flex flex-col gap-5 p-4 md:p-8">
+            <div className="flex flex-wrap items-end justify-between gap-4">
                 <Heading
                     title="Configuración"
                     description="Tu perfil, contraseña y apariencia"
@@ -53,7 +53,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 variant="ghost"
                                 asChild
                                 className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentOrParentUrl(item.href),
+                                    'bg-accent font-semibold':
+                                        isCurrentOrParentUrl(item.href),
                                 })}
                             >
                                 <Link href={item.href}>

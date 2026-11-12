@@ -18,6 +18,7 @@ import {
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import SteppedBand from '@/components/stepped-band';
 import {
     Sidebar,
     SidebarContent,
@@ -145,6 +146,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
+                <SteppedBand className="h-2.5 px-2 opacity-90 group-data-[collapsible=icon]:hidden" />
             </SidebarHeader>
 
             <SidebarContent>

@@ -208,7 +208,7 @@ export default function ProcedureWizard({
 
     return (
         <div className="flex min-h-full flex-1 flex-col gap-6 p-4 md:p-6">
-            <div className="-mx-4 -mt-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
                 <Heading title={title} description={description} />
             </div>
 
@@ -257,7 +257,7 @@ export default function ProcedureWizard({
                 })}
             </ol>
 
-            <section className="flex-1 rounded-xl border border-sidebar-border/70 p-6 dark:border-sidebar-border">
+            <section className="flex-1 rounded-2xl border bg-card p-6">
                 <h2 className="mb-4 text-lg font-semibold">
                     {step + 1}. {STEPS[step].title}
                 </h2>
@@ -386,7 +386,7 @@ export default function ProcedureWizard({
 
                         {declarationSource &&
                             form.data.establishment_id !== null && (
-                                <div className="flex items-start gap-3 rounded-lg border border-sky-500/40 bg-sky-500/5 p-4 text-sm">
+                                <div className="flex items-start gap-3 rounded-lg border border-[#c9d9f3] bg-[#e6eefb] p-4 text-sm dark:border-sky-400/30 dark:bg-sky-400/10">
                                     <History className="mt-0.5 size-5 shrink-0 text-sky-600" />
                                     <div>
                                         <div className="font-medium">

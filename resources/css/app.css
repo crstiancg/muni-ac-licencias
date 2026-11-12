@@ -9,9 +9,15 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Public Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+    --font-display:
+        'Bricolage Grotesque', 'Public Sans', ui-sans-serif, system-ui,
+        sans-serif;
+    --font-mono:
+        'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+        monospace;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -59,77 +65,92 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    --color-gold: var(--gold);
+    --color-gold-strong: var(--gold-strong);
+    --color-link: var(--link);
 }
 
+/*
+ * "Grafito y oro": neutral graphite base so the licence status colours are
+ * the only loud colour on screen; the gold of the municipal coat of arms is
+ * this system's signature (active nav icon, focus ring, key actions).
+ */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --background: #f6f6f4;
+    --foreground: #17191c;
+    --card: #ffffff;
+    --card-foreground: #17191c;
+    --popover: #ffffff;
+    --popover-foreground: #17191c;
+    --primary: #1a1d21;
+    --primary-foreground: #ffffff;
+    --secondary: #eeeeea;
+    --secondary-foreground: #17191c;
+    --muted: #f0f0ec;
+    --muted-foreground: #5c6067;
+    --accent: #f4efe2;
+    --accent-foreground: #17191c;
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
+    --border: #e2e2de;
+    --input: #d3d3ce;
+    --ring: #c48a12;
+    --gold: #f2c14e;
+    --gold-strong: #c48a12;
+    --link: #8a5b00;
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --sidebar: #1a1d21;
+    --sidebar-foreground: #d5d8dc;
+    --sidebar-primary: #f2c14e;
+    --sidebar-primary-foreground: #1a1d21;
+    --sidebar-accent: #2a2e34;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #2e3238;
+    --sidebar-ring: #c48a12;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
+    --background: #141619;
+    --foreground: #ecece8;
+    --card: #1c1f23;
+    --card-foreground: #ecece8;
+    --popover: #1c1f23;
+    --popover-foreground: #ecece8;
+    --primary: #f2c14e;
+    --primary-foreground: #1a1d21;
+    --secondary: #26292e;
+    --secondary-foreground: #ecece8;
+    --muted: #26292e;
+    --muted-foreground: #a3a8af;
+    --accent: #2e2a20;
+    --accent-foreground: #ecece8;
     --destructive: oklch(0.396 0.141 25.723);
     --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
+    --border: #2e3238;
+    --input: #3a3f46;
+    --ring: #c48a12;
+    --gold: #f2c14e;
+    --gold-strong: #e0a82e;
+    --link: #f2c14e;
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
     --chart-4: oklch(0.627 0.265 303.9);
     --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    --sidebar: #0f1113;
+    --sidebar-foreground: #d5d8dc;
+    --sidebar-primary: #f2c14e;
+    --sidebar-primary-foreground: #1a1d21;
+    --sidebar-accent: #24282d;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #24282d;
+    --sidebar-ring: #c48a12;
 }
 
 @layer base {
@@ -139,5 +160,17 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+
+    h1,
+    h2 {
+        @apply font-display tracking-tight;
+    }
+}
+
+@layer components {
+    /* The current section's icon carries the gold signature. */
+    [data-sidebar='menu-button'][data-active='true'] > svg {
+        color: var(--sidebar-primary);
     }
 }

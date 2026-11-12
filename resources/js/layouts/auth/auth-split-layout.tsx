@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { BadgeCheck, Receipt, ShieldCheck, Warehouse } from 'lucide-react';
-import AppLogoIcon from '@/components/app-logo-icon';
+import MunicipalCrest from '@/components/municipal-crest';
+import SteppedBand from '@/components/stepped-band';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -24,20 +25,14 @@ export default function AuthSplitLayout({
 
     return (
         <div className="grid min-h-dvh bg-background lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-            <aside className="relative hidden overflow-hidden bg-zinc-900 text-zinc-300 lg:flex lg:flex-col lg:justify-between lg:p-12">
-                {/* Soft institutional glow behind the content. */}
-                <div className="pointer-events-none absolute -top-32 -left-32 size-112 rounded-full bg-zinc-700 opacity-40 blur-3xl" />
-                <div className="pointer-events-none absolute -right-24 -bottom-40 size-96 rounded-full bg-zinc-700 opacity-30 blur-3xl" />
-
+            <aside className="relative hidden overflow-hidden bg-sidebar text-sidebar-foreground lg:flex lg:flex-col lg:justify-between lg:p-12">
                 <Link
                     href={home()}
                     className="relative flex items-center gap-3"
                 >
-                    <span className="flex size-11 items-center justify-center rounded-lg bg-white text-zinc-900">
-                        <AppLogoIcon className="size-6 fill-current" />
-                    </span>
+                    <MunicipalCrest className="size-12" />
                     <span className="grid leading-tight">
-                        <span className="text-lg font-semibold text-white">
+                        <span className="font-display text-xl font-bold text-white">
                             {name}
                         </span>
                         <span className="text-sm opacity-75">
@@ -47,13 +42,14 @@ export default function AuthSplitLayout({
                 </Link>
 
                 <div className="relative space-y-6">
-                    <h2 className="max-w-md text-3xl leading-tight font-semibold text-white">
+                    <SteppedBand className="max-w-md" />
+                    <h2 className="max-w-md text-4xl leading-tight font-bold text-white">
                         Trámites, licencias y cobros en un solo lugar.
                     </h2>
                     <ul className="space-y-3">
                         {modules.map(({ icon: Icon, label }) => (
                             <li key={label} className="flex items-center gap-3">
-                                <span className="flex size-8 items-center justify-center rounded-md bg-zinc-800">
+                                <span className="flex size-8 items-center justify-center rounded-md bg-sidebar-accent text-gold">
                                     <Icon className="size-4" />
                                 </span>
                                 <span className="text-sm">{label}</span>
@@ -74,11 +70,11 @@ export default function AuthSplitLayout({
                         href={home()}
                         className="flex items-center gap-3 lg:hidden"
                     >
-                        <span className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                            <AppLogoIcon className="size-6 fill-current" />
-                        </span>
+                        <MunicipalCrest className="size-11" />
                         <span className="grid leading-tight">
-                            <span className="font-semibold">{name}</span>
+                            <span className="font-display text-lg font-bold">
+                                {name}
+                            </span>
                             <span className="text-xs text-muted-foreground">
                                 Municipalidad Provincial de Puno
                             </span>
@@ -86,9 +82,7 @@ export default function AuthSplitLayout({
                     </Link>
 
                     <div className="space-y-2">
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                            {title}
-                        </h1>
+                        <h1 className="text-3xl font-bold">{title}</h1>
                         <p className="text-sm text-muted-foreground">
                             {description}
                         </p>

@@ -100,8 +100,8 @@ export default function TaxpayerShow({
         <>
             <Head title={taxpayer.name} />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>
                         <Heading
                             title={taxpayer.name}
@@ -135,7 +135,7 @@ export default function TaxpayerShow({
                     </div>
                 </div>
 
-                <section className="grid gap-x-8 gap-y-4 rounded-xl border border-sidebar-border/70 p-6 sm:grid-cols-2 lg:grid-cols-3 dark:border-sidebar-border">
+                <section className="grid gap-x-8 gap-y-4 rounded-2xl border bg-card p-6 sm:grid-cols-2 lg:grid-cols-3">
                     <Field label="Domicilio fiscal">
                         {[
                             taxpayer.address,
@@ -175,7 +175,7 @@ export default function TaxpayerShow({
                             Aún no tiene documentos emitidos.
                         </div>
                     ) : (
-                        <ul className="divide-y rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                        <ul className="divide-y rounded-2xl border bg-card">
                             {licenses.map((license) => (
                                 <li key={license.id}>
                                     <Link
@@ -215,7 +215,7 @@ export default function TaxpayerShow({
                             Aún no tiene trámites en el sistema nuevo.
                         </div>
                     ) : (
-                        <ul className="divide-y rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                        <ul className="divide-y rounded-2xl border bg-card">
                             {procedures.map((procedure) => (
                                 <li key={procedure.id}>
                                     <Link
@@ -269,7 +269,7 @@ export default function TaxpayerShow({
                     </div>
 
                     {establishments.length === 0 ? (
-                        <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                        <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
                             Aún no tiene establecimientos registrados.
                         </div>
                     ) : (
@@ -277,7 +277,7 @@ export default function TaxpayerShow({
                             {establishments.map((establishment) => (
                                 <li
                                     key={establishment.id}
-                                    className="flex gap-3 rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
+                                    className="flex gap-3 rounded-2xl border bg-card p-4"
                                 >
                                     <Store className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
                                     <div className="min-w-0 flex-1">

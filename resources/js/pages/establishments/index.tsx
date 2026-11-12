@@ -4,7 +4,7 @@ import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
 import SearchInput from '@/components/search-input';
 import SortableHeader from '@/components/sortable-header';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { create, edit, index } from '@/routes/establishments';
 import { show } from '@/routes/taxpayers';
 import type { Establishment, Paginated } from '@/types';
@@ -46,8 +46,8 @@ export default function EstablishmentIndex({
         <>
             <Head title="Establecimientos" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Establecimientos"
                         description="Locales donde los contribuyentes desarrollan su actividad"
@@ -71,15 +71,15 @@ export default function EstablishmentIndex({
                 />
 
                 {establishments.data.length === 0 ? (
-                    <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                    <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
                         {filters.search
                             ? `No hay establecimientos que coincidan con “${filters.search}”.`
                             : 'Aún no hay establecimientos registrados.'}
                     </div>
                 ) : (
-                    <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                    <div className="overflow-x-auto rounded-2xl border bg-card">
                         <table className="w-full text-sm">
-                            <thead className="bg-muted text-left text-foreground">
+                            <thead className="border-b bg-muted/60 text-left text-xs tracking-wide text-muted-foreground uppercase">
                                 <tr>
                                     <SortableHeader
                                         column="activity"
@@ -95,7 +95,7 @@ export default function EstablishmentIndex({
                                     >
                                         Dirección
                                     </SortableHeader>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Contribuyente
                                     </th>
                                     <SortableHeader
@@ -139,10 +139,7 @@ export default function EstablishmentIndex({
                                                         establishment.taxpayer
                                                             .id,
                                                     )}
-                                                    className={buttonVariants({
-                                                        variant: 'outline',
-                                                        size: 'sm',
-                                                    })}
+                                                    className="font-semibold hover:text-link hover:underline"
                                                 >
                                                     {
                                                         establishment.taxpayer

@@ -5,11 +5,9 @@ import type { SelectOption } from '@/components/form-select';
 import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
 import SearchInput from '@/components/search-input';
-import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { ORDER_STATUS_STYLES } from '@/lib/payment-orders';
+import PaymentOrderStatusBadge from '@/components/payment-order-status-badge';
+import { Button } from '@/components/ui/button';
 import type { PaymentOrderRow } from '@/lib/payment-orders';
-import { cn } from '@/lib/utils';
 import { create, index, show } from '@/routes/payment-orders';
 import type { Paginated } from '@/types';
 
@@ -57,8 +55,8 @@ export default function PaymentOrderIndex({
         <>
             <Head title="Órdenes de pago" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                <div className="-mx-4 -mt-4 flex flex-wrap items-start justify-between gap-4 border-b px-4 py-5 md:-mx-6 md:-mt-6 md:px-6 md:py-6">
+            <div className="flex flex-col gap-5 p-4 md:p-8">
+                <div className="flex flex-wrap items-end justify-between gap-4">
                     <Heading
                         title="Órdenes de pago"
                         description="Caja: trámites, otros conceptos y mercados en un solo lugar"
@@ -107,27 +105,27 @@ export default function PaymentOrderIndex({
                 </div>
 
                 {orders.data.length === 0 ? (
-                    <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                    <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
                         No hay órdenes con esos filtros.
                     </div>
                 ) : (
-                    <div className="overflow-x-auto rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                    <div className="overflow-x-auto rounded-2xl border bg-card">
                         <table className="w-full text-sm">
-                            <thead className="bg-muted text-left text-foreground">
+                            <thead className="border-b bg-muted/60 text-left text-xs tracking-wide text-muted-foreground uppercase">
                                 <tr>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Orden
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Contribuyente
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Estado
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
                                         Total
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
+                                    <th className="px-4 py-3 font-semibold">
                                         Emitida
                                     </th>
                                 </tr>
@@ -141,11 +139,7 @@ export default function PaymentOrderIndex({
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <Link
                                                 href={show(order.id)}
-                                                className={buttonVariants({
-                                                    variant: 'outline',
-                                                    size: 'sm',
-                                                    className: 'tabular-nums',
-                                                })}
+                                                className="font-mono font-semibold tabular-nums hover:text-link hover:underline"
                                             >
                                                 {order.code}
                                             </Link>
@@ -162,16 +156,10 @@ export default function PaymentOrderIndex({
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Badge
-                                                variant="outline"
-                                                className={cn(
-                                                    ORDER_STATUS_STYLES[
-                                                        order.status
-                                                    ],
-                                                )}
-                                            >
-                                                {order.status_label}
-                                            </Badge>
+                                            <PaymentOrderStatusBadge
+                                                status={order.status}
+                                                label={order.status_label}
+                                            />
                                             {order.receipt_number && (
                                                 <div className="text-xs text-muted-foreground">
                                                     Comp. {order.receipt_number}
