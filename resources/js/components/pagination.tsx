@@ -31,7 +31,11 @@ export default function Pagination<T>({
             )}
         >
             <p className="text-sm text-muted-foreground">
-                Mostrando {paginator.from}–{paginator.to} de {paginator.total}
+                Mostrando{' '}
+                <strong className="text-foreground tabular-nums">
+                    {paginator.from}–{paginator.to}
+                </strong>{' '}
+                de {paginator.total.toLocaleString('es-PE')}
             </p>
 
             {paginator.last_page > 1 && (

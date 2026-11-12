@@ -502,22 +502,12 @@ export default function LicenseIndex({
                         </div>
                     )}
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
-                        <p className="text-sm text-muted-foreground">
-                            {licenses.total > 0 ? (
-                                <>
-                                    Mostrando{' '}
-                                    <strong className="text-foreground">
-                                        {licenses.from}–{licenses.to}
-                                    </strong>{' '}
-                                    de {licenses.total.toLocaleString('es-PE')}
-                                </>
-                            ) : (
-                                'Sin resultados'
-                            )}
-                        </p>
-                        <Pagination paginator={licenses} />
-                    </div>
+                    {licenses.total > 0 && (
+                        <Pagination
+                            paginator={licenses}
+                            className="border-t px-4 py-3"
+                        />
+                    )}
                 </section>
             </div>
         </>

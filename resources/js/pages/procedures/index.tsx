@@ -428,23 +428,12 @@ export default function ProcedureIndex({
                         </div>
                     )}
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
-                        <p className="text-sm text-muted-foreground">
-                            {procedures.total > 0 ? (
-                                <>
-                                    Mostrando{' '}
-                                    <strong className="text-foreground">
-                                        {procedures.from}–{procedures.to}
-                                    </strong>{' '}
-                                    de{' '}
-                                    {procedures.total.toLocaleString('es-PE')}
-                                </>
-                            ) : (
-                                'Sin resultados'
-                            )}
-                        </p>
-                        <Pagination paginator={procedures} />
-                    </div>
+                    {procedures.total > 0 && (
+                        <Pagination
+                            paginator={procedures}
+                            className="border-t px-4 py-3"
+                        />
+                    )}
                 </section>
             </div>
         </>
