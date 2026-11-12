@@ -47,13 +47,18 @@ LICENCIAS_VERIFICATION_URL=   # URL pública de los QR; vacío = APP_URL
 
 APIS_NET_TOKEN=           # consulta RENIEC/SUNAT al registrar contribuyentes
 
-# Sistema anterior (solo lectura), para legacy:sync
-LEGACY_DB_HOST=192.168.100.3
-LEGACY_DB_PORT=3306
+# Sistema anterior, para legacy:sync (ver "Conexión al sistema anterior")
+LEGACY_SSH_HOST=192.168.100.3
+LEGACY_SSH_USER=licencias
+LEGACY_SSH_PRIVATE_KEY_B64=   # llave privada en base64, una línea
+LEGACY_SSH_KNOWN_HOSTS=       # opcional: fija la llave del servidor
 LEGACY_DB_DATABASE=dblicencias
 LEGACY_DB_USERNAME=licencias_lectura
 LEGACY_DB_PASSWORD=
 ```
+
+`LEGACY_DB_HOST` y `LEGACY_DB_PORT` no se cargan: el compose apunta la app
+al túnel (`legacy-tunnel:3306`).
 
 No hace falta `SESSION_DOMAIN`.
 
@@ -102,24 +107,50 @@ veces que haga falta (por ejemplo, cada mañana o el día del corte):
   importado, ese cambio no se trae.
 - Si se corta a mitad, se vuelve a correr y continúa sin duplicar.
 
-### Usuario de solo lectura en la base anterior
+## Conexión al sistema anterior
 
-La importación solo lee. En el MySQL de `192.168.100.3`, crear un usuario
-que solo pueda leer y solo desde el servidor de Dokploy:
+El MySQL de `192.168.100.3` solo escucha en `127.0.0.1` de ese servidor;
+se llega por SSH, como hace HeidiSQL. El servicio `legacy-tunnel` hace lo
+mismo: entra por SSH como `licencias` y ofrece el MySQL a la app solo
+dentro de la red interna del compose. No se toca el servidor anterior.
 
-```sql
-CREATE USER 'licencias_lectura'@'<IP del servidor Dokploy>'
-    IDENTIFIED BY '<contraseña>';
-GRANT SELECT ON dblicencias.* TO 'licencias_lectura'@'<IP del servidor Dokploy>';
-```
-
-MySQL tiene que escuchar en la red (`bind-address` distinto de
-`127.0.0.1`) y el firewall permitir el 3306 solo desde esa IP. Para probar
-desde la terminal del contenedor `app`:
-
-```bash
-php artisan tinker --execute="DB::connection('legacy')->getPdo(); echo 'OK';"
-```
+1. **Llave SSH** (en tu PC, con Git Bash). No uses la contraseña de
+   `licencias`:
+   ```bash
+   ssh-keygen -t ed25519 -f dokploy_legacy -N "" -C dokploy-legacy-tunnel
+   ```
+   Si el servidor es muy antiguo y rechaza `ed25519`, usar
+   `-t rsa -b 4096`.
+2. **Autorizarla** en el servidor anterior (te pide la contraseña de
+   `licencias` una vez):
+   ```bash
+   cat dokploy_legacy.pub | ssh licencias@192.168.100.3 \
+     'mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys'
+   ```
+3. **Cargarla en Dokploy**: `base64 -w0 dokploy_legacy` y pegar el
+   resultado en `LEGACY_SSH_PRIVATE_KEY_B64`. Después borrar
+   `dokploy_legacy` de tu PC: la llave solo vive en Dokploy.
+4. **Opcional, recomendado**: fijar la llave del servidor para que nadie
+   pueda hacerse pasar por él. Desde el servidor de Dokploy,
+   `ssh-keyscan -t ed25519 192.168.100.3` y pegar esa línea en
+   `LEGACY_SSH_KNOWN_HOSTS`.
+5. **Usuario de solo lectura** en MySQL, desde HeidiSQL con la sesión
+   `root` (la app no debe leer como root). Por el túnel, MySQL ve las
+   conexiones como locales:
+   ```sql
+   CREATE USER 'licencias_lectura'@'127.0.0.1' IDENTIFIED BY '<contraseña>';
+   GRANT SELECT ON dblicencias.* TO 'licencias_lectura'@'127.0.0.1';
+   CREATE USER 'licencias_lectura'@'localhost' IDENTIFIED BY '<contraseña>';
+   GRANT SELECT ON dblicencias.* TO 'licencias_lectura'@'localhost';
+   ```
+6. **Deploy** y revisar los logs de `legacy-tunnel`: tiene que mostrar
+   `legacy-tunnel: licencias@192.168.100.3 -> 127.0.0.1:3306` sin errores.
+7. **Probar** desde la terminal del contenedor `app`:
+   ```bash
+   php artisan tinker --execute="DB::connection('legacy')->getPdo(); echo 'OK';"
+   ```
+   - `Connection refused`: el túnel no está arriba (ver sus logs).
+   - `Access denied`: usuario, contraseña o host del `GRANT`.
 
 ## Si el dominio responde 502 Bad Gateway
 

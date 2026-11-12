@@ -4,9 +4,11 @@
 # internal host. Every variable comes from Dokploy's Environment tab, which
 # Dokploy writes to .env next to this file.
 #
-#   app        web (nginx + php-fpm, port 8080). Runs migrations on start.
-#              In Dokploy > Domains: service "app", port 8080, HTTPS on.
-#   scheduler  same image running `schedule:work` (licenses:expire 00:10).
+#   app            web (nginx + php-fpm, port 8080). Runs migrations on start.
+#                  In Dokploy > Domains: service "app", port 8080, HTTPS on.
+#   scheduler      same image running `schedule:work` (licenses:expire 00:10).
+#   legacy-tunnel  SSH tunnel to the old system's MySQL for `legacy:sync`
+#                  (reachable only inside this compose network).
 
 x-app: &app
   build:
@@ -23,6 +25,9 @@ services:
     <<: *app
     environment:
       AUTORUN_ENABLED: "true"
+      # The old system's MySQL, through the tunnel below.
+      LEGACY_DB_HOST: legacy-tunnel
+      LEGACY_DB_PORT: "3306"
     expose:
       - "8080"
 
@@ -39,3 +44,18 @@ services:
     depends_on:
       app:
         condition: service_healthy
+
+  legacy-tunnel:
+    build:
+      context: docker/legacy-tunnel
+    restart: unless-stopped
+    # Only its own variables: it never sees the app's secrets.
+    environment:
+      LEGACY_SSH_HOST: ${LEGACY_SSH_HOST:-}
+      LEGACY_SSH_USER: ${LEGACY_SSH_USER:-licencias}
+      LEGACY_SSH_PORT: ${LEGACY_SSH_PORT:-22}
+      LEGACY_SSH_PRIVATE_KEY_B64: ${LEGACY_SSH_PRIVATE_KEY_B64:-}
+      LEGACY_SSH_KNOWN_HOSTS: ${LEGACY_SSH_KNOWN_HOSTS:-}
+      LEGACY_SSH_TARGET: ${LEGACY_SSH_TARGET:-127.0.0.1:3306}
+    expose:
+      - "3306"
