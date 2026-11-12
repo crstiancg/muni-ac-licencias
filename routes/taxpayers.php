@@ -70,6 +70,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($view, $manage, 
     Route::put('licenses/{license}/series', [LicenseController::class, 'updateSeries'])->middleware($manage)->name('licenses.series');
     // Mesa de partes or Fiscalización: checked in the controller.
     Route::post('licenses/{license}/confirm', [LicenseController::class, 'confirm'])->name('licenses.confirm');
+    Route::post('licenses/confirm', [LicenseController::class, 'confirmMany'])->name('licenses.confirm-many');
 
     Route::middleware($collect)->group(function () {
         Route::post('payment-orders/{paymentOrder}/payment', [PaymentOrderController::class, 'registerPayment'])->name('payment-orders.payment');

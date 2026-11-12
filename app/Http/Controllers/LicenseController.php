@@ -56,6 +56,8 @@ class LicenseController extends Controller
             ],
             'types' => IssuedDocumentType::options(),
             'statuses' => LicenseStatus::options(),
+            // Imported licences in force still waiting to be confirmed.
+            'pending_count' => License::query()->pendingConfirmation()->count(),
         ]);
     }
 
@@ -133,6 +135,7 @@ class LicenseController extends Controller
                 'duplicates' => $license->duplicates,
                 'replaced_by' => $license->replacedBy?->only('id', 'number'),
                 'verification_url' => $license->verificationUrl(),
+                'qr' => QrCode::svg($license->verificationUrl()),
                 'is_legacy' => $license->isLegacy(),
                 'confirmed_at' => $license->confirmed_at,
                 'confirmation_note' => $license->confirmation_note,
@@ -198,10 +201,7 @@ class LicenseController extends Controller
      */
     public function confirm(Request $request, License $license, ConfirmLicense $confirm): RedirectResponse
     {
-        abort_unless(
-            $request->user()->can(Permission::ProceduresManage->value) || $request->user()->can(Permission::Itse->value),
-            403,
-        );
+        $this->authorizeConfirmation($request);
 
         $data = $request->validate(
             ['confirmation_note' => ['required', 'string', 'min:5', 'max:255']],
@@ -219,6 +219,51 @@ class LicenseController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => "Vigencia de la licencia {$license->number} confirmada."]);
 
         return back();
+    }
+
+    /**
+     * Confirm several imported licences at once with one basis, e.g. after a
+     * Fiscalización operation. Licences that need no confirmation are skipped.
+     */
+    public function confirmMany(Request $request, ConfirmLicense $confirm): RedirectResponse
+    {
+        $this->authorizeConfirmation($request);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'max:100'],
+            'ids.*' => ['integer'],
+            'confirmation_note' => ['required', 'string', 'min:5', 'max:255'],
+        ], attributes: ['ids' => 'licencias', 'confirmation_note' => 'sustento']);
+
+        $licenses = License::query()->whereKey($data['ids'])->pendingConfirmation()->get();
+
+        if ($licenses->isEmpty()) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Ninguna de las licencias seleccionadas requiere confirmación.']);
+
+            return back();
+        }
+
+        DB::transaction(fn () => $licenses->each(
+            fn (License $license) => $confirm->handle($license, $data['confirmation_note']),
+        ));
+
+        $count = $licenses->count();
+        Inertia::flash('toast', ['type' => 'success', 'message' => $count === 1
+            ? "Vigencia de la licencia {$licenses->first()->number} confirmada."
+            : "Vigencia de {$count} licencias confirmada."]);
+
+        return back();
+    }
+
+    /**
+     * Mesa de partes or Fiscalización confirm imported licences.
+     */
+    private function authorizeConfirmation(Request $request): void
+    {
+        abort_unless(
+            $request->user()->can(Permission::ProceduresManage->value) || $request->user()->can(Permission::Itse->value),
+            403,
+        );
     }
 
     /**

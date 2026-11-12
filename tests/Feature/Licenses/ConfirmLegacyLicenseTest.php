@@ -137,6 +137,73 @@ class ConfirmLegacyLicenseTest extends TestCase
             );
     }
 
+    public function test_the_list_counts_the_licences_pending_confirmation()
+    {
+        $this->license();
+        $this->license();
+        $this->license()->update(['confirmed_at' => now()]);
+        $this->license(legacy: false);
+
+        $this->actingAs($this->user('Mesa de partes'))
+            ->get(route('licenses.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('pending_count', 2));
+    }
+
+    public function test_several_selected_licences_are_confirmed_at_once()
+    {
+        $first = $this->license();
+        $second = $this->license();
+        $current = $this->license(legacy: false);
+        $untouched = $this->license();
+        $inspector = $this->user('Fiscalización');
+
+        $this->actingAs($inspector)
+            ->post(route('licenses.confirm-many'), [
+                'ids' => [$first->id, $second->id, $current->id],
+                'confirmation_note' => 'Operativo de fiscalización: locales en funcionamiento.',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        foreach ([$first, $second] as $license) {
+            $license->refresh();
+            $this->assertNotNull($license->confirmed_at);
+            $this->assertSame($inspector->id, $license->confirmed_by);
+            $this->assertSame('Operativo de fiscalización: locales en funcionamiento.', $license->confirmation_note);
+        }
+
+        $this->assertNull($current->fresh()->confirmed_at);
+        $this->assertNull($untouched->fresh()->confirmed_at);
+    }
+
+    public function test_the_bulk_confirmation_needs_licences_and_its_basis()
+    {
+        $this->actingAs($this->user('Mesa de partes'))
+            ->post(route('licenses.confirm-many'), ['ids' => [], 'confirmation_note' => ''])
+            ->assertSessionHasErrors(['ids', 'confirmation_note']);
+    }
+
+    public function test_users_without_permission_cannot_confirm_in_bulk()
+    {
+        $this->actingAs($this->user('Caja'))
+            ->post(route('licenses.confirm-many'), [
+                'ids' => [$this->license()->id],
+                'confirmation_note' => 'Local en funcionamiento.',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_the_licence_page_carries_its_verification_qr()
+    {
+        $license = $this->license();
+
+        $this->actingAs($this->user('Mesa de partes'))
+            ->get(route('licenses.show', $license))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('license.qr', fn (string $qr) => str_starts_with($qr, 'data:image/svg+xml'))
+            );
+    }
+
     public function test_a_procedure_on_a_legacy_licence_confirms_it()
     {
         Uit::factory()->create(['year' => now()->year, 'amount' => 5500]);
