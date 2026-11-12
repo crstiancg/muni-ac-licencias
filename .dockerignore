@@ -1,0 +1,47 @@
+# Rebuilt inside the image
+vendor
+node_modules
+public/build
+public/hot
+bootstrap/ssr
+bootstrap/cache/*.php
+resources/js/actions
+resources/js/routes
+resources/js/wayfinder
+
+# Secrets and local data: configuration comes from Dokploy's environment
+.env
+.env.*
+!.env.example
+auth.json
+database/*.sqlite*
+storage/logs/*
+!storage/logs/.gitignore
+storage/framework/cache/data/*
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/app/private/*
+!storage/app/private/.gitignore
+storage/app/public/*
+!storage/app/public/.gitignore
+
+# Not needed at runtime
+.git
+.github
+tests
+.phpunit.cache
+*.log
+docker-compose*.yml
+docker/pgloader
+
+# Editors and AI tools
+.idea
+.vscode
+.claude
+.agents
+.cursor
+.junie
+.atl
+openspec

@@ -1,0 +1,41 @@
+# Licencias MPP on Dokploy ("Docker Compose" service).
+#
+# Postgres is a separate Dokploy database service; point DB_HOST at its
+# internal host. Every variable comes from Dokploy's Environment tab, which
+# Dokploy writes to .env next to this file.
+#
+#   app        web (nginx + php-fpm, port 8080). Runs migrations on start.
+#              In Dokploy > Domains: service "app", port 8080, HTTPS on.
+#   scheduler  same image running `schedule:work` (licenses:expire 00:10).
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: production
+  restart: unless-stopped
+  env_file:
+    - path: .env
+      required: false
+
+services:
+  app:
+    <<: *app
+    environment:
+      AUTORUN_ENABLED: "true"
+    expose:
+      - "8080"
+
+  scheduler:
+    <<: *app
+    environment:
+      # Only the web container migrates and caches.
+      AUTORUN_ENABLED: "false"
+    command: ["php", "/var/www/html/artisan", "schedule:work"]
+    stop_signal: SIGTERM
+    healthcheck:
+      test: ["CMD", "healthcheck-schedule"]
+      start_period: 10s
+    depends_on:
+      app:
+        condition: service_healthy
