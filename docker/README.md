@@ -11,7 +11,7 @@ salida a producción importante, corré la suite contra Postgres (ver al final).
 | --- | --- |
 | `Dockerfile` | Imagen de producción: PHP 8.4 (nginx + php-fpm, puerto 8080), assets compilados. |
 | `docker-compose.prod.yml` | Servicio `app` (web) y `scheduler` (`licenses:expire` a las 00:10). |
-| `docker/pgloader/` | Copia de los datos de MySQL local a Postgres. |
+| `php artisan legacy:sync` | Trae los datos del sistema anterior (`dblicencias`); se puede repetir. |
 
 ## Variables (pestaña *Environment* de Dokploy)
 
@@ -46,10 +46,16 @@ INERTIA_SSR_ENABLED=false
 LICENCIAS_VERIFICATION_URL=   # URL pública de los QR; vacío = APP_URL
 
 APIS_NET_TOKEN=           # consulta RENIEC/SUNAT al registrar contribuyentes
+
+# Sistema anterior (solo lectura), para legacy:sync
+LEGACY_DB_HOST=192.168.100.3
+LEGACY_DB_PORT=3306
+LEGACY_DB_DATABASE=dblicencias
+LEGACY_DB_USERNAME=licencias_lectura
+LEGACY_DB_PASSWORD=
 ```
 
-No hacen falta en producción: `LEGACY_DB_*` (importadores del sistema
-anterior) ni `SESSION_DOMAIN`.
+No hace falta `SESSION_DOMAIN`.
 
 `APP_KEY` no se cambia nunca más: cifra los secretos de la verificación en
 dos pasos y las sesiones.
@@ -74,22 +80,46 @@ dos pasos y las sesiones.
    La contraseña se escribe oculta y en producción exige 12 caracteres con
    mayúsculas, minúsculas, números y símbolos. El resto del personal se crea
    desde la pantalla Usuarios.
-7. **Datos** (una sola vez, con la app ya desplegada). Ojo: pgloader vacía
-   las tablas y copia las de tu MySQL, **incluidos los usuarios**: el
-   administrador creado en el paso 6 se reemplaza por los locales, y entre
-   ellos viaja el usuario de desarrollo `password@gmail.com` con contraseña
-   `password`. Después de copiar, desactivalo o borralo y volvé a correr
-   `php artisan app:create-admin` si hace falta.
+7. **Datos del sistema anterior**: en la terminal del contenedor `app`:
    ```bash
-   cd docker/pgloader
-   cp mysql-to-postgres.load.example mysql-to-postgres.load   # completar URLs
-   docker run --rm -v "$PWD":/work dimitri/pgloader:latest \
-       pgloader /work/mysql-to-postgres.load
+   php artisan legacy:sync
    ```
-   Postgres tiene que ser alcanzable desde tu máquina: exponer el puerto
-   temporalmente en Dokploy o usar un túnel SSH, y cerrarlo al terminar.
-8. **Verificar** que los conteos coinciden (licencias, trámites,
-   contribuyentes, usuarios) y entrar con un usuario real.
+   Importa en orden tipos de trámite, contribuyentes, establecimientos,
+   trámites y licencias, y mercados. Si un paso falla, se detiene ahí.
+8. **Verificar** los conteos contra el sistema anterior y entrar con un
+   usuario real.
+
+## Sincronizar con el sistema anterior
+
+Mientras los dos sistemas convivan, `php artisan legacy:sync` se corre las
+veces que haga falta (por ejemplo, cada mañana o el día del corte):
+
+- Cada importador reconoce lo ya traído por su id del sistema anterior:
+  **solo entra lo nuevo** y nunca se duplica.
+- **Nunca pisa** lo trabajado en este sistema (confirmaciones, cambios de
+  estado, ediciones).
+- Limitación: si en el sistema anterior **modifican** un registro ya
+  importado, ese cambio no se trae.
+- Si se corta a mitad, se vuelve a correr y continúa sin duplicar.
+
+### Usuario de solo lectura en la base anterior
+
+La importación solo lee. En el MySQL de `192.168.100.3`, crear un usuario
+que solo pueda leer y solo desde el servidor de Dokploy:
+
+```sql
+CREATE USER 'licencias_lectura'@'<IP del servidor Dokploy>'
+    IDENTIFIED BY '<contraseña>';
+GRANT SELECT ON dblicencias.* TO 'licencias_lectura'@'<IP del servidor Dokploy>';
+```
+
+MySQL tiene que escuchar en la red (`bind-address` distinto de
+`127.0.0.1`) y el firewall permitir el 3306 solo desde esa IP. Para probar
+desde la terminal del contenedor `app`:
+
+```bash
+php artisan tinker --execute="DB::connection('legacy')->getPdo(); echo 'OK';"
+```
 
 ## Si el dominio responde 502 Bad Gateway
 

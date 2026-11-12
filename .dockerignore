@@ -34,7 +34,7 @@ tests
 .phpunit.cache
 *.log
 docker-compose*.yml
-docker/pgloader
+docker/README.md
 
 # Editors and AI tools
 .idea
