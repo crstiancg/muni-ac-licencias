@@ -143,11 +143,15 @@ class License extends Model
     }
 
     /**
-     * Public URL the QR points to.
+     * Public URL the QR points to. A blank LICENCIAS_VERIFICATION_URL reaches
+     * config as "" (env() only defaults on missing, not empty), which would
+     * print a QR with no domain: fall back to the app URL.
      */
     public function verificationUrl(): string
     {
-        return rtrim((string) config('licencias.verification_url'), '/').'/v/'.$this->qr_token;
+        $base = config('licencias.verification_url') ?: config('app.url');
+
+        return rtrim((string) $base, '/').'/v/'.$this->qr_token;
     }
 
     /**
