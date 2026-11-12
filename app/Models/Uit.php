@@ -52,8 +52,8 @@ class Uit extends Model
     {
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
-                ->where('year', 'like', "{$term}%")
-                ->orWhere('legal_basis', 'like', "%{$term}%")
+                ->whereLike('year', "{$term}%")
+                ->orWhereLike('legal_basis', "%{$term}%")
         ));
     }
 }

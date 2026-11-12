@@ -107,10 +107,10 @@ class PaymentOrder extends Model
     {
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
-                ->where('code', 'like', "%{$term}%")
-                ->orWhere('receipt_number', 'like', "{$term}%")
-                ->orWhere('payer_name', 'like', "%{$term}%")
-                ->orWhere('payer_document', 'like', "{$term}%")
+                ->whereLike('code', "%{$term}%")
+                ->orWhereLike('receipt_number', "{$term}%")
+                ->orWhereLike('payer_name', "%{$term}%")
+                ->orWhereLike('payer_document', "{$term}%")
         ));
     }
 }

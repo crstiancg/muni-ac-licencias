@@ -99,10 +99,10 @@ class MarketStall extends Model
     {
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
-                ->where('code', 'like', "{$term}%")
-                ->orWhere('holder_name', 'like', "%{$term}%")
-                ->orWhere('holder_document', 'like', "{$term}%")
-                ->orWhere('activity', 'like', "%{$term}%")
+                ->whereLike('code', "{$term}%")
+                ->orWhereLike('holder_name', "%{$term}%")
+                ->orWhereLike('holder_document', "{$term}%")
+                ->orWhereLike('activity', "%{$term}%")
         ));
     }
 }

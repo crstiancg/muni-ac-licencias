@@ -214,12 +214,12 @@ class License extends Model
     {
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
-                ->where('number', 'like', "%{$term}%")
-                ->orWhere('holder_document', 'like', "{$term}%")
-                ->orWhere('holder_name', 'like', "%{$term}%")
-                ->orWhere('trade_name', 'like', "%{$term}%")
-                ->orWhere('activity', 'like', "%{$term}%")
-                ->orWhere('address', 'like', "%{$term}%")
+                ->whereLike('number', "%{$term}%")
+                ->orWhereLike('holder_document', "{$term}%")
+                ->orWhereLike('holder_name', "%{$term}%")
+                ->orWhereLike('trade_name', "%{$term}%")
+                ->orWhereLike('activity', "%{$term}%")
+                ->orWhereLike('address', "%{$term}%")
         ));
     }
 }

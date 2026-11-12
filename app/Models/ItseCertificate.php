@@ -131,7 +131,7 @@ class ItseCertificate extends Model
     {
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
-                ->where('number', 'like', "%{$term}%")
+                ->whereLike('number', "%{$term}%")
                 ->orWhereHas('establishment', fn (Builder $query) => $query->search($term))
         ));
     }

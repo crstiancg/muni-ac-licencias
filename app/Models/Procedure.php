@@ -151,8 +151,8 @@ class Procedure extends Model
     {
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
-                ->where('code', 'like', "%{$term}%")
-                ->orWhere('file_number', 'like', "{$term}%")
+                ->whereLike('code', "%{$term}%")
+                ->orWhereLike('file_number', "{$term}%")
                 ->orWhereHas('taxpayer', fn (Builder $query) => $query->search($term))
         ));
     }

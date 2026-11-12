@@ -134,9 +134,9 @@ class Establishment extends Model
     {
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
-                ->where('trade_name', 'like', "%{$term}%")
-                ->orWhere('activity', 'like', "%{$term}%")
-                ->orWhere('street', 'like', "%{$term}%")
+                ->whereLike('trade_name', "%{$term}%")
+                ->orWhereLike('activity', "%{$term}%")
+                ->orWhereLike('street', "%{$term}%")
                 ->orWhereHas('taxpayer', fn (Builder $query) => $query->search($term))
         ));
     }

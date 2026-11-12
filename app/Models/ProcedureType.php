@@ -101,8 +101,8 @@ class ProcedureType extends Model
     {
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
-                ->where('name', 'like', "%{$term}%")
-                ->orWhere('tupa_code', 'like', "{$term}%")
+                ->whereLike('name', "%{$term}%")
+                ->orWhereLike('tupa_code', "{$term}%")
         ));
     }
 

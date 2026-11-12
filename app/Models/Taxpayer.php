@@ -117,9 +117,9 @@ class Taxpayer extends Model
     {
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
-                ->where('document_number', 'like', "{$term}%")
-                ->orWhere('ruc', 'like', "{$term}%")
-                ->orWhere('name', 'like', "%{$term}%")
+                ->whereLike('document_number', "{$term}%")
+                ->orWhereLike('ruc', "{$term}%")
+                ->orWhereLike('name', "%{$term}%")
         ));
     }
 }

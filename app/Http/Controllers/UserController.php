@@ -27,8 +27,8 @@ class UserController extends Controller
             'users' => User::query()
                 ->with('roles:id,name')
                 ->when($search, fn ($query) => $query->where(fn ($query) => $query
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")))
+                    ->whereLike('name', "%{$search}%")
+                    ->orWhereLike('email', "%{$search}%")))
                 ->orderByDesc('is_active')
                 ->orderBy('name')
                 ->paginate(20)
