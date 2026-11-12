@@ -166,6 +166,19 @@
     h2 {
         @apply font-display tracking-tight;
     }
+
+    /*
+     * No visible scrollbars anywhere; scrolling still works with the wheel,
+     * trackpad, keyboard and touch. Standard property for Firefox and
+     * Chromium 121+, the pseudo-element for Safari and older Chromium.
+     */
+    * {
+        scrollbar-width: none;
+    }
+
+    *::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 @layer components {
