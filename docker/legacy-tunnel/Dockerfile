@@ -4,7 +4,7 @@
 
 FROM alpine:3.20
 
-RUN apk add --no-cache openssh-client \
+RUN apk add --no-cache openssh-client sshpass \
     && adduser -D -h /home/tunnel tunnel
 
 COPY --chmod=755 entrypoint.sh /usr/local/bin/legacy-tunnel

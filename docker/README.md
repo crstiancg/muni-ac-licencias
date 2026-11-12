@@ -50,7 +50,8 @@ APIS_NET_TOKEN=           # consulta RENIEC/SUNAT al registrar contribuyentes
 # Sistema anterior, para legacy:sync (ver "Conexión al sistema anterior")
 LEGACY_SSH_HOST=192.168.100.3
 LEGACY_SSH_USER=licencias
-LEGACY_SSH_PRIVATE_KEY_B64=   # llave privada en base64, una línea
+LEGACY_SSH_PASSWORD=          # contraseña de "licencias" (o la llave de abajo)
+LEGACY_SSH_PRIVATE_KEY_B64=   # alternativa más segura: llave en base64
 LEGACY_SSH_KNOWN_HOSTS=       # opcional: fija la llave del servidor
 LEGACY_DB_DATABASE=dblicencias
 LEGACY_DB_USERNAME=licencias_lectura
@@ -114,8 +115,14 @@ se llega por SSH, como hace HeidiSQL. El servicio `legacy-tunnel` hace lo
 mismo: entra por SSH como `licencias` y ofrece el MySQL a la app solo
 dentro de la red interna del compose. No se toca el servidor anterior.
 
-1. **Llave SSH** (en tu PC, con Git Bash). No uses la contraseña de
-   `licencias`:
+**Lo rápido (temporal):** cargar `LEGACY_SSH_PASSWORD` con la contraseña de
+`licencias` y saltar a los pasos 5 a 7. Al terminar la migración, borrar las
+variables `LEGACY_SSH_*` y redesplegar: el túnel queda apagado.
+
+**Lo recomendado si va a quedar más tiempo**: una llave, revocable sin
+cambiarle la contraseña a nadie.
+
+1. **Llave SSH** (en tu PC, con Git Bash):
    ```bash
    ssh-keygen -t ed25519 -f dokploy_legacy -N "" -C dokploy-legacy-tunnel
    ```
