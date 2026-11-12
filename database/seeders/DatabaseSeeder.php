@@ -12,10 +12,16 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * The dev user (password "password") only exists on developer machines:
+     * anywhere else it would be a publicly known login, and factories need
+     * Faker, absent from --no-dev builds. On a server, create the first
+     * administrator with `php artisan app:create-admin`.
      */
     public function run(): void
     {
-        if (User::query()->where('email', 'password@gmail.com')->doesntExist()) {
+        if (app()->environment('local', 'testing')
+            && User::query()->where('email', 'password@gmail.com')->doesntExist()) {
             User::factory()->create([
                 'name' => 'Admin Dev',
                 'email' => 'password@gmail.com',
