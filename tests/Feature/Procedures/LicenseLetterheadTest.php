@@ -87,6 +87,8 @@ class LicenseLetterheadTest extends TestCase
             ->assertSeeInOrder(['DOSCIENTOS OCHO CON 20/100', 'SOLES'])
             ->assertSee('2026-00049928')
             ->assertSee('44025')
+            // The sheet has the crest pre-printed but not the procedure code under it.
+            ->assertSee('class="f crest-code" style="left:16mm;top:52.5mm;width:41mm">C.T. '.$license->procedure->code.'</div>', false)
             ->assertSee('class="qr" src="data:image/svg+xml;base64,', false);
     }
 

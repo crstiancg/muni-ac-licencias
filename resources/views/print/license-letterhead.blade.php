@@ -1,7 +1,7 @@
 @php
     // Positions in mm measured on the municipality's pre-printed A4 sheet.
     // Bump the layout version on every position change: it is printed in a corner to tell test prints apart.
-    $layoutVersion = 'v7';
+    $layoutVersion = 'v8';
     $dx = config('licencias.license_offset_x');
     $dy = config('licencias.license_offset_y');
     $date = fn ($value) => $value?->format('Y-m-d');
@@ -24,6 +24,8 @@
         .layer { position: absolute; inset: 0; transform: translate({{ $dx }}mm, {{ $dy }}mm); }
         .f { position: absolute; font-weight: 700; font-size: 10pt; text-transform: uppercase; white-space: nowrap; line-height: 1.15; }
         .wrap { white-space: normal; }
+        /* Centred under the pre-printed crest, as on the blank-sheet design. */
+        .crest-code { text-align: center; letter-spacing: .2mm; }
         .guide { position: absolute; font-size: 9pt; color: #9ca3af; font-family: 'Times New Roman', serif; }
         .warn { position: absolute; left: 20mm; top: 80mm; right: 20mm; text-align: center; font-size: 26pt; font-weight: 700; color: #b91c1c; border: 3px solid #b91c1c; transform: rotate(-8deg); opacity: .8; }
         .version { position: absolute; right: 8mm; bottom: 8mm; font-size: 6pt; color: #6b7280; }
@@ -69,6 +71,8 @@
             @if ($license->status->value !== 'vigente')
                 <div class="warn">{{ mb_strtoupper($license->status->label()) }}</div>
             @endif
+
+            <div class="f crest-code" style="left:16mm;top:52.5mm;width:41mm">C.T. {{ $procedure?->code }}</div>
 
             <div class="f" style="left:38.7mm;top:99.4mm">{{ $license->holder_name }}</div>
             <div class="f" style="left:38.7mm;top:118mm">{{ $license->trade_name }}</div>
