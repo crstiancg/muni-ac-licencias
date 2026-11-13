@@ -1,7 +1,7 @@
 @php
     // Positions in mm measured on the municipality's pre-printed A4 sheet.
     // Bump the layout version on every position change: it is printed in a corner to tell test prints apart.
-    $layoutVersion = 'v8';
+    $layoutVersion = 'v9';
     $dx = config('licencias.license_offset_x');
     $dy = config('licencias.license_offset_y');
     $date = fn ($value) => $value?->format('Y-m-d');
@@ -72,26 +72,26 @@
                 <div class="warn">{{ mb_strtoupper($license->status->label()) }}</div>
             @endif
 
-            <div class="f crest-code" style="left:16mm;top:52.5mm;width:41mm">C.T. {{ $procedure?->code }}</div>
+            <div class="f crest-code" style="left:8mm;top:54mm;width:41mm">C.T. {{ $procedure?->code }}</div>
 
-            <div class="f" style="left:38.7mm;top:99.4mm">{{ $license->holder_name }}</div>
-            <div class="f" style="left:38.7mm;top:118mm">{{ $license->trade_name }}</div>
-            <div class="f" style="left:38.7mm;top:135.4mm">{{ $license->activity }}</div>
-            <div class="f" style="left:38.7mm;top:149.8mm">{{ $license->address }}</div>
-            <div class="f wrap" style="left:40mm;top:163.9mm;width:125mm;font-size:8.5pt">{{ $observations }}</div>
+            <div class="f" style="left:38.7mm;top:105mm">{{ $license->holder_name }}</div>
+            <div class="f" style="left:38.7mm;top:122mm">{{ $license->trade_name }}</div>
+            <div class="f" style="left:38.7mm;top:139.3mm">{{ $license->activity }}</div>
+            <div class="f" style="left:38.7mm;top:155.1mm">{{ $license->address }}</div>
+            <div class="f wrap" style="left:40mm;top:167.3mm;width:125mm;font-size:8.5pt">{{ $observations }}</div>
 
-            <div class="f" style="left:79mm;top:183.4mm">{{ $order ? number_format((float) $order->total, 2, '.', '') : '' }}</div>
-            <div class="f" style="left:114mm;top:183.4mm">{{ $words }}</div>
-            <div class="f" style="left:38.7mm;top:190.7mm">{{ $words ? 'SOLES' : '' }}</div>
+            <div class="f" style="left:67mm;top:189.9mm">{{ $order ? number_format((float) $order->total, 2, '.', '') : '' }}</div>
+            <div class="f" style="left:101mm;top:189.9mm">{{ $words }}</div>
+            <div class="f" style="left:38.7mm;top:197.2mm">{{ $words ? 'SOLES' : '' }}</div>
 
-            <div class="f wrap" style="left:65mm;top:198.9mm;width:21mm;font-size:9pt">{{ $procedure?->file_number }}</div>
-            <div class="f" style="left:91.5mm;top:199.4mm">{{ $order?->receipt_number }}</div>
-            <div class="f" style="left:134.5mm;top:199.4mm">{{ $license->capacity }}</div>
-            <div class="f" style="left:174mm;top:199.4mm">{{ $license->area ? rtrim(rtrim(number_format((float) $license->area, 2, '.', ''), '0'), '.') : '' }}</div>
+            <div class="f wrap" style="left:44mm;top:207.4mm;width:21mm;font-size:9pt">{{ $procedure?->file_number }}</div>
+            <div class="f" style="left:84.5mm;top:207.9mm">{{ $order?->receipt_number }}</div>
+            <div class="f" style="left:124mm;top:207.9mm">{{ $license->capacity }}</div>
+            <div class="f" style="left:160mm;top:207.9mm">{{ $license->area ? rtrim(rtrim(number_format((float) $license->area, 2, '.', ''), '0'), '.') : '' }}</div>
 
-            <div class="f" style="left:66.8mm;top:206.4mm">{{ $date($procedure?->created_at) }}</div>
-            <div class="f" style="left:66.8mm;top:212.4mm">{{ $date($order?->paid_at) }}</div>
-            <div class="f" style="left:66.8mm;top:218.7mm">{{ $date($license->issued_at) }}</div>
+            <div class="f" style="left:66.8mm;top:214.8mm">{{ $date($procedure?->created_at) }}</div>
+            <div class="f" style="left:66.8mm;top:220.6mm">{{ $date($order?->paid_at) }}</div>
+            <div class="f" style="left:66.8mm;top:226.4mm">{{ $date($license->issued_at) }}</div>
 
             <img class="qr" src="{{ $qr }}" alt="QR de verificación">
         </div>
