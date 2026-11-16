@@ -6,6 +6,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
+import { passkeyError } from '@/lib/passkeys';
 
 type Props = {
     routes?: {
@@ -55,7 +56,10 @@ export default function PasskeyVerify({
                         : (label ?? 'Ingresar con llave de acceso')}
                 </Button>
                 {error && (
-                    <InputError message={error} className="text-center" />
+                    <InputError
+                        message={passkeyError(error) ?? undefined}
+                        className="text-center"
+                    />
                 )}
             </div>
 
