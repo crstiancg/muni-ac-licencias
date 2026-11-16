@@ -22,6 +22,7 @@ export default function FormSelect({
     defaultValue,
     emptyLabel,
     invalid,
+    disabled,
     onValueChange,
 }: {
     id: string;
@@ -31,6 +32,7 @@ export default function FormSelect({
     /** Label of the "none" option; omit to make a value mandatory. */
     emptyLabel?: string;
     invalid?: boolean;
+    disabled?: boolean;
     onValueChange?: (value: string) => void;
 }) {
     const [value, setValue] = useState(
@@ -46,6 +48,7 @@ export default function FormSelect({
             />
             <Select
                 value={value}
+                disabled={disabled}
                 onValueChange={(next) => {
                     setValue(next);
                     onValueChange?.(next === EMPTY ? '' : next);
