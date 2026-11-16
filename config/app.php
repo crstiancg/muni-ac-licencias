@@ -65,7 +65,9 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Puno, Peru (UTC-5, no daylight saving). Dates printed on licences and
+    // "today" in reports depend on it.
+    'timezone' => env('APP_TIMEZONE', 'America/Lima'),
 
     /*
     |--------------------------------------------------------------------------
