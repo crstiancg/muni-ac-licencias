@@ -1,5 +1,4 @@
 import { Form, Head, usePage } from '@inertiajs/react';
-import { Link } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -8,19 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/profile';
 import type { Auth } from '@/types';
-import { send } from '@/routes/verification';
 
 type PageProps = {
     auth: Auth;
 };
 
-export default function Profile({
-    mustVerifyEmail,
-    status,
-}: {
-    mustVerifyEmail: boolean;
-    status?: string;
-}) {
+export default function Profile() {
     const { auth } = usePage<PageProps>().props;
 
     return (
@@ -82,32 +74,6 @@ export default function Profile({
                                     message={errors.email}
                                 />
                             </div>
-
-                            {mustVerifyEmail &&
-                                auth.user.email_verified_at === null && (
-                                    <div>
-                                        <p className="-mt-4 text-sm text-muted-foreground">
-                                            Tu correo electrónico no está
-                                            verificado.{' '}
-                                            <Link
-                                                href={send()}
-                                                as="button"
-                                                className="font-semibold text-link underline underline-offset-4"
-                                            >
-                                                Reenviar el correo de
-                                                verificación.
-                                            </Link>
-                                        </p>
-
-                                        {status ===
-                                            'verification-link-sent' && (
-                                            <div className="mt-2 text-sm font-medium text-[#0b6b4f] dark:text-emerald-300">
-                                                Te enviamos un nuevo enlace de
-                                                verificación a tu correo.
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
 
                             <div className="flex items-center gap-4">
                                 <Button

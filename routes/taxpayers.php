@@ -19,7 +19,7 @@ $view = 'can:'.Permission::ProceduresView->value;
 $manage = 'can:'.Permission::ProceduresManage->value;
 $collect = 'can:'.Permission::Payments->value;
 
-Route::middleware(['auth', 'verified'])->group(function () use ($view, $manage, $collect) {
+Route::middleware(['auth'])->group(function () use ($view, $manage, $collect) {
     // Shared lookups used by forms of several modules.
     Route::get('taxpayers/lookup', [TaxpayerController::class, 'lookup'])
         ->middleware('throttle:30,1')

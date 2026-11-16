@@ -162,8 +162,9 @@ return [
 
     'features' => [
         // Accounts are created by an administrator, never self-registered.
+        // No email verification: the system sends no mail and an unverified
+        // address must never lock anyone out.
         Features::resetPasswords(),
-        Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,

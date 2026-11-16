@@ -12,7 +12,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     // No self-deletion: staff accounts are deactivated by the administrator
     // so their name stays on the procedures and payments they recorded.
 
