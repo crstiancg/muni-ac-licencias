@@ -1,8 +1,9 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     BadgeCheck,
     Check,
+    ClipboardCheck,
     Copy,
     ExternalLink,
     FilePlus2,
@@ -18,6 +19,7 @@ import InputError from '@/components/input-error';
 import LicenseStatusBadge, {
     LicensePendingBadge,
 } from '@/components/license-status-badge';
+import StatusPill from '@/components/status-pill';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -30,7 +32,16 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import {
+    formatDateTime,
+    RESULT_TONES,
+    type InspectionResultValue,
+} from '@/lib/inspections';
 import { cn } from '@/lib/utils';
+import {
+    create as createInspection,
+    show as showInspection,
+} from '@/routes/inspections';
 import { index, show } from '@/routes/licenses';
 import {
     create as createProcedure,
@@ -103,13 +114,24 @@ type Props = {
     license: LicenseDetail;
     observationsMax: number;
     standardObservations: string;
+    inspections: {
+        id: number;
+        code: string;
+        visited_at: string;
+        result: InspectionResultValue;
+        result_label: string;
+        inspector: string;
+    }[];
 };
 
 export default function LicenseShow({
     license,
     observationsMax,
     standardObservations,
+    inspections,
 }: Props) {
+    const { permissions } = usePage().props.auth;
+
     return (
         <>
             <Head title={license.number} />
@@ -335,6 +357,82 @@ export default function LicenseShow({
                                 </Button>
                             </div>
                         </Card>
+
+                        {(inspections.length > 0 ||
+                            permissions.includes('inspections.manage')) && (
+                            <Card title="Fiscalizaciones">
+                                {inspections.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        Todavía no se visitó este negocio.
+                                    </p>
+                                ) : (
+                                    <ul className="flex flex-col gap-2 text-sm">
+                                        {inspections.map((inspection) => {
+                                            const content = (
+                                                <>
+                                                    <StatusPill
+                                                        tone={
+                                                            RESULT_TONES[
+                                                                inspection
+                                                                    .result
+                                                            ]
+                                                        }
+                                                    >
+                                                        {
+                                                            inspection.result_label
+                                                        }
+                                                    </StatusPill>
+                                                    <span className="text-muted-foreground">
+                                                        {formatDateTime(
+                                                            inspection.visited_at,
+                                                        )}
+                                                        {' · '}
+                                                        {inspection.inspector}
+                                                    </span>
+                                                </>
+                                            );
+
+                                            return (
+                                                <li key={inspection.id}>
+                                                    {permissions.includes(
+                                                        'inspections.manage',
+                                                    ) ? (
+                                                        <Link
+                                                            href={showInspection(
+                                                                inspection.id,
+                                                            )}
+                                                            className="flex flex-wrap items-center gap-2 hover:underline"
+                                                        >
+                                                            {content}
+                                                        </Link>
+                                                    ) : (
+                                                        <span className="flex flex-wrap items-center gap-2">
+                                                            {content}
+                                                        </span>
+                                                    )}
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                                {permissions.includes('inspections.manage') && (
+                                    <Button
+                                        variant="outline"
+                                        className="self-start"
+                                        asChild
+                                    >
+                                        <Link
+                                            href={createInspection({
+                                                query: { license: license.id },
+                                            })}
+                                        >
+                                            <ClipboardCheck />
+                                            Registrar visita
+                                        </Link>
+                                    </Button>
+                                )}
+                            </Card>
+                        )}
 
                         <Card title="Historial">
                             <Timeline license={license} />

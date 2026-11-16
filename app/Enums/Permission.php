@@ -11,6 +11,7 @@ enum Permission: string
     case ProceduresView = 'procedures.view';
     case ProceduresManage = 'procedures.manage';
     case Itse = 'itse.manage';
+    case Inspections = 'inspections.manage';
     case Payments = 'payments.collect';
     case Reports = 'reports.view';
     case Markets = 'markets.manage';
@@ -24,6 +25,7 @@ enum Permission: string
             self::ProceduresView => 'Consultar trámites, licencias y contribuyentes',
             self::ProceduresManage => 'Registrar y tramitar (mesa de partes)',
             self::Itse => 'Certificados ITSE',
+            self::Inspections => 'Fiscalizar negocios en campo',
             self::Payments => 'Caja: emitir, cobrar y anular órdenes',
             self::Reports => 'Reporte de recaudación',
             self::Markets => 'Mercados y puestos',
@@ -45,7 +47,7 @@ enum Permission: string
             'Administrador' => [],
             'Mesa de partes' => [self::ProceduresView, self::ProceduresManage],
             'Caja' => [self::ProceduresView, self::Payments, self::Reports],
-            'Fiscalización' => [self::ProceduresView, self::Itse],
+            'Fiscalización' => [self::ProceduresView, self::Itse, self::Inspections],
             'Mercados' => [self::Markets],
         ];
     }

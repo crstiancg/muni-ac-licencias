@@ -6,6 +6,7 @@ use App\Actions\Licenses\ConfirmLicense;
 use App\Enums\IssuedDocumentType;
 use App\Enums\LicenseStatus;
 use App\Enums\Permission;
+use App\Models\Inspection;
 use App\Models\License;
 use App\Support\QrCode;
 use Illuminate\Contracts\View\View;
@@ -146,6 +147,14 @@ class LicenseController extends Controller
             ],
             'observationsMax' => License::OBSERVATIONS_MAX,
             'standardObservations' => License::standardObservations(),
+            // Inspectors' visits, so whoever looks up the licence knows how it was found.
+            'inspections' => $license->inspections()->with('inspector:id,name')->limit(10)->get()
+                ->map(fn (Inspection $inspection) => [
+                    ...$inspection->only('id', 'code', 'visited_at'),
+                    'result' => $inspection->result->value,
+                    'result_label' => $inspection->result->label(),
+                    'inspector' => $inspection->inspector->name,
+                ]),
         ]);
     }
 

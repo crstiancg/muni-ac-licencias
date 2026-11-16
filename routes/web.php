@@ -20,3 +20,4 @@ Route::middleware(['auth'])->group(function () {
 require __DIR__.'/settings.php';
 require __DIR__.'/parameters.php';
 require __DIR__.'/taxpayers.php';
+require __DIR__.'/inspections.php';

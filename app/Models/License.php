@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -211,6 +212,16 @@ class License extends Model
     }
 
     /**
+     * Inspectors' field visits, latest first.
+     *
+     * @return HasMany<Inspection, $this>
+     */
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(Inspection::class)->latest('visited_at');
+    }
+
+    /**
      * @return BelongsTo<Establishment, $this>
      */
     public function establishment(): BelongsTo
@@ -243,7 +254,10 @@ class License extends Model
         $query->when($term, fn (Builder $query) => $query->where(
             fn (Builder $query) => $query
                 ->whereLike('number', "%{$term}%")
+                ->orWhereLike('series', "%{$term}%")
+                // "RUC 10…" / "DNI 01…": the number may be typed without its prefix.
                 ->orWhereLike('holder_document', "{$term}%")
+                ->orWhereLike('holder_document', "% {$term}%")
                 ->orWhereLike('holder_name', "%{$term}%")
                 ->orWhereLike('trade_name', "%{$term}%")
                 ->orWhereLike('activity', "%{$term}%")

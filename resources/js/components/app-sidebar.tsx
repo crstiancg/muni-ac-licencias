@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     BadgeCheck,
+    ClipboardCheck,
     ClipboardList,
     FileText,
     History,
@@ -31,6 +32,7 @@ import {
 import { dashboard } from '@/routes';
 import { index as auditIndex } from '@/routes/audit';
 import { index as establishmentsIndex } from '@/routes/establishments';
+import { index as inspectionsIndex } from '@/routes/inspections';
 import { index as itseIndex } from '@/routes/itse';
 import { index as licensesIndex } from '@/routes/licenses';
 import { index as marketsIndex } from '@/routes/markets';
@@ -67,6 +69,12 @@ const mainNavItems: NavItem[] = [
         permission: 'itse.manage',
         href: itseIndex(),
         icon: ShieldCheck,
+    },
+    {
+        title: 'Fiscalización',
+        permission: 'inspections.manage',
+        href: inspectionsIndex(),
+        icon: ClipboardCheck,
     },
     {
         title: 'Caja',

@@ -51,4 +51,16 @@ return [
     |
     */
     'area_per_person' => (float) env('LICENCIAS_AREA_PER_PERSON', 1.5),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Inspection photos
+    |--------------------------------------------------------------------------
+    |
+    | Private disk (served only to inspectors). In Docker, storage/app must be
+    | a persistent volume or the photos are lost on every redeploy.
+    |
+    */
+    'inspection_disk' => env('LICENCIAS_INSPECTION_DISK', 'local'),
+    'inspection_max_photos' => 5,
 ];
