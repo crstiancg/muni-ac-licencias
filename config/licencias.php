@@ -63,4 +63,6 @@ return [
     */
     'inspection_disk' => env('LICENCIAS_INSPECTION_DISK', 'local'),
     'inspection_max_photos' => 5,
+    // Days a business without a licence is given to get one once notified.
+    'inspection_notice_days' => (int) env('LICENCIAS_INSPECTION_NOTICE_DAYS', 15),
 ];

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\InspectionResult;
 use App\Models\Inspection;
+use App\Models\InspectionCase;
 use App\Models\License;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -51,6 +52,8 @@ class InspectionRequest extends FormRequest
             'photos.*' => ['image', 'max:8192'],
             // An imported licence the inspector saw in use: confirm it is in force.
             'confirm_license' => ['nullable', 'boolean', $withLicense ? 'nullable' : 'prohibited'],
+            // Revisit of a business without a licence that is being followed.
+            'inspection_case_id' => ['nullable', 'integer', $withLicense ? 'prohibited' : 'exists:inspection_cases,id'],
         ];
     }
 
@@ -65,6 +68,14 @@ class InspectionRequest extends FormRequest
             $result = InspectionResult::tryFrom((string) $this->input('result'));
             $license = $this->filled('license_id') ? License::find($this->input('license_id')) : null;
             $status = $license?->effectiveStatus();
+
+            $case = $this->filled('inspection_case_id') ? InspectionCase::find($this->input('inspection_case_id')) : null;
+
+            if ($case && ! $case->status->isOpen()) {
+                $validator->errors()->add('inspection_case_id', 'Este caso ya está cerrado.');
+
+                return;
+            }
 
             if ($license && $this->boolean('confirm_license')) {
                 if (! $license->needsConfirmation()) {
@@ -118,6 +129,7 @@ class InspectionRequest extends FormRequest
             'photos' => 'fotos',
             'photos.*' => 'foto',
             'confirm_license' => 'confirmación de vigencia',
+            'inspection_case_id' => 'caso de seguimiento',
         ];
     }
 }

@@ -7,6 +7,7 @@ use App\Enums\InspectionResult;
 use App\Enums\LicenseStatus;
 use App\Http\Requests\InspectionRequest;
 use App\Models\Inspection;
+use App\Models\InspectionCase;
 use App\Models\InspectionPhoto;
 use App\Models\ItseCertificate;
 use App\Models\License;
@@ -78,6 +79,9 @@ class InspectionController extends Controller
                 'without_license' => Inspection::query()->where('result', InspectionResult::WithoutLicense)->count(),
                 // Imported licences still to be confirmed on site.
                 'pending_confirmation' => License::query()->pendingConfirmation()->count(),
+                // Businesses without a licence being followed.
+                'open_cases' => InspectionCase::query()->open()->count(),
+                'overdue_cases' => InspectionCase::query()->overdue()->count(),
             ],
         ]);
     }
@@ -106,12 +110,15 @@ class InspectionController extends Controller
 
     /**
      * The visit form: with ?license=id, what to compare on site; without
-     * it, a business with no licence.
+     * it, a business with no licence (?case=id: revisit of its case).
      */
     public function create(Request $request): Response
     {
         $license = $request->integer('license')
             ? License::query()->with('establishment:id')->findOrFail($request->integer('license'))
+            : null;
+        $case = ! $license && $request->integer('case')
+            ? InspectionCase::query()->open()->findOrFail($request->integer('case'))
             : null;
 
         return Inertia::render('inspections/create', [
@@ -121,6 +128,10 @@ class InspectionController extends Controller
                 'itse' => $this->itse($license),
                 'inspections' => $license->inspections()->with('inspector:id,name')->limit(5)->get()
                     ->map(fn (Inspection $inspection) => $this->inspectionRow($inspection)),
+            ] : null,
+            'case' => $case ? [
+                ...$case->only('id', 'code', 'business_name', 'holder_name', 'holder_document', 'address', 'activity'),
+                'status_label' => $case->statusLabel(),
             ] : null,
             'results' => InspectionResult::options($license !== null, $license?->effectiveStatus()),
             'checks' => collect(Inspection::CHECKS)->map(fn (string $label, string $key) => ['key' => $key, 'label' => $label])->values(),
@@ -140,6 +151,8 @@ class InspectionController extends Controller
         $confirmsLicense = $license !== null && (bool) ($data['confirm_license'] ?? false);
 
         $inspection = DB::transaction(function () use ($data, $license, $upper, $request, $confirm, $confirmsLicense) {
+            $case = $license ? null : $this->caseFor($data, $upper);
+
             ['year' => $year, 'sequence' => $sequence] = YearlySequence::next(Inspection::class);
 
             $inspection = Inspection::create([
@@ -148,6 +161,7 @@ class InspectionController extends Controller
                 'code' => sprintf('FIS-%d-%05d', $year, $sequence),
                 'license_id' => $license?->id,
                 'establishment_id' => $license?->establishment_id,
+                'inspection_case_id' => $case?->id,
                 'inspector_id' => Auth::id(),
                 'visited_at' => now(),
                 'result' => $data['result'],
@@ -180,8 +194,11 @@ class InspectionController extends Controller
             return $inspection;
         });
 
+        $case = $inspection->inspectionCase;
+
         Inertia::flash('toast', ['type' => 'success', 'message' => "Visita {$inspection->code} registrada: {$inspection->result->label()}."
-            .($confirmsLicense ? " Vigencia de {$license->number} confirmada." : '')]);
+            .($confirmsLicense ? " Vigencia de {$license->number} confirmada." : '')
+            .($case ? " Caso de seguimiento {$case->code}." : '')]);
 
         return to_route('inspections.show', $inspection);
     }
@@ -191,7 +208,7 @@ class InspectionController extends Controller
      */
     public function show(Inspection $inspection): Response
     {
-        $inspection->load('license.establishment:id', 'inspector:id,name', 'photos');
+        $inspection->load('license.establishment:id', 'inspector:id,name', 'photos', 'inspectionCase');
 
         return Inertia::render('inspections/show', [
             'inspection' => [
@@ -210,6 +227,12 @@ class InspectionController extends Controller
                     'url' => route('inspections.photo', $photo),
                 ]),
                 'print_url' => route('inspections.print', $inspection),
+                'case' => $inspection->inspectionCase ? [
+                    ...$inspection->inspectionCase->only('id', 'code'),
+                    'status' => $inspection->inspectionCase->status->value,
+                    'is_overdue' => $inspection->inspectionCase->isOverdue(),
+                    'status_label' => $inspection->inspectionCase->statusLabel(),
+                ] : null,
             ],
         ]);
     }
@@ -232,6 +255,42 @@ class InspectionController extends Controller
     {
         return Storage::disk(config('licencias.inspection_disk'))->response($photo->path, headers: [
             'Cache-Control' => 'private, max-age=86400',
+        ]);
+    }
+
+    /**
+     * The follow-up case of a business without a licence: the one the
+     * revisit came from, the open one with the same RUC/DNI, or a new one.
+     * A closed business with no case behind it opens none: nobody was there.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  callable(?string): ?string  $upper
+     */
+    private function caseFor(array $data, callable $upper): ?InspectionCase
+    {
+        if (isset($data['inspection_case_id'])) {
+            return InspectionCase::find($data['inspection_case_id']);
+        }
+
+        $key = InspectionCase::documentKey($data['holder_document'] ?? null);
+        $open = $key ? InspectionCase::query()->open()->where('document_key', $key)->oldest()->first() : null;
+
+        if ($open || $data['result'] !== InspectionResult::WithoutLicense->value) {
+            return $open;
+        }
+
+        ['year' => $year, 'sequence' => $sequence] = YearlySequence::next(InspectionCase::class);
+
+        return InspectionCase::create([
+            'year' => $year,
+            'sequence' => $sequence,
+            'code' => sprintf('SEG-%d-%05d', $year, $sequence),
+            'business_name' => $upper($data['business_name']),
+            'holder_name' => $upper($data['holder_name'] ?? null),
+            'holder_document' => $data['holder_document'] ?? null,
+            'address' => $upper($data['address']),
+            'activity' => $upper($data['activity'] ?? null),
+            'opened_by' => Auth::id(),
         ]);
     }
 

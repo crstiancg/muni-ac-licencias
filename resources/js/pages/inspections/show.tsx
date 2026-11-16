@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import {
     BadgeCheck,
     Check,
+    ChevronRight,
     ExternalLink,
     MapPin,
     Plus,
@@ -12,12 +13,15 @@ import LicenseStatusBadge from '@/components/license-status-badge';
 import StatusPill from '@/components/status-pill';
 import { Button } from '@/components/ui/button';
 import {
+    caseTone,
     formatDateTime,
+    type InspectionCaseStatusValue,
     RESULT_TONES,
     type InspectedLicense,
     type InspectionRow,
 } from '@/lib/inspections';
 import { create, index, show } from '@/routes/inspections';
+import { show as showCase } from '@/routes/inspections/cases';
 import { show as showLicense } from '@/routes/licenses';
 import type { LicenseStatusValue } from '@/types';
 
@@ -36,6 +40,13 @@ type Props = {
         license: InspectedLicense | null;
         photos: { id: number; url: string }[];
         print_url: string;
+        case: {
+            id: number;
+            code: string;
+            status: InspectionCaseStatusValue;
+            is_overdue: boolean;
+            status_label: string;
+        } | null;
     };
 };
 
@@ -75,6 +86,26 @@ export default function InspectionsShow({ inspection }: Props) {
                         En esta visita se confirmó la vigencia de la licencia
                         migrada del sistema anterior.
                     </p>
+                )}
+
+                {inspection.case && (
+                    <Link
+                        href={showCase(inspection.case.id)}
+                        className="flex items-center gap-3 rounded-2xl border bg-card p-4 text-sm hover:bg-accent/50"
+                    >
+                        <span className="min-w-0 flex-1">
+                            <span className="block text-xs text-muted-foreground">
+                                Caso de seguimiento
+                            </span>
+                            <span className="font-mono font-semibold">
+                                {inspection.case.code}
+                            </span>
+                        </span>
+                        <StatusPill tone={caseTone(inspection.case)}>
+                            {inspection.case.status_label}
+                        </StatusPill>
+                        <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+                    </Link>
                 )}
 
                 <section className="flex flex-col gap-3 rounded-2xl border bg-card p-4 md:p-5">

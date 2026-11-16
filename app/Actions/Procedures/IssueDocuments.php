@@ -2,6 +2,7 @@
 
 namespace App\Actions\Procedures;
 
+use App\Actions\Inspections\RegularizeCases;
 use App\Actions\Licenses\ConfirmLicense;
 use App\Enums\IssuedDocumentType;
 use App\Enums\LicenseEffect;
@@ -97,6 +98,11 @@ class IssueDocuments
             if ($related) {
                 $effects->each(fn (LicenseEffect $effect) => $this->apply($effect, $related, $procedure, $licenses));
             }
+
+            // A business followed for working without a licence just got one.
+            $licenses
+                ->filter(fn (License $license) => $license->type === IssuedDocumentType::OperatingLicense)
+                ->each(fn (License $license) => app(RegularizeCases::class)->handle($license, $procedure->taxpayer));
 
             return $licenses;
         });

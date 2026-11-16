@@ -1,6 +1,7 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     BadgeCheck,
+    CalendarClock,
     Camera,
     ChevronRight,
     MapPin,
@@ -24,6 +25,7 @@ import {
 } from '@/lib/inspections';
 import { cn } from '@/lib/utils';
 import { create, index, show } from '@/routes/inspections';
+import { index as casesIndex } from '@/routes/inspections/cases';
 import { index as licensesIndex } from '@/routes/licenses';
 import type { LicenseStatusValue, Paginated } from '@/types';
 
@@ -37,6 +39,8 @@ type Props = {
         today: number;
         without_license: number;
         pending_confirmation: number;
+        open_cases: number;
+        overdue_cases: number;
     };
 };
 
@@ -113,6 +117,53 @@ export default function InspectionsIndex({
                         las migradas del sistema anterior.
                     </p>
                 </section>
+
+                <Link
+                    href={casesIndex({
+                        query: {
+                            filter: {
+                                status:
+                                    counts.overdue_cases > 0
+                                        ? 'vencido'
+                                        : 'abiertos',
+                            },
+                        },
+                    })}
+                    className={cn(
+                        'flex items-center gap-3 rounded-2xl border bg-card p-4 hover:bg-accent/50',
+                        counts.overdue_cases > 0 &&
+                            'border-[#d9473b]/50 bg-[#fce9e7]/40 dark:bg-red-400/10',
+                    )}
+                >
+                    <CalendarClock
+                        className={cn(
+                            'size-6 shrink-0',
+                            counts.overdue_cases > 0
+                                ? 'text-[#d9473b]'
+                                : 'text-muted-foreground',
+                        )}
+                    />
+                    <span className="min-w-0 flex-1 text-sm">
+                        <span className="font-semibold">
+                            {counts.open_cases === 1
+                                ? '1 negocio sin licencia en seguimiento'
+                                : `${counts.open_cases.toLocaleString('es-PE')} negocios sin licencia en seguimiento`}
+                        </span>
+                        <span
+                            className={cn(
+                                'block',
+                                counts.overdue_cases > 0
+                                    ? 'font-medium text-[#a3261c] dark:text-red-300'
+                                    : 'text-muted-foreground',
+                            )}
+                        >
+                            {counts.overdue_cases > 0
+                                ? `${counts.overdue_cases} con el plazo vencido: toca revisitarlos.`
+                                : 'Notifícalos, revisítalos y ciérralos cuando obtengan su licencia.'}
+                        </span>
+                    </span>
+                    <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+                </Link>
 
                 {counts.pending_confirmation > 0 && (
                     <Link

@@ -39,8 +39,21 @@ type LicenseToInspect = InspectedLicense & {
     inspections: InspectionRow[];
 };
 
+type FollowedCase = {
+    id: number;
+    code: string;
+    business_name: string;
+    holder_name: string | null;
+    holder_document: string | null;
+    address: string;
+    activity: string | null;
+    status_label: string;
+};
+
 type Props = {
     license: LicenseToInspect | null;
+    /** Revisit of a business without a licence being followed. */
+    case: FollowedCase | null;
     results: {
         value: InspectionResultValue;
         label: string;
@@ -62,6 +75,7 @@ const formatDate = (value: string) =>
 
 export default function InspectionsCreate({
     license,
+    case: followUp,
     results,
     checks,
     maxPhotos,
@@ -81,6 +95,7 @@ export default function InspectionsCreate({
         gps_accuracy: string;
         photos: File[];
         confirm_license: boolean;
+        inspection_case_id: number | null;
     }>({
         license_id: license?.id ?? null,
         // A licence not in force already says the result; the inspector can still change it.
@@ -91,16 +106,17 @@ export default function InspectionsCreate({
             : 'sin_licencia',
         checks: {},
         notes: '',
-        business_name: '',
-        holder_name: '',
-        holder_document: '',
-        address: '',
-        activity: '',
+        business_name: followUp?.business_name ?? '',
+        holder_name: followUp?.holder_name ?? '',
+        holder_document: followUp?.holder_document ?? '',
+        address: followUp?.address ?? '',
+        activity: followUp?.activity ?? '',
         latitude: '',
         longitude: '',
         gps_accuracy: '',
         photos: [],
         confirm_license: false,
+        inspection_case_id: followUp?.id ?? null,
     });
 
     const gps = useLocation((position) =>
@@ -206,12 +222,14 @@ export default function InspectionsCreate({
                     <section className="flex flex-col gap-4 rounded-2xl border bg-card p-4 md:p-5">
                         <div>
                             <h1 className="font-display text-xl font-bold">
-                                Negocio sin licencia
+                                {followUp
+                                    ? `Revisita · ${followUp.code}`
+                                    : 'Negocio sin licencia'}
                             </h1>
                             <p className="text-sm text-muted-foreground">
-                                Registra lo que ves en el local. Queda en la
-                                lista de negocios sin licencia para hacerle
-                                seguimiento.
+                                {followUp
+                                    ? `Caso de seguimiento (${followUp.status_label.toLowerCase()}). Corrige los datos si cambió algo; si ya tiene licencia, búscala y regístrala con ella.`
+                                    : 'Registra lo que ves en el local. Se abre un caso de seguimiento para notificarlo y verificar que obtenga su licencia.'}
                             </p>
                         </div>
                         <TextField

@@ -46,6 +46,44 @@ export type InspectedLicense = {
     needs_confirmation: boolean;
 };
 
+export type InspectionCaseStatusValue =
+    | 'pendiente'
+    | 'notificado'
+    | 'regularizado'
+    | 'derivado';
+
+export type InspectionCaseRow = {
+    id: number;
+    code: string;
+    business_name: string;
+    holder_document: string | null;
+    address: string;
+    activity: string | null;
+    status: InspectionCaseStatusValue;
+    status_label: string;
+    is_open: boolean;
+    is_overdue: boolean;
+    deadline: string | null;
+    inspections_count: number;
+};
+
+/** Overdue is shown apart from "notificado": it is what needs a revisit. */
+export const caseTone = (
+    row: Pick<InspectionCaseRow, 'status' | 'is_overdue'>,
+): StatusTone =>
+    row.is_overdue
+        ? 'danger'
+        : {
+              pendiente: 'rust' as const,
+              notificado: 'info' as const,
+              regularizado: 'success' as const,
+              derivado: 'violet' as const,
+          }[row.status];
+
+/** A date-only value (YYYY-MM-DD) in local time, not shifted by UTC. */
+export const formatDate = (value: string) =>
+    new Date(`${value.slice(0, 10)}T00:00:00`).toLocaleDateString('es-PE');
+
 export const formatDateTime = (value: string) =>
     new Date(value).toLocaleString('es-PE', {
         day: '2-digit',

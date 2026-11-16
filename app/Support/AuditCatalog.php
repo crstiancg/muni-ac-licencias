@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Establishment;
 use App\Models\Inspection;
+use App\Models\InspectionCase;
 use App\Models\ItseCertificate;
 use App\Models\License;
 use App\Models\Market;
@@ -33,6 +34,7 @@ final class AuditCatalog
         'licenses' => ['label' => 'Licencias', 'model' => License::class, 'route' => 'licenses.show'],
         'itse_certificates' => ['label' => 'ITSE', 'model' => ItseCertificate::class, 'route' => null],
         'inspections' => ['label' => 'Fiscalización', 'model' => Inspection::class, 'route' => 'inspections.show'],
+        'inspection_cases' => ['label' => 'Casos sin licencia', 'model' => InspectionCase::class, 'route' => 'inspections.cases.show'],
         'payment_orders' => ['label' => 'Órdenes de pago', 'model' => PaymentOrder::class, 'route' => 'payment-orders.show'],
         'markets' => ['label' => 'Mercados', 'model' => Market::class, 'route' => 'markets.show'],
         'market_stalls' => ['label' => 'Puestos', 'model' => MarketStall::class, 'route' => 'market-stalls.show'],
@@ -146,6 +148,14 @@ final class AuditCatalog
         'latitude' => 'Latitud',
         'longitude' => 'Longitud',
         'gps_accuracy' => 'Precisión del GPS (m)',
+        'inspection_case_id' => 'Caso de seguimiento',
+        'notice_number' => 'N° de notificación',
+        'notified_at' => 'Fecha de notificación',
+        'deadline' => 'Plazo hasta',
+        'resolved_at' => 'Fecha de cierre',
+        'resolution_note' => 'Sustento del cierre',
+        'opened_by' => 'Abierto por',
+        'resolved_by' => 'Cerrado por',
     ];
 
     /**
@@ -156,6 +166,7 @@ final class AuditCatalog
     private const array MODULE_FIELDS = [
         'establishments' => ['number' => 'N° de puerta'],
         'inspections' => ['holder_name' => 'Responsable', 'holder_document' => 'DNI/RUC del responsable', 'address' => 'Dirección del negocio'],
+        'inspection_cases' => ['holder_name' => 'Responsable', 'holder_document' => 'DNI/RUC del responsable', 'address' => 'Dirección del negocio'],
         'market_stalls' => ['code' => 'N° de puesto'],
     ];
 

@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property string $code
  * @property int|null $license_id
  * @property int|null $establishment_id
+ * @property int|null $inspection_case_id
  * @property int $inspector_id
  * @property Carbon $visited_at
  * @property InspectionResult $result
@@ -38,13 +39,14 @@ use Illuminate\Support\Carbon;
  * @property string|null $longitude
  * @property int|null $gps_accuracy
  * @property-read License|null $license
+ * @property-read InspectionCase|null $inspectionCase
  * @property-read User $inspector
  * @property-read Collection<int, InspectionPhoto> $photos
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 #[Fillable([
-    'year', 'sequence', 'code', 'license_id', 'establishment_id', 'inspector_id', 'visited_at',
+    'year', 'sequence', 'code', 'license_id', 'establishment_id', 'inspection_case_id', 'inspector_id', 'visited_at',
     'result', 'license_status', 'confirmed_license', 'checks', 'notes',
     'business_name', 'holder_name', 'holder_document', 'address', 'activity',
     'latitude', 'longitude', 'gps_accuracy',
@@ -88,6 +90,16 @@ class Inspection extends Model
     public function license(): BelongsTo
     {
         return $this->belongsTo(License::class);
+    }
+
+    /**
+     * Follow-up case of a business without a licence.
+     *
+     * @return BelongsTo<InspectionCase, $this>
+     */
+    public function inspectionCase(): BelongsTo
+    {
+        return $this->belongsTo(InspectionCase::class);
     }
 
     /**
