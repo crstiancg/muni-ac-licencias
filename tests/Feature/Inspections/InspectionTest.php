@@ -203,6 +203,54 @@ class InspectionTest extends TestCase
             ->assertSessionHasNoErrors();
     }
 
+    public function test_licencia_no_vigente_only_for_a_licence_not_in_force()
+    {
+        $valid = $this->license();
+
+        $this->actingAs($this->inspector)
+            ->post(route('inspections.store'), [
+                'license_id' => $valid->id,
+                'result' => 'licencia_no_vigente',
+                'checks' => $this->checks(ok: false),
+            ])
+            ->assertSessionHasErrors(['result' => 'La licencia está vigente: si algo no coincide, elige "Con observaciones".']);
+
+        $revoked = $this->license(['number' => 'LF-2026-00002', 'sequence' => 2, 'series' => null, 'status' => LicenseStatus::Revoked]);
+
+        $this->actingAs($this->inspector)
+            ->post(route('inspections.store'), [
+                'license_id' => $revoked->id,
+                'result' => 'licencia_no_vigente',
+                'checks' => $this->checks(),
+            ])
+            ->assertSessionHasNoErrors();
+    }
+
+    public function test_conforme_only_for_a_licence_in_force()
+    {
+        $expired = $this->license(['valid_until' => now()->subDay()->toDateString()]);
+
+        $this->actingAs($this->inspector)
+            ->post(route('inspections.store'), [
+                'license_id' => $expired->id,
+                'result' => 'conforme',
+                'checks' => $this->checks(),
+            ])
+            ->assertSessionHasErrors(['result' => 'La licencia no está vigente (Caducada): elige "Licencia no vigente".']);
+    }
+
+    public function test_the_form_disables_results_that_contradict_the_licence()
+    {
+        $valid = $this->license();
+
+        $this->actingAs($this->inspector)
+            ->get(route('inspections.create', ['license' => $valid->id]))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('results', fn ($results) => collect($results)->firstWhere('value', 'licencia_no_vigente')['disabled'] === 'Esta licencia está vigente.'
+                    && collect($results)->firstWhere('value', 'conforme')['disabled'] === null)
+            );
+    }
+
     public function test_a_closed_business_is_recorded_without_comparing()
     {
         $license = $this->license();

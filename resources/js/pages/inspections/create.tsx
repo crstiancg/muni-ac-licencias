@@ -45,6 +45,8 @@ type Props = {
         value: InspectionResultValue;
         label: string;
         description: string;
+        /** Why it contradicts the licence status; null when it can be chosen. */
+        disabled: string | null;
     }[];
     checks: { key: string; label: string }[];
     maxPhotos: number;
@@ -80,7 +82,12 @@ export default function InspectionsCreate({
         photos: File[];
     }>({
         license_id: license?.id ?? null,
-        result: license ? '' : 'sin_licencia',
+        // A licence not in force already says the result; the inspector can still change it.
+        result: license
+            ? license.is_valid
+                ? ''
+                : 'licencia_no_vigente'
+            : 'sin_licencia',
         checks: {},
         notes: '',
         business_name: '',
@@ -300,6 +307,7 @@ export default function InspectionsCreate({
                             <button
                                 key={result.value}
                                 type="button"
+                                disabled={result.disabled !== null}
                                 onClick={() =>
                                     form.setData('result', result.value)
                                 }
@@ -309,13 +317,15 @@ export default function InspectionsCreate({
                                     form.data.result === result.value
                                         ? 'border-primary ring-2 ring-ring/40'
                                         : 'bg-background',
+                                    result.disabled !== null &&
+                                        'cursor-not-allowed border-dashed opacity-50',
                                 )}
                             >
                                 <StatusPill tone={RESULT_TONES[result.value]}>
                                     {result.label}
                                 </StatusPill>
                                 <span className="text-xs text-muted-foreground">
-                                    {result.description}
+                                    {result.disabled ?? result.description}
                                 </span>
                             </button>
                         ))}

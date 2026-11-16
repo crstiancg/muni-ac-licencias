@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\InspectionResult;
 use App\Models\Inspection;
+use App\Models\License;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -59,6 +60,21 @@ class InspectionRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator) {
+            $result = InspectionResult::tryFrom((string) $this->input('result'));
+            $status = $this->filled('license_id') ? License::find($this->input('license_id'))?->effectiveStatus() : null;
+
+            if ($result === InspectionResult::LicenseNotInForce && $result->contradicts($status)) {
+                $validator->errors()->add('result', 'La licencia está vigente: si algo no coincide, elige "Con observaciones".');
+
+                return;
+            }
+
+            if ($result === InspectionResult::Compliant && $status && $result->contradicts($status)) {
+                $validator->errors()->add('result', "La licencia no está vigente ({$status->label()}): elige \"Licencia no vigente\".");
+
+                return;
+            }
+
             $checks = (array) $this->input('checks', []);
 
             if ($this->input('result') === InspectionResult::Compliant->value

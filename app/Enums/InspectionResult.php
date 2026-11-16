@@ -48,14 +48,33 @@ enum InspectionResult: string
     }
 
     /**
-     * @return list<array{value: string, label: string, description: string}>
+     * Why this result contradicts the licence's status, or null when it fits.
+     * "Licencia no vigente" only for a licence not in force; "Conforme" only
+     * for one in force.
      */
-    public static function options(bool $withLicense): array
+    public function contradicts(?LicenseStatus $status): ?string
+    {
+        if ($status === null) {
+            return null;
+        }
+
+        return match (true) {
+            $this === self::LicenseNotInForce && $status === LicenseStatus::Active => 'Esta licencia está vigente.',
+            $this === self::Compliant && $status !== LicenseStatus::Active => "La licencia no está vigente ({$status->label()}).",
+            default => null,
+        };
+    }
+
+    /**
+     * @return list<array{value: string, label: string, description: string, disabled: string|null}>
+     */
+    public static function options(bool $withLicense, ?LicenseStatus $status = null): array
     {
         return array_map(fn (self $result) => [
             'value' => $result->value,
             'label' => $result->label(),
             'description' => $result->description(),
+            'disabled' => $result->contradicts($status),
         ], self::for($withLicense));
     }
 }

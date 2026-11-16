@@ -118,7 +118,7 @@ class InspectionController extends Controller
                 'inspections' => $license->inspections()->with('inspector:id,name')->limit(5)->get()
                     ->map(fn (Inspection $inspection) => $this->inspectionRow($inspection)),
             ] : null,
-            'results' => InspectionResult::options($license !== null),
+            'results' => InspectionResult::options($license !== null, $license?->effectiveStatus()),
             'checks' => collect(Inspection::CHECKS)->map(fn (string $label, string $key) => ['key' => $key, 'label' => $label])->values(),
             'maxPhotos' => config('licencias.inspection_max_photos'),
         ]);
