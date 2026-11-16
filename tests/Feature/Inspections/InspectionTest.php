@@ -433,4 +433,98 @@ class InspectionTest extends TestCase
                 ->where('inspections.0.result_label', 'Conforme')
             );
     }
+
+    private function visit(?License $license, array $attributes = []): Inspection
+    {
+        return Inspection::create([
+            'year' => 2026,
+            'sequence' => 7,
+            'code' => 'FIS-2026-00007',
+            'license_id' => $license?->id,
+            'establishment_id' => $license?->establishment_id,
+            'inspector_id' => $this->inspector->id,
+            'visited_at' => '2026-11-16 10:30:00',
+            'result' => 'observado',
+            'license_status' => $license?->effectiveStatus()->value,
+            'checks' => $license ? $this->checks(false) : null,
+            'notes' => 'Amplió el giro a venta de licores.',
+            'latitude' => '-15.8402218',
+            'longitude' => '-70.0219107',
+            'gps_accuracy' => 12,
+            ...$attributes,
+        ]);
+    }
+
+    public function test_the_visit_prints_as_an_inspection_act()
+    {
+        $inspection = $this->visit($this->license());
+        $photo = $inspection->photos()->create(['path' => 'inspections/2026/foto.jpg']);
+
+        $this->actingAs($this->inspector)
+            ->get(route('inspections.print', $inspection))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Acta de fiscalización',
+                'FIS-2026-00007',
+                '16/11/2026 10:30',
+                'BODEGA ANITA',
+                'MAMANI QUISPE ANA',
+                'LF-2026-00001',
+                'Vigente',
+                '-15.8402218, -70.0219107 (±12 m)',
+                'Con observaciones',
+                'El giro coincide',
+                'No',
+                'Amplió el giro a venta de licores.',
+                route('inspections.photo', $photo),
+                $this->inspector->name,
+                'Conductor o representante',
+            ]);
+    }
+
+    public function test_a_business_without_licence_prints_as_seen_on_site()
+    {
+        $inspection = $this->visit(null, [
+            'result' => 'sin_licencia',
+            'business_name' => 'FERRETERIA EL MARTILLO',
+            'holder_name' => 'QUISPE ROJAS JUAN',
+            'holder_document' => '10456789012',
+            'address' => 'JR. MOQUEGUA 789',
+            'activity' => 'FERRETERIA',
+            'latitude' => null,
+            'longitude' => null,
+            'gps_accuracy' => null,
+        ]);
+
+        $this->actingAs($this->inspector)
+            ->get(route('inspections.print', $inspection))
+            ->assertOk()
+            ->assertSeeInOrder(['FERRETERIA EL MARTILLO', 'QUISPE ROJAS JUAN', '10456789012', 'JR. MOQUEGUA 789', 'FERRETERIA', 'Sin licencia'])
+            ->assertSee('Sin licencia de funcionamiento')
+            ->assertDontSee('Verificación')
+            ->assertDontSee('Registro fotográfico');
+    }
+
+    public function test_the_act_states_the_imported_licence_was_confirmed()
+    {
+        $inspection = $this->visit($this->legacyLicense(), ['result' => 'conforme', 'checks' => $this->checks(), 'confirmed_license' => true]);
+
+        $this->actingAs($this->inspector)
+            ->get(route('inspections.print', $inspection))
+            ->assertSee('se confirmó la vigencia de la licencia');
+
+        $cashier = User::factory()->create();
+        $cashier->assignRole('Caja');
+
+        $this->actingAs($cashier)->get(route('inspections.print', $inspection))->assertForbidden();
+    }
+
+    public function test_the_visit_detail_links_to_its_act()
+    {
+        $inspection = $this->visit($this->license());
+
+        $this->actingAs($this->inspector)
+            ->get(route('inspections.show', $inspection))
+            ->assertInertia(fn (Assert $page) => $page->where('inspection.print_url', route('inspections.print', $inspection)));
+    }
 }

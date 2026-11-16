@@ -17,6 +17,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -208,7 +209,19 @@ class InspectionController extends Controller
                     'id' => $photo->id,
                     'url' => route('inspections.photo', $photo),
                 ]),
+                'print_url' => route('inspections.print', $inspection),
             ],
+        ]);
+    }
+
+    /**
+     * The visit as a printable act, signed on paper by the inspector and
+     * whoever runs the business.
+     */
+    public function print(Inspection $inspection): View
+    {
+        return view('print.inspection', [
+            'inspection' => $inspection->load('license', 'inspector:id,name', 'photos'),
         ]);
     }
 

@@ -15,5 +15,6 @@ Route::middleware(['auth', 'can:'.Permission::Inspections->value])
         Route::get('visitas/nueva', 'create')->name('create');
         Route::post('visitas', 'store')->name('store');
         Route::get('visitas/{inspection}', 'show')->name('show');
+        Route::get('visitas/{inspection}/acta', 'print')->name('print');
         Route::get('fotos/{photo}', 'photo')->name('photo');
     });

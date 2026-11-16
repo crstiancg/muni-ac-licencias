@@ -1,5 +1,13 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { BadgeCheck, Check, ExternalLink, MapPin, Plus, X } from 'lucide-react';
+import {
+    BadgeCheck,
+    Check,
+    ExternalLink,
+    MapPin,
+    Plus,
+    Printer,
+    X,
+} from 'lucide-react';
 import LicenseStatusBadge from '@/components/license-status-badge';
 import StatusPill from '@/components/status-pill';
 import { Button } from '@/components/ui/button';
@@ -27,6 +35,7 @@ type Props = {
         license_status_label: string | null;
         license: InspectedLicense | null;
         photos: { id: number; url: string }[];
+        print_url: string;
     };
 };
 
@@ -232,6 +241,16 @@ export default function InspectionsShow({ inspection }: Props) {
                 <div className="flex flex-wrap gap-2">
                     <Button variant="outline" asChild>
                         <Link href={index()}>Volver a Fiscalización</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                        <a
+                            href={inspection.print_url}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <Printer />
+                            Imprimir acta
+                        </a>
                     </Button>
                     {inspection.license_id && (
                         <Button asChild>
