@@ -141,7 +141,11 @@ class LicenseController extends Controller
                 'confirmation_note' => $license->confirmation_note,
                 'confirmed_by' => $license->confirmedBy?->name,
                 'transitions' => array_map(fn (LicenseStatus $status) => ['value' => $status->value, 'label' => $status->label()], $license->status->transitions()),
+                // Only the operating licence prints observations.
+                'observations' => $license->type === IssuedDocumentType::OperatingLicense ? $license->printedObservations() : null,
             ],
+            'observationsMax' => License::OBSERVATIONS_MAX,
+            'standardObservations' => License::standardObservations(),
         ]);
     }
 
@@ -178,7 +182,7 @@ class LicenseController extends Controller
     private static function observations(License $license): string
     {
         return trim(implode(' ', array_filter([
-            config('licencias.license_observations'),
+            $license->printedObservations(),
             $license->duplicates > 0 ? 'DUPLICADO'.($license->duplicates > 1 ? " N° {$license->duplicates}" : '').'.' : null,
             $license->valid_until ? 'VIGENCIA HASTA EL '.$license->valid_until->format('d/m/Y').'.' : null,
         ])));
@@ -316,6 +320,29 @@ class LicenseController extends Controller
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Serie de {$license->number} actualizada."]);
+
+        return back();
+    }
+
+    /**
+     * Change the observations printed on the licence; the change stays in
+     * the procedure history.
+     */
+    public function updateObservations(Request $request, License $license): RedirectResponse
+    {
+        $observations = $request->validate([
+            'observations' => ['required', 'string', 'max:'.License::OBSERVATIONS_MAX],
+        ], attributes: ['observations' => 'observaciones'])['observations'];
+
+        if ($observations !== $license->observations) {
+            DB::transaction(function () use ($license, $observations) {
+                $license->update(['observations' => $observations]);
+
+                $license->procedure?->log('licencia_observaciones', "{$license->number}: observaciones actualizadas.");
+            });
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Observaciones de {$license->number} actualizadas."]);
 
         return back();
     }

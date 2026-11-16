@@ -29,9 +29,10 @@ class IssueDocuments
      * @param  string|null  $validUntil  temporary licence requested by the applicant (Ley 28976 art. 11)
      * @param  License|null  $related  existing licence the procedure replaces, closes or duplicates
      * @param  array<string, string>  $series  pre-printed form series, keyed by document type
+     * @param  string|null  $observations  printed on the operating licence; null keeps the standard text
      * @return Collection<int, License>
      */
-    public function handle(Procedure $procedure, array $sign = [], ?string $validUntil = null, ?License $related = null, array $series = []): Collection
+    public function handle(Procedure $procedure, array $sign = [], ?string $validUntil = null, ?License $related = null, array $series = [], ?string $observations = null): Collection
     {
         if ($procedure->status !== ProcedureStatus::Paid) {
             throw ValidationException::withMessages(['documents' => 'Solo se emiten documentos de un trámite pagado.']);
@@ -46,8 +47,8 @@ class IssueDocuments
 
         $this->ensurePriorItse($procedure);
 
-        return DB::transaction(function () use ($procedure, $sign, $validUntil, $related, $effects, $series) {
-            $licenses = $this->documentTypes($procedure)->map(function (IssuedDocumentType $type) use ($procedure, $sign, $validUntil, $series) {
+        return DB::transaction(function () use ($procedure, $sign, $validUntil, $related, $effects, $series, $observations) {
+            $licenses = $this->documentTypes($procedure)->map(function (IssuedDocumentType $type) use ($procedure, $sign, $validUntil, $series, $observations) {
                 ['year' => $year, 'sequence' => $sequence] = YearlySequence::next(
                     License::class,
                     fn ($query) => $query->where('type', $type),
@@ -76,6 +77,10 @@ class IssueDocuments
                     'area' => $establishment->area,
                     'capacity' => $establishment->capacity,
                     'risk_level' => $establishment->risk_level,
+                    // Saved, not looked up when printing: the paper handed over can be reprinted as is.
+                    'observations' => $type === IssuedDocumentType::OperatingLicense
+                        ? ($observations ?? License::standardObservations())
+                        : null,
                     'issued_by' => Auth::id(),
                     ...($type === IssuedDocumentType::SignAuthorization ? $sign : []),
                 ]);

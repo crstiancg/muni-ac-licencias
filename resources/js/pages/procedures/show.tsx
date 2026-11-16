@@ -19,6 +19,7 @@ import EditLicenseSeries from '@/components/edit-license-series';
 import FormSelect from '@/components/form-select';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import LicenseObservationsField from '@/components/license-observations-field';
 import LicensePicker from '@/components/license-picker';
 import PaymentOrderStatusBadge from '@/components/payment-order-status-badge';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
@@ -88,6 +89,7 @@ const EVENT_LABELS: Record<string, string> = {
     licencia_duplicado: 'Duplicado de licencia',
     licencia_confirmada: 'Vigencia de licencia confirmada',
     licencia_serie: 'Serie del formato corregida',
+    licencia_observaciones: 'Observaciones de licencia actualizadas',
 };
 
 const textareaClassName =
@@ -755,6 +757,17 @@ function IssueDocumentsDialog({ procedure }: { procedure: ProcedureDetail }) {
                                     </p>
                                     <InputError message={errors.valid_until} />
                                 </div>
+                            )}
+
+                            {procedure.document_types_to_issue.some(
+                                (type) => type.value === 'licencia',
+                            ) && (
+                                <LicenseObservationsField
+                                    defaultValue={procedure.default_observations}
+                                    standard={procedure.default_observations}
+                                    max={procedure.observations_max}
+                                    error={errors.observations}
+                                />
                             )}
 
                             <InputError message={errors.documents} />

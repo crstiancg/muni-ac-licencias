@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import LicenseController from '@/actions/App/Http/Controllers/LicenseController';
+import EditLicenseObservations from '@/components/edit-license-observations';
 import EditLicenseSeries from '@/components/edit-license-series';
 import InputError from '@/components/input-error';
 import LicenseStatusBadge, {
@@ -94,11 +95,21 @@ type LicenseDetail = {
     confirmation_note: string | null;
     confirmed_by: string | null;
     transitions: { value: LicenseStatusValue; label: string }[];
+    /** Printed text; null on sign authorizations, which have none. */
+    observations: string | null;
 };
 
-type Props = { license: LicenseDetail };
+type Props = {
+    license: LicenseDetail;
+    observationsMax: number;
+    standardObservations: string;
+};
 
-export default function LicenseShow({ license }: Props) {
+export default function LicenseShow({
+    license,
+    observationsMax,
+    standardObservations,
+}: Props) {
     return (
         <>
             <Head title={license.number} />
@@ -276,6 +287,28 @@ export default function LicenseShow({ license }: Props) {
                                 )}
                             </dl>
                         </Card>
+
+                        {license.observations !== null && (
+                            <Card title="Observaciones impresas">
+                                <p className="text-sm leading-relaxed uppercase">
+                                    {license.observations}
+                                </p>
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <p className="text-xs text-muted-foreground">
+                                        Duplicado y vigencia se agregan solos al
+                                        imprimir.
+                                    </p>
+                                    <EditLicenseObservations
+                                        license={{
+                                            ...license,
+                                            observations: license.observations,
+                                        }}
+                                        standard={standardObservations}
+                                        max={observationsMax}
+                                    />
+                                </div>
+                            </Card>
+                        )}
 
                         <Card title="Titular">
                             <div className="flex flex-wrap items-center gap-4">

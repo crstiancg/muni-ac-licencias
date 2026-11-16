@@ -105,6 +105,8 @@ export type ProcedureDetail = Omit<Procedure, 'types' | 'taxpayer'> & {
     documents_to_issue: string[];
     document_types_to_issue: { value: string; label: string }[];
     needs_sign_data: boolean;
+    default_observations: string;
+    observations_max: number;
     license_effects: string[];
     /** In-force licence of the procedure's own place: the one acted on. */
     establishment_license: {

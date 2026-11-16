@@ -42,6 +42,7 @@ use Illuminate\Support\Str;
  * @property string|null $area
  * @property int|null $capacity
  * @property RiskLevel|null $risk_level
+ * @property string|null $observations
  * @property string|null $sign_kind
  * @property int|null $sign_faces
  * @property string|null $sign_material
@@ -61,7 +62,7 @@ use Illuminate\Support\Str;
 #[Fillable([
     'type', 'year', 'sequence', 'number', 'series', 'procedure_id', 'taxpayer_id', 'establishment_id',
     'issued_at', 'valid_until', 'status', 'status_reason', 'status_changed_at', 'confirmed_at', 'confirmed_by', 'confirmation_note', 'duplicates', 'replaced_by_id', 'qr_token',
-    'holder_name', 'holder_document', 'trade_name', 'activity', 'address', 'area', 'capacity', 'risk_level',
+    'holder_name', 'holder_document', 'trade_name', 'activity', 'address', 'area', 'capacity', 'risk_level', 'observations',
     'sign_kind', 'sign_faces', 'sign_material', 'sign_width', 'sign_height',
     'issued_by', 'legacy_id',
 ])]
@@ -69,6 +70,29 @@ use Illuminate\Support\Str;
 class License extends Model
 {
     use Audited;
+
+    /**
+     * What fits the observations box of the form, leaving room for the
+     * duplicate and validity notes the system adds.
+     */
+    public const OBSERVATIONS_MAX = 300;
+
+    /**
+     * Standard warning suggested when issuing an operating licence.
+     */
+    public static function standardObservations(): string
+    {
+        return (string) config('licencias.license_observations');
+    }
+
+    /**
+     * The licence's own text, or the standard one for imported licences
+     * that never had it.
+     */
+    public function printedObservations(): string
+    {
+        return $this->observations ?? self::standardObservations();
+    }
 
     /**
      * Get the attributes that should be cast.

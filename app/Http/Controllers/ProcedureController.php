@@ -214,6 +214,8 @@ class ProcedureController extends Controller
                 'documents_to_issue' => $documentTypes->map(fn (IssuedDocumentType $type) => $type->label()),
                 'document_types_to_issue' => $documentTypes->map(fn (IssuedDocumentType $type) => ['value' => $type->value, 'label' => $type->label()]),
                 'needs_sign_data' => $documentTypes->contains(IssuedDocumentType::SignAuthorization),
+                'default_observations' => License::standardObservations(),
+                'observations_max' => License::OBSERVATIONS_MAX,
                 'license_effects' => $effects->map(fn (LicenseEffect $effect) => $effect->label()),
                 // The licence of the procedure's own place, acted on without picking it.
                 'establishment_license' => $effects->isNotEmpty() ? License::query()
@@ -308,7 +310,13 @@ class ProcedureController extends Controller
             attributes: ['related_license_id' => 'licencia'],
         )['related_license_id'] ?? null;
 
-        $licenses = $issue->handle($procedure, $sign, $validUntil, $relatedId ? License::find($relatedId) : null, $series);
+        // Starts from the standard warning; left blank, the standard is kept.
+        $observations = $documentTypes->contains(IssuedDocumentType::OperatingLicense) ? $request->validate(
+            ['observations' => ['nullable', 'string', 'max:'.License::OBSERVATIONS_MAX]],
+            attributes: ['observations' => 'observaciones'],
+        )['observations'] ?? null : null;
+
+        $licenses = $issue->handle($procedure, $sign, $validUntil, $relatedId ? License::find($relatedId) : null, $series, $observations);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => $licenses->isEmpty()
             ? "Trámite {$procedure->code} atendido."
