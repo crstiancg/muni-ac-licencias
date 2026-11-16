@@ -49,6 +49,8 @@ class InspectionRequest extends FormRequest
             'gps_accuracy' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'photos' => ['nullable', 'array', 'max:'.config('licencias.inspection_max_photos')],
             'photos.*' => ['image', 'max:8192'],
+            // An imported licence the inspector saw in use: confirm it is in force.
+            'confirm_license' => ['nullable', 'boolean', $withLicense ? 'nullable' : 'prohibited'],
         ];
     }
 
@@ -61,7 +63,22 @@ class InspectionRequest extends FormRequest
     {
         return [function (Validator $validator) {
             $result = InspectionResult::tryFrom((string) $this->input('result'));
-            $status = $this->filled('license_id') ? License::find($this->input('license_id'))?->effectiveStatus() : null;
+            $license = $this->filled('license_id') ? License::find($this->input('license_id')) : null;
+            $status = $license?->effectiveStatus();
+
+            if ($license && $this->boolean('confirm_license')) {
+                if (! $license->needsConfirmation()) {
+                    $validator->errors()->add('confirm_license', 'Esta licencia no requiere confirmación.');
+
+                    return;
+                }
+
+                if (! in_array($result, [InspectionResult::Compliant, InspectionResult::Observed], true)) {
+                    $validator->errors()->add('confirm_license', 'Solo se confirma la vigencia si el negocio está funcionando (Conforme o Con observaciones).');
+
+                    return;
+                }
+            }
 
             if ($result === InspectionResult::LicenseNotInForce && $result->contradicts($status)) {
                 $validator->errors()->add('result', 'La licencia está vigente: si algo no coincide, elige "Con observaciones".');
@@ -100,6 +117,7 @@ class InspectionRequest extends FormRequest
             'activity' => 'giro',
             'photos' => 'fotos',
             'photos.*' => 'foto',
+            'confirm_license' => 'confirmación de vigencia',
         ];
     }
 }

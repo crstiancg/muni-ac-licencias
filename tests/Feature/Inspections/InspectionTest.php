@@ -251,6 +251,73 @@ class InspectionTest extends TestCase
             );
     }
 
+    public function test_the_visit_confirms_an_imported_licence_still_in_force()
+    {
+        $legacy = $this->legacyLicense();
+        $this->assertTrue($legacy->needsConfirmation());
+
+        $this->actingAs($this->inspector)
+            ->post(route('inspections.store'), [
+                'license_id' => $legacy->id,
+                'result' => 'conforme',
+                'checks' => $this->checks(),
+                'confirm_license' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $inspection = Inspection::sole();
+        $legacy->refresh();
+
+        $this->assertTrue($inspection->confirmed_license);
+        $this->assertFalse($legacy->needsConfirmation());
+        $this->assertSame($this->inspector->id, $legacy->confirmed_by);
+        $this->assertSame("Fiscalización {$inspection->code}: Conforme.", $legacy->confirmation_note);
+
+        $this->actingAs($this->inspector)
+            ->get(route('inspections.show', $inspection))
+            ->assertInertia(fn (Assert $page) => $page->where('inspection.confirmed_license', true));
+    }
+
+    public function test_only_an_operating_business_with_a_licence_to_confirm_confirms_it()
+    {
+        $legacy = $this->legacyLicense();
+
+        // Closed: nobody saw it working.
+        $this->actingAs($this->inspector)
+            ->post(route('inspections.store'), [
+                'license_id' => $legacy->id,
+                'result' => 'cerrado',
+                'confirm_license' => true,
+            ])
+            ->assertSessionHasErrors(['confirm_license' => 'Solo se confirma la vigencia si el negocio está funcionando (Conforme o Con observaciones).']);
+
+        // Issued here: there is nothing to confirm.
+        $this->actingAs($this->inspector)
+            ->post(route('inspections.store'), [
+                'license_id' => $this->license()->id,
+                'result' => 'conforme',
+                'checks' => $this->checks(),
+                'confirm_license' => true,
+            ])
+            ->assertSessionHasErrors(['confirm_license' => 'Esta licencia no requiere confirmación.']);
+
+        $this->assertNull($legacy->fresh()->confirmed_at);
+        $this->assertSame(0, Inspection::count());
+    }
+
+    public function test_the_visit_form_offers_to_confirm_and_the_home_counts_pending_ones()
+    {
+        $legacy = $this->legacyLicense();
+
+        $this->actingAs($this->inspector)
+            ->get(route('inspections.create', ['license' => $legacy->id]))
+            ->assertInertia(fn (Assert $page) => $page->where('license.needs_confirmation', true));
+
+        $this->actingAs($this->inspector)
+            ->get(route('inspections.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('counts.pending_confirmation', 1));
+    }
+
     public function test_a_closed_business_is_recorded_without_comparing()
     {
         $license = $this->license();

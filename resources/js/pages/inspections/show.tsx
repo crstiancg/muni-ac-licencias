@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Check, ExternalLink, MapPin, Plus, X } from 'lucide-react';
+import { BadgeCheck, Check, ExternalLink, MapPin, Plus, X } from 'lucide-react';
 import LicenseStatusBadge from '@/components/license-status-badge';
 import StatusPill from '@/components/status-pill';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import type { LicenseStatusValue } from '@/types';
 
 type Props = {
     inspection: InspectionRow & {
+        confirmed_license: boolean;
         notes: string | null;
         holder_name: string | null;
         holder_document: string | null;
@@ -58,6 +59,14 @@ export default function InspectionsShow({ inspection }: Props) {
                         {inspection.inspector}
                     </p>
                 </header>
+
+                {inspection.confirmed_license && (
+                    <p className="flex items-center gap-2 rounded-2xl bg-[#e3f3ec] p-4 text-sm font-medium text-[#0b6b4f] dark:bg-emerald-400/15 dark:text-emerald-300">
+                        <BadgeCheck className="size-5 shrink-0" />
+                        En esta visita se confirmó la vigencia de la licencia
+                        migrada del sistema anterior.
+                    </p>
+                )}
 
                 <section className="flex flex-col gap-3 rounded-2xl border bg-card p-4 md:p-5">
                     <h2 className="font-display text-lg font-bold">Negocio</h2>

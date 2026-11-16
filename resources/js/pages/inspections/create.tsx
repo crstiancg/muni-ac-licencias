@@ -80,6 +80,7 @@ export default function InspectionsCreate({
         longitude: string;
         gps_accuracy: string;
         photos: File[];
+        confirm_license: boolean;
     }>({
         license_id: license?.id ?? null,
         // A licence not in force already says the result; the inspector can still change it.
@@ -99,6 +100,7 @@ export default function InspectionsCreate({
         longitude: '',
         gps_accuracy: '',
         photos: [],
+        confirm_license: false,
     });
 
     const gps = useLocation((position) =>
@@ -115,24 +117,45 @@ export default function InspectionsCreate({
         : true;
     const anyMismatch = Object.values(form.data.checks).some((ok) => !ok);
 
+    // An imported licence seen in use can be confirmed: suggested when
+    // everything matches, offered when there are observations, never
+    // when the business was not seen working.
+    const canConfirm = (result: InspectionResultValue | '') =>
+        Boolean(license?.needs_confirmation) &&
+        (result === 'conforme' || result === 'observado');
+    const confirmFor = (result: InspectionResultValue | '', current: boolean) =>
+        canConfirm(result) && (result === 'conforme' ? true : current);
+
+    const chooseResult = (result: InspectionResultValue) =>
+        form.setData((data) => ({
+            ...data,
+            result,
+            confirm_license: confirmFor(result, data.confirm_license),
+        }));
+
     // Suggest the result from what was ticked; the inspector can change it.
     const answer = (key: string, ok: boolean) => {
         const next = { ...form.data.checks, [key]: ok };
         const complete = checks.every((check) => check.key in next);
         const mismatch = Object.values(next).some((value) => !value);
 
-        form.setData((data) => ({
-            ...data,
-            checks: next,
-            result:
+        form.setData((data) => {
+            const result: InspectionResultValue | '' =
                 data.result === 'cerrado' || !complete
                     ? data.result
                     : !license?.is_valid
                       ? 'licencia_no_vigente'
                       : mismatch
                         ? 'observado'
-                        : 'conforme',
-        }));
+                        : 'conforme';
+
+            return {
+                ...data,
+                checks: next,
+                result,
+                confirm_license: confirmFor(result, data.confirm_license),
+            };
+        });
     };
 
     const addPhotos = async (files: FileList | null) => {
@@ -153,9 +176,11 @@ export default function InspectionsCreate({
     const submit = (event: React.FormEvent) => {
         event.preventDefault();
         // Closed: nothing was compared, whatever was ticked before goes away.
-        form.transform((data) =>
-            data.result === 'cerrado' ? { ...data, checks: {} } : data,
-        );
+        form.transform((data) => ({
+            ...data,
+            checks: data.result === 'cerrado' ? {} : data.checks,
+            confirm_license: canConfirm(data.result) && data.confirm_license,
+        }));
         form.post(store.url(), { forceFormData: true, preserveScroll: true });
     };
 
@@ -308,9 +333,7 @@ export default function InspectionsCreate({
                                 key={result.value}
                                 type="button"
                                 disabled={result.disabled !== null}
-                                onClick={() =>
-                                    form.setData('result', result.value)
-                                }
+                                onClick={() => chooseResult(result.value)}
                                 aria-pressed={form.data.result === result.value}
                                 className={cn(
                                     'flex flex-col items-start gap-1 rounded-xl border p-3 text-left',
@@ -412,6 +435,42 @@ export default function InspectionsCreate({
                         }
                     />
                 </section>
+
+                {canConfirm(form.data.result) && (
+                    <label
+                        className={cn(
+                            'flex cursor-pointer items-start gap-3 rounded-2xl border p-4',
+                            form.data.confirm_license
+                                ? 'border-[#12a06f] bg-[#e3f3ec] dark:bg-emerald-400/15'
+                                : 'bg-card',
+                        )}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={form.data.confirm_license}
+                            onChange={(event) =>
+                                form.setData(
+                                    'confirm_license',
+                                    event.target.checked,
+                                )
+                            }
+                            className="mt-0.5 size-5 shrink-0 accent-[#12a06f]"
+                        />
+                        <span className="text-sm">
+                            <span className="font-semibold">
+                                El negocio sigue funcionando con esta licencia:
+                                confirmar su vigencia
+                            </span>
+                            <span className="mt-0.5 block text-muted-foreground">
+                                Es una licencia migrada del sistema anterior. Al
+                                confirmarla, su QR deja de advertir que puede
+                                estar desactualizada y queda registrado que lo
+                                verificaste en esta visita.
+                            </span>
+                            <InputError message={form.errors.confirm_license} />
+                        </span>
+                    </label>
+                )}
 
                 <GpsStatus gps={gps.status} onRetry={gps.locate} />
 

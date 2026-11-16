@@ -1,5 +1,12 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { Camera, ChevronRight, MapPin, Search, Store } from 'lucide-react';
+import {
+    BadgeCheck,
+    Camera,
+    ChevronRight,
+    MapPin,
+    Search,
+    Store,
+} from 'lucide-react';
 import Heading from '@/components/heading';
 import LicenseStatusBadge, {
     LicensePendingBadge,
@@ -17,6 +24,7 @@ import {
 } from '@/lib/inspections';
 import { cn } from '@/lib/utils';
 import { create, index, show } from '@/routes/inspections';
+import { index as licensesIndex } from '@/routes/licenses';
 import type { LicenseStatusValue, Paginated } from '@/types';
 
 type Props = {
@@ -25,7 +33,11 @@ type Props = {
     inspections: Paginated<InspectionRow>;
     filters: { search: string | null; result: string | null; mine: boolean };
     resultOptions: { value: string; label: string }[];
-    counts: { today: number; without_license: number };
+    counts: {
+        today: number;
+        without_license: number;
+        pending_confirmation: number;
+    };
 };
 
 export default function InspectionsIndex({
@@ -101,6 +113,30 @@ export default function InspectionsIndex({
                         las migradas del sistema anterior.
                     </p>
                 </section>
+
+                {counts.pending_confirmation > 0 && (
+                    <Link
+                        href={licensesIndex({
+                            query: { filter: { confirmation: 'pending' } },
+                        })}
+                        className="flex items-center gap-3 rounded-2xl border border-dashed bg-card p-4 hover:bg-accent/50"
+                    >
+                        <BadgeCheck className="size-6 shrink-0 text-muted-foreground" />
+                        <span className="min-w-0 flex-1 text-sm">
+                            <span className="font-semibold">
+                                {counts.pending_confirmation.toLocaleString(
+                                    'es-PE',
+                                )}{' '}
+                                licencias migradas por confirmar
+                            </span>
+                            <span className="block text-muted-foreground">
+                                Al visitarlas, confirma en la ficha que el
+                                negocio sigue funcionando.
+                            </span>
+                        </span>
+                        <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
+                    </Link>
+                )}
 
                 {results !== null && (
                     <section className="flex flex-col gap-3">

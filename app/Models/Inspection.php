@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $visited_at
  * @property InspectionResult $result
  * @property string|null $license_status
+ * @property bool $confirmed_license
  * @property array<string, bool>|null $checks
  * @property string|null $notes
  * @property string|null $business_name
@@ -44,7 +45,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'year', 'sequence', 'code', 'license_id', 'establishment_id', 'inspector_id', 'visited_at',
-    'result', 'license_status', 'checks', 'notes',
+    'result', 'license_status', 'confirmed_license', 'checks', 'notes',
     'business_name', 'holder_name', 'holder_document', 'address', 'activity',
     'latitude', 'longitude', 'gps_accuracy',
 ])]
@@ -75,6 +76,7 @@ class Inspection extends Model
             'visited_at' => 'datetime',
             'result' => InspectionResult::class,
             'checks' => 'array',
+            'confirmed_license' => 'boolean',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
         ];

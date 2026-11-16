@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Licenses\ConfirmLicense;
 use App\Enums\InspectionResult;
 use App\Enums\LicenseStatus;
 use App\Http\Requests\InspectionRequest;
@@ -74,6 +75,8 @@ class InspectionController extends Controller
             'counts' => [
                 'today' => Inspection::query()->where('inspector_id', Auth::id())->whereDate('visited_at', today())->count(),
                 'without_license' => Inspection::query()->where('result', InspectionResult::WithoutLicense)->count(),
+                // Imported licences still to be confirmed on site.
+                'pending_confirmation' => License::query()->pendingConfirmation()->count(),
             ],
         ]);
     }
@@ -127,13 +130,15 @@ class InspectionController extends Controller
     /**
      * Record the visit with its photos and location.
      */
-    public function store(InspectionRequest $request): RedirectResponse
+    public function store(InspectionRequest $request, ConfirmLicense $confirm): RedirectResponse
     {
         $data = $request->validated();
         $license = isset($data['license_id']) ? License::find($data['license_id']) : null;
         $upper = fn (?string $value) => $value === null ? null : mb_strtoupper(trim($value));
 
-        $inspection = DB::transaction(function () use ($data, $license, $upper, $request) {
+        $confirmsLicense = $license !== null && (bool) ($data['confirm_license'] ?? false);
+
+        $inspection = DB::transaction(function () use ($data, $license, $upper, $request, $confirm, $confirmsLicense) {
             ['year' => $year, 'sequence' => $sequence] = YearlySequence::next(Inspection::class);
 
             $inspection = Inspection::create([
@@ -146,6 +151,7 @@ class InspectionController extends Controller
                 'visited_at' => now(),
                 'result' => $data['result'],
                 'license_status' => $license?->effectiveStatus()->value,
+                'confirmed_license' => $confirmsLicense,
                 'checks' => isset($data['checks']) ? array_map(fn ($value) => (bool) $value, $data['checks']) : null,
                 'notes' => $data['notes'] ?? null,
                 'business_name' => $upper($data['business_name'] ?? null),
@@ -165,10 +171,16 @@ class InspectionController extends Controller
                 ]);
             }
 
+            // Same confirmation as Mesa de partes, with the visit as its basis.
+            if ($confirmsLicense) {
+                $confirm->handle($license, "Fiscalización {$inspection->code}: {$inspection->result->label()}.");
+            }
+
             return $inspection;
         });
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Visita {$inspection->code} registrada: {$inspection->result->label()}."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Visita {$inspection->code} registrada: {$inspection->result->label()}."
+            .($confirmsLicense ? " Vigencia de {$license->number} confirmada." : '')]);
 
         return to_route('inspections.show', $inspection);
     }
@@ -183,7 +195,7 @@ class InspectionController extends Controller
         return Inertia::render('inspections/show', [
             'inspection' => [
                 ...$this->inspectionRow($inspection),
-                ...$inspection->only('notes', 'holder_name', 'holder_document', 'activity', 'latitude', 'longitude', 'gps_accuracy'),
+                ...$inspection->only('confirmed_license', 'notes', 'holder_name', 'holder_document', 'activity', 'latitude', 'longitude', 'gps_accuracy'),
                 'checks' => collect(Inspection::CHECKS)->map(fn (string $label, string $key) => [
                     'label' => $label,
                     'ok' => $inspection->checks[$key] ?? null,
