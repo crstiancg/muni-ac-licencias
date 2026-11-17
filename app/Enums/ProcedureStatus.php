@@ -28,11 +28,6 @@ enum ProcedureStatus: string
     /**
      * Data can change only before the payment order freezes the amounts.
      */
-    public function isEditable(): bool
-    {
-        return $this === self::Registered;
-    }
-
     public function isCancellable(): bool
     {
         return ! in_array($this, [self::Issued, self::Cancelled], true);

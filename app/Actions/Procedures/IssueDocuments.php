@@ -55,8 +55,9 @@ class IssueDocuments
                     fn ($query) => $query->where('type', $type),
                 );
 
-                $establishment = $procedure->establishment;
-                $taxpayer = $procedure->taxpayer;
+                // As declared in this procedure, with its corrections.
+                $establishment = $procedure->declaredEstablishment();
+                $taxpayer = $procedure->declaredTaxpayer();
 
                 return License::create([
                     'type' => $type,
@@ -65,8 +66,8 @@ class IssueDocuments
                     'number' => sprintf('%s-%d-%05d', $type->prefix(), $year, $sequence),
                     'series' => $series[$type->value] ?? null,
                     'procedure_id' => $procedure->id,
-                    'taxpayer_id' => $taxpayer->id,
-                    'establishment_id' => $establishment->id,
+                    'taxpayer_id' => $procedure->taxpayer_id,
+                    'establishment_id' => $procedure->establishment_id,
                     'issued_at' => now(),
                     'valid_until' => $validUntil ?? $this->validUntil($procedure, $type),
                     'status' => LicenseStatus::Active,

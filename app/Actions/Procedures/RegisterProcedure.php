@@ -4,6 +4,7 @@ namespace App\Actions\Procedures;
 
 use App\Enums\ProcedureStatus;
 use App\Models\Procedure;
+use App\Support\DeclaredParties;
 use App\Support\SwornDeclaration;
 use App\Support\YearlySequence;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +35,12 @@ class RegisterProcedure
                 'status' => ProcedureStatus::Registered,
                 'declaration' => SwornDeclaration::normalize($data['declaration']),
                 'registered_by' => Auth::id(),
+            ]);
+
+            // The applicant and establishment as declared, kept with the procedure.
+            $procedure->update([
+                'applicant_data' => DeclaredParties::ofTaxpayer($procedure->taxpayer),
+                'premises_data' => DeclaredParties::ofEstablishment($procedure->establishment),
             ]);
 
             $procedure->types()->attach($data['procedure_type_ids']);

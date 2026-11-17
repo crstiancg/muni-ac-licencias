@@ -6,7 +6,6 @@ use App\Actions\Procedures\IssueDocuments;
 use App\Actions\Procedures\IssuePaymentOrder;
 use App\Actions\Procedures\RegisterPayment;
 use App\Actions\Procedures\RegisterProcedure;
-use App\Actions\Procedures\ResolveParties;
 use App\Enums\DocumentType;
 use App\Enums\EconomicSector;
 use App\Enums\IssuedDocumentType;
@@ -18,11 +17,13 @@ use App\Enums\RiskLevel;
 use App\Enums\SettlementType;
 use App\Enums\StreetType;
 use App\Http\Requests\ProcedureRequest;
+use App\Http\Requests\UpdateProcedureRequest;
 use App\Models\License;
 use App\Models\Procedure;
 use App\Models\ProcedureType;
 use App\Models\Taxpayer;
 use App\Models\Uit;
+use App\Support\DeclaredParties;
 use App\Support\QrCode;
 use App\Support\SwornDeclaration;
 use Illuminate\Contracts\View\View;
@@ -137,6 +138,10 @@ class ProcedureController extends Controller
         $procedure->load('taxpayer', 'establishment', 'types', 'paymentOrder');
         $uit = Uit::query()->firstWhere('year', $procedure->year);
 
+        // As declared in this procedure, with its corrections.
+        $procedure->setRelation('taxpayer', $procedure->declaredTaxpayer());
+        $procedure->setRelation('establishment', $procedure->declaredEstablishment());
+
         return view('print.declaration', [
             'procedure' => $procedure,
             'declaration' => $procedure->declaration ?? [],
@@ -187,6 +192,10 @@ class ProcedureController extends Controller
             'registeredBy:id,name',
         ]);
 
+        // As declared in this procedure, with its corrections.
+        $procedure->setRelation('taxpayer', $procedure->declaredTaxpayer());
+        $procedure->setRelation('establishment', $procedure->declaredEstablishment());
+
         $currentUit = Uit::query()->firstWhere('year', now()->year);
         $documentTypes = (new IssueDocuments)->documentTypes($procedure);
         $effects = (new IssueDocuments)->licenseEffects($procedure);
@@ -229,7 +238,7 @@ class ProcedureController extends Controller
                     'status_label' => $procedure->relatedLicense->effectiveStatus()->label(),
                 ] : null,
                 'status_label' => $procedure->status->label(),
-                'is_editable' => $procedure->status->isEditable(),
+                'is_editable' => $procedure->isEditable(),
                 'is_cancellable' => $procedure->status->isCancellable(),
             ],
             'currentUit' => $currentUit?->only('year', 'amount'),
@@ -338,45 +347,67 @@ class ProcedureController extends Controller
     }
 
     /**
-     * Show the form to edit the procedure while it is still registered.
+     * Every field of the procedure as declared: applicant, establishment and
+     * sworn declaration. The procedure types only before liquidating.
      */
     public function edit(Procedure $procedure): Response|RedirectResponse
     {
-        if (! $procedure->status->isEditable()) {
+        if (! $procedure->isEditable()) {
             return $this->notEditable($procedure);
         }
 
+        $procedure->load('taxpayer', 'establishment', 'types:id,name');
+
         return Inertia::render('procedures/edit', [
-            'procedure' => $procedure->load([
-                'taxpayer:id,document_type,document_number,ruc,name,address,phone,'.implode(',', SwornDeclaration::REPRESENTATIVE),
-                'establishment',
-                'types:id',
-            ]),
+            'procedure' => [
+                ...$procedure->only('id', 'code', 'status', 'taxpayer_id', 'establishment_id'),
+                'status_label' => $procedure->status->label(),
+                'applicant' => DeclaredParties::ofTaxpayer($procedure->declaredTaxpayer()),
+                'premises' => DeclaredParties::ofEstablishment($procedure->declaredEstablishment()),
+                // DJs registered before the representative was declared take the taxpayer's.
+                'declaration' => [
+                    ...collect(SwornDeclaration::REPRESENTATIVE)->mapWithKeys(fn (string $key) => [$key => $procedure->taxpayer->{$key}])->all(),
+                    ...($procedure->declaration ?? []),
+                ],
+                'type_ids' => $procedure->types->pluck('id')->all(),
+                'types' => $procedure->types->map->only('id', 'name')->values(),
+            ],
+            'canChangeTypes' => $procedure->typesAreEditable(),
             ...$this->formOptions(),
         ]);
     }
 
     /**
-     * Update the procedure while it is still registered.
+     * Correct the procedure: only its own copy of the applicant and the
+     * establishment changes, never their records or other procedures.
      */
-    public function update(ProcedureRequest $request, Procedure $procedure, ResolveParties $parties): RedirectResponse
+    public function update(UpdateProcedureRequest $request, Procedure $procedure): RedirectResponse
     {
-        if (! $procedure->status->isEditable()) {
+        if (! $procedure->isEditable()) {
             return $this->notEditable($procedure);
         }
 
-        DB::transaction(function () use ($request, $procedure, $parties) {
+        DB::transaction(function () use ($request, $procedure) {
             $data = $request->validated();
+            // Typed data in upper case, as the rest of the system; codes and e-mail as they are.
+            $upper = fn (array $values, array $keep) => collect($values)
+                ->map(fn ($value, string $key) => is_string($value) && ! in_array($key, $keep, true) ? mb_strtoupper(trim($value)) : $value)
+                ->all();
 
             $procedure->update([
-                ...$parties->handle($data),
+                'applicant_data' => DeclaredParties::raw($upper($data['applicant'], ['email', 'document_type']), DeclaredParties::TAXPAYER),
+                'premises_data' => DeclaredParties::raw($upper($data['premises'], ['economic_sector', 'street_type', 'settlement_type', 'risk_level']), DeclaredParties::ESTABLISHMENT),
                 'declaration' => SwornDeclaration::normalize($data['declaration']),
             ]);
-            $procedure->types()->sync($data['procedure_type_ids']);
+
+            if ($procedure->typesAreEditable()) {
+                $procedure->types()->sync($data['procedure_type_ids']);
+            }
+
             $procedure->log('actualizado');
         });
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Trámite {$procedure->code} actualizado."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Trámite {$procedure->code} actualizado. Si la declaración jurada ya se imprimió, reimprímela."]);
 
         return to_route('procedures.show', $procedure);
     }
@@ -416,7 +447,7 @@ class ProcedureController extends Controller
 
     private function notEditable(Procedure $procedure): RedirectResponse
     {
-        Inertia::flash('toast', ['type' => 'error', 'message' => "El trámite {$procedure->code} ya tiene orden de pago; no se puede editar."]);
+        Inertia::flash('toast', ['type' => 'error', 'message' => "El trámite {$procedure->code} ya no se puede editar: está pagado con su declaración jurada recepcionada, emitido o anulado."]);
 
         return to_route('procedures.show', $procedure);
     }

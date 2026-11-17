@@ -127,9 +127,12 @@ class PaymentOrderController extends Controller
      */
     public function print(PaymentOrder $paymentOrder): View
     {
-        return view('print.payment-order', [
-            'order' => $paymentOrder->load('items', 'issuedBy:id,name', 'procedure.establishment'),
-        ]);
+        $paymentOrder->load('items', 'issuedBy:id,name', 'procedure.establishment');
+
+        // The establishment as the procedure declared it.
+        $paymentOrder->procedure?->setRelation('establishment', $paymentOrder->procedure->declaredEstablishment());
+
+        return view('print.payment-order', ['order' => $paymentOrder]);
     }
 
     /**

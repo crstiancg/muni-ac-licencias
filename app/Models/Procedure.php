@@ -24,6 +24,8 @@ use Illuminate\Support\Facades\Auth;
  * @property int $taxpayer_id
  * @property int $establishment_id
  * @property int|null $related_license_id
+ * @property array<string, mixed>|null $applicant_data the applicant as declared here
+ * @property array<string, mixed>|null $premises_data the establishment as declared here
  * @property array<string, mixed>|null $declaration
  * @property ProcedureStatus $status
  * @property string|null $file_number
@@ -39,7 +41,7 @@ use Illuminate\Support\Facades\Auth;
  * @property Carbon|null $updated_at
  */
 #[Fillable([
-    'year', 'sequence', 'code', 'taxpayer_id', 'establishment_id', 'related_license_id', 'declaration', 'status',
+    'year', 'sequence', 'code', 'taxpayer_id', 'establishment_id', 'related_license_id', 'applicant_data', 'premises_data', 'declaration', 'status',
     'file_number', 'folios', 'notes', 'cancelled_at', 'cancellation_reason',
     'registered_by', 'legacy_id',
 ])]
@@ -54,6 +56,8 @@ class Procedure extends Model
     {
         return [
             'status' => ProcedureStatus::class,
+            'applicant_data' => 'array',
+            'premises_data' => 'array',
             'declaration' => 'array',
             'year' => 'integer',
             'sequence' => 'integer',
@@ -77,6 +81,49 @@ class Procedure extends Model
     public function establishment(): BelongsTo
     {
         return $this->belongsTo(Establishment::class);
+    }
+
+    /**
+     * The applicant as this procedure declared it (its DJ, payment order and
+     * licence), over the taxpayer's record for anything not copied. Read
+     * only: corrections go to applicant_data.
+     */
+    public function declaredTaxpayer(): Taxpayer
+    {
+        return $this->applicant_data === null
+            ? $this->taxpayer
+            : (new Taxpayer)->setRawAttributes([...$this->taxpayer->getAttributes(), ...$this->applicant_data]);
+    }
+
+    /**
+     * The establishment as this procedure declared it. Read only.
+     */
+    public function declaredEstablishment(): Establishment
+    {
+        return $this->premises_data === null
+            ? $this->establishment
+            : (new Establishment)->setRawAttributes([...$this->establishment->getAttributes(), ...$this->premises_data]);
+    }
+
+    /**
+     * Its data can be corrected until it is paid and Mesa de partes received
+     * the signed DJ (and never once issued or cancelled).
+     */
+    public function isEditable(): bool
+    {
+        return match ($this->status) {
+            ProcedureStatus::Issued, ProcedureStatus::Cancelled => false,
+            ProcedureStatus::Paid => blank($this->file_number),
+            default => true,
+        };
+    }
+
+    /**
+     * The procedure types set the fee: fixed once the payment order exists.
+     */
+    public function typesAreEditable(): bool
+    {
+        return $this->status === ProcedureStatus::Registered;
     }
 
     /**
