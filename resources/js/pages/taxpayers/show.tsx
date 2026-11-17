@@ -138,7 +138,16 @@ export default function TaxpayerShow({
                 <section className="grid gap-x-8 gap-y-4 rounded-2xl border bg-card p-6 sm:grid-cols-2 lg:grid-cols-3">
                     <Field label="Domicilio fiscal">
                         {[
-                            taxpayer.address,
+                            [
+                                taxpayer.address,
+                                taxpayer.number,
+                                taxpayer.interior && `Int ${taxpayer.interior}`,
+                                taxpayer.block && `Mz ${taxpayer.block}`,
+                                taxpayer.lot && `Lt ${taxpayer.lot}`,
+                                taxpayer.settlement,
+                            ]
+                                .filter(Boolean)
+                                .join(' '),
                             taxpayer.district,
                             taxpayer.province,
                             taxpayer.department,

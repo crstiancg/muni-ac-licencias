@@ -24,6 +24,11 @@ use Illuminate\Support\Carbon;
  * @property string|null $email
  * @property string|null $phone
  * @property string|null $address
+ * @property string|null $number
+ * @property string|null $interior
+ * @property string|null $block
+ * @property string|null $lot
+ * @property string|null $settlement
  * @property string|null $district
  * @property string|null $province
  * @property string|null $department
@@ -37,7 +42,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'document_type', 'document_number', 'ruc', 'name', 'email', 'phone',
-    'address', 'district', 'province', 'department',
+    'address', 'number', 'interior', 'block', 'lot', 'settlement', 'district', 'province', 'department',
     'representative_name', 'representative_document', 'representative_sunarp', 'representative_phone',
     'legacy_procedure_id',
 ])]

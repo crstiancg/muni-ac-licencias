@@ -165,6 +165,7 @@ final class AuditCatalog
      */
     private const array MODULE_FIELDS = [
         'establishments' => ['number' => 'N° de puerta'],
+        'taxpayers' => ['address' => 'Domicilio fiscal', 'number' => 'N° de puerta', 'settlement' => 'Urbanización, AA.HH. o barrio'],
         'inspections' => ['holder_name' => 'Responsable', 'holder_document' => 'DNI/RUC del responsable', 'address' => 'Dirección del negocio'],
         'inspection_cases' => ['holder_name' => 'Responsable', 'holder_document' => 'DNI/RUC del responsable', 'address' => 'Dirección del negocio'],
         'market_stalls' => ['code' => 'N° de puesto'],

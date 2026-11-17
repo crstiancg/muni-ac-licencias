@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\DB;
  * Builds taxpayers from dblicencias.lic_tramite, where the applicant was
  * retyped in every procedure. One taxpayer per document; the most recent
  * procedure provides the data. Existing taxpayers are never overwritten, so
- * running it again keeps edits made in the new system.
+ * running it again keeps edits made in the new system. The one exception:
+ * an address still exactly as an earlier import joined it into one text is
+ * split into its parts (number, interior, block, lot, settlement).
  *
  * Procedures before 2011 (migrated from an older system) mostly have no
  * document and are skipped: their history keeps the typed name.
@@ -52,6 +54,7 @@ class ImportLegacyTaxpayers extends Command
             });
 
         $created = 0;
+        $split = 0;
         $usedRucs = Taxpayer::query()->whereNotNull('ruc')->pluck('ruc')->flip()->all();
 
         foreach ($taxpayers as $attributes) {
@@ -60,10 +63,18 @@ class ImportLegacyTaxpayers extends Command
                 $attributes['ruc'] = null;
             }
 
+            $joined = $attributes['joined_address'];
+            unset($attributes['joined_address']);
+
             $taxpayer = Taxpayer::firstOrCreate(
                 ['document_type' => $attributes['document_type'], 'document_number' => $attributes['document_number']],
                 $attributes,
             );
+
+            if (! $taxpayer->wasRecentlyCreated && $this->stillJoined($taxpayer, $joined, $attributes['address'])) {
+                $taxpayer->update(collect($attributes)->only(self::ADDRESS_PARTS)->all());
+                $split++;
+            }
 
             if ($taxpayer->wasRecentlyCreated) {
                 $created++;
@@ -74,7 +85,7 @@ class ImportLegacyTaxpayers extends Command
             }
         }
 
-        $this->info("{$created} contribuyentes importados ({$skipped} trámites sin documento o nombre válido).");
+        $this->info("{$created} contribuyentes importados ({$skipped} trámites sin documento o nombre válido), {$split} domicilios separados.");
 
         return self::SUCCESS;
     }
@@ -100,7 +111,14 @@ class ImportLegacyTaxpayers extends Command
             'name' => mb_strtoupper($name),
             'email' => $this->clean($row->tra_email),
             'phone' => $this->clean($row->tra_tel),
-            'address' => $this->address($row),
+            // Cut to the column: Postgres rejects longer text instead of truncating.
+            'address' => $this->clean($row->tra_direc, 255),
+            'number' => $this->clean($row->tra_dir_nro, 20),
+            'interior' => $this->clean($row->tra_dir_int, 20),
+            'block' => $this->clean($row->tra_dir_mz, 10),
+            'lot' => $this->clean($row->tra_dir_lt, 10),
+            'settlement' => $this->clean($row->tra_urb, 100),
+            'joined_address' => $this->joinedAddress($row),
             'district' => $this->clean($row->tra_dist),
             'province' => $this->clean($row->tra_prov),
             'department' => $this->clean($row->tra_depa),
@@ -113,9 +131,27 @@ class ImportLegacyTaxpayers extends Command
     }
 
     /**
-     * "JR. LIMA N° 123 Int. 2 Mz. B Lt. 4 URB. X" from the split legacy columns.
+     * Address columns, as the old system and the sworn declaration split them.
      */
-    private function address(object $row): ?string
+    private const array ADDRESS_PARTS = ['address', 'number', 'interior', 'block', 'lot', 'settlement'];
+
+    /**
+     * Imported earlier as one text and not edited since: its parts are empty
+     * and the text is still exactly what the importer wrote.
+     */
+    private function stillJoined(Taxpayer $taxpayer, ?string $joined, ?string $street): bool
+    {
+        return $joined !== null
+            && $joined !== $street
+            && $taxpayer->address === $joined
+            && collect(self::ADDRESS_PARTS)->except(0)->every(fn (string $part) => $taxpayer->{$part} === null);
+    }
+
+    /**
+     * How earlier imports joined the address: "JR. LIMA N° 123 Int. 2 Mz. B
+     * Lt. 4 URB. X". Only to recognize those untouched since.
+     */
+    private function joinedAddress(object $row): ?string
     {
         $parts = array_filter([
             $this->clean($row->tra_direc),
@@ -129,8 +165,10 @@ class ImportLegacyTaxpayers extends Command
         return $parts === [] ? null : mb_substr(implode(' ', $parts), 0, 255);
     }
 
-    private function clean(?string $value): ?string
+    private function clean(?string $value, ?int $max = null): ?string
     {
-        return LegacyApplicant::clean($value);
+        $value = LegacyApplicant::clean($value);
+
+        return $value === null || $max === null ? $value : rtrim(mb_substr($value, 0, $max));
     }
 }

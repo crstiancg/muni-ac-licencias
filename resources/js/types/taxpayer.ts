@@ -14,6 +14,11 @@ export type Taxpayer = {
     email: string | null;
     phone: string | null;
     address: string | null;
+    number: string | null;
+    interior: string | null;
+    block: string | null;
+    lot: string | null;
+    settlement: string | null;
     district: string | null;
     province: string | null;
     department: string | null;

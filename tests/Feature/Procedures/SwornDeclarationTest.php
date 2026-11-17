@@ -127,7 +127,12 @@ class SwornDeclarationTest extends TestCase
                     'document_type' => 'ce',
                     'document_number' => 'X1234567',
                     'name' => 'PEREZ JUAN',
-                    'address' => 'JR. LIMA 123',
+                    'address' => 'JR. LIMA',
+                    'number' => '123',
+                    'interior' => '201',
+                    'block' => 'F',
+                    'lot' => '12',
+                    'settlement' => 'URB. CHANU CHANU',
                     'district' => 'PUNO',
                     'province' => 'PUNO',
                     'department' => 'PUNO',
@@ -143,6 +148,31 @@ class SwornDeclarationTest extends TestCase
         $taxpayer = Procedure::query()->sole()->taxpayer;
         $this->assertSame('QUISPE MAMANI ROSA', $taxpayer->representative_name);
         $this->assertSame('40123456', $taxpayer->representative_document);
+        $this->assertSame(['123', '201', 'F', '12', 'URB. CHANU CHANU'], [$taxpayer->number, $taxpayer->interior, $taxpayer->block, $taxpayer->lot, $taxpayer->settlement]);
+    }
+
+    public function test_the_applicant_address_prints_with_its_number_interior_block_lot_and_settlement()
+    {
+        $establishment = Establishment::factory()->create();
+        $establishment->taxpayer->update(['address' => 'JR. LIMA', 'number' => '456', 'interior' => '201', 'block' => 'F', 'lot' => '12', 'settlement' => 'AA.HH. SAN JOSE']);
+        $type = ProcedureType::factory()->create(['is_active' => true]);
+
+        $procedure = app(RegisterProcedure::class)->handle($this->payload($establishment, $type));
+
+        $this->actingAs($this->clerk)
+            ->get(route('procedures.declaration.print', $procedure))
+            ->assertSeeInOrder([
+                'II. DATOS DEL SOLICITANTE',
+                '>JR. LIMA</td>',
+                '>456</td>',
+                '>201</td>',
+                '>F</td>',
+                '>12</td>',
+                '14. Av./Jr./Ca./Pje.',
+                '15. Nro.',
+                '>AA.HH. SAN JOSE</td>',
+                '16. Urb., AA.HH, Barrio, Otros',
+            ], false);
     }
 
     public function test_the_sworn_declaration_is_required_to_register()

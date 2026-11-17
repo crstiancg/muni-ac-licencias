@@ -134,9 +134,9 @@
                 <td class="l" colspan="2">12. Nro. de teléfono</td>
                 <td class="l" colspan="2">13. RUC</td>
             </tr>
-            <tr><td class="v" colspan="2">{{ $taxpayer->address }}</td><td class="v"></td><td class="v"></td><td class="v"></td><td class="v"></td></tr>
+            <tr><td class="v" colspan="2">{{ $taxpayer->address }}</td><td class="v">{{ $taxpayer->number }}</td><td class="v">{{ $taxpayer->interior }}</td><td class="v">{{ $taxpayer->block }}</td><td class="v">{{ $taxpayer->lot }}</td></tr>
             <tr><td class="l" colspan="2">14. Av./Jr./Ca./Pje.</td><td class="l">15. Nro.</td><td class="l">Int</td><td class="l">Mz</td><td class="l">Lt</td></tr>
-            <tr><td class="v"></td><td class="v">{{ $taxpayer->district }}</td><td class="v" colspan="2">{{ $taxpayer->province }}</td><td class="v" colspan="2">{{ $taxpayer->department }}</td></tr>
+            <tr><td class="v">{{ $taxpayer->settlement }}</td><td class="v">{{ $taxpayer->district }}</td><td class="v" colspan="2">{{ $taxpayer->province }}</td><td class="v" colspan="2">{{ $taxpayer->department }}</td></tr>
             <tr><td class="l">16. Urb., AA.HH, Barrio, Otros</td><td class="l">17. Distrito</td><td class="l" colspan="2">18. Provincia</td><td class="l" colspan="2">19. Departamento</td></tr>
         </table>
 

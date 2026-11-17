@@ -246,7 +246,16 @@ export default function ApplicantStep({
                     />
                     <WizardInput
                         {...field('address')}
-                        label="Domicilio fiscal"
+                        label="Domicilio fiscal (Av./Jr./Ca./Pje.)"
+                        className="md:col-span-4"
+                    />
+                    <WizardInput {...field('number')} label="Nro." />
+                    <WizardInput {...field('interior')} label="Int" />
+                    <WizardInput {...field('block')} label="Mz" />
+                    <WizardInput {...field('lot')} label="Lt" />
+                    <WizardInput
+                        {...field('settlement')}
+                        label="Urb., AA.HH., Barrio, Otros"
                         className="md:col-span-4"
                     />
                     <WizardInput {...field('district')} label="Distrito" />

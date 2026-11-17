@@ -290,7 +290,9 @@ export default function TaxpayerFormFields({
             </div>
 
             <div className="grid gap-2">
-                <Label htmlFor="address">Domicilio fiscal</Label>
+                <Label htmlFor="address">
+                    Domicilio fiscal (Av./Jr./Ca./Pje.)
+                </Label>
                 <Input
                     id="address"
                     name="address"
@@ -300,6 +302,45 @@ export default function TaxpayerFormFields({
                     aria-invalid={form?.errors.address ? true : undefined}
                 />
                 <InputError message={form?.errors.address} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {(
+                    [
+                        { field: 'number', label: 'Nro.', max: 20 },
+                        { field: 'interior', label: 'Int', max: 20 },
+                        { field: 'block', label: 'Mz', max: 10 },
+                        { field: 'lot', label: 'Lt', max: 10 },
+                    ] as const
+                ).map(({ field, label, max }) => (
+                    <div key={field} className="grid gap-2">
+                        <Label htmlFor={field}>{label}</Label>
+                        <Input
+                            id={field}
+                            name={field}
+                            maxLength={max}
+                            defaultValue={taxpayer?.[field] ?? ''}
+                            onBlur={() => form?.validate(field)}
+                            aria-invalid={
+                                form?.errors[field] ? true : undefined
+                            }
+                        />
+                        <InputError message={form?.errors[field]} />
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="settlement">Urb., AA.HH., Barrio, Otros</Label>
+                <Input
+                    id="settlement"
+                    name="settlement"
+                    maxLength={100}
+                    defaultValue={taxpayer?.settlement ?? ''}
+                    onBlur={() => form?.validate('settlement')}
+                    aria-invalid={form?.errors.settlement ? true : undefined}
+                />
+                <InputError message={form?.errors.settlement} />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">

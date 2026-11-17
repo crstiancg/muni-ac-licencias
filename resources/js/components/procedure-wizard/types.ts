@@ -13,6 +13,11 @@ export type NewTaxpayer = {
     phone: string;
     email: string;
     address: string;
+    number: string;
+    interior: string;
+    block: string;
+    lot: string;
+    settlement: string;
     district: string;
     province: string;
     department: string;
@@ -124,6 +129,11 @@ export const TAXPAYER_FIELDS: (keyof NewTaxpayer)[] = [
     'phone',
     'email',
     'address',
+    'number',
+    'interior',
+    'block',
+    'lot',
+    'settlement',
     'district',
     'province',
     'department',
@@ -156,6 +166,11 @@ export const emptyTaxpayer = (
     phone: '',
     email: '',
     address: '',
+    number: '',
+    interior: '',
+    block: '',
+    lot: '',
+    settlement: '',
     district: 'PUNO',
     province: 'PUNO',
     department: 'PUNO',
