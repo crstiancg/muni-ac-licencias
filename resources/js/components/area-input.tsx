@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 /**
  * Area of the premises as clerks measured it in the old system: length ×
  * width. Typing both fills the area; the area can still be typed directly
- * (irregular premises). Only the area is stored.
+ * (irregular premises). Only the area is stored, unless the length and
+ * width are given from outside (the sworn declaration keeps them).
  */
 export default function AreaInput({
     id,
@@ -15,6 +16,8 @@ export default function AreaInput({
     onChange,
     onBlur,
     error,
+    dimensions,
+    onDimensionsChange,
 }: {
     id: string;
     /** Submit the area under this name (uncontrolled <Form>s). */
@@ -23,13 +26,19 @@ export default function AreaInput({
     onChange: (area: string) => void;
     onBlur?: () => void;
     error?: string;
+    /** Length and width kept by the caller instead of here. */
+    dimensions?: { length: string; width: string };
+    onDimensionsChange?: (length: string, width: string) => void;
 }) {
-    const [length, setLength] = useState('');
-    const [width, setWidth] = useState('');
+    const [ownLength, setOwnLength] = useState('');
+    const [ownWidth, setOwnWidth] = useState('');
+    const length = dimensions?.length ?? ownLength;
+    const width = dimensions?.width ?? ownWidth;
 
     function measure(nextLength: string, nextWidth: string) {
-        setLength(nextLength);
-        setWidth(nextWidth);
+        setOwnLength(nextLength);
+        setOwnWidth(nextWidth);
+        onDimensionsChange?.(nextLength, nextWidth);
 
         const area = Number(nextLength) * Number(nextWidth);
 

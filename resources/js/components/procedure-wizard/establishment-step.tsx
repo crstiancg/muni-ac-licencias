@@ -28,7 +28,12 @@ export default function EstablishmentStep({
     onPick,
     onNew,
     onChangeNew,
+    dimensions,
+    onChangeDimensions,
 }: {
+    /** Length and width of the sworn declaration: measured once, here. */
+    dimensions: { length: string; width: string };
+    onChangeDimensions: (length: string, width: string) => void;
     applicant: Applicant | null;
     establishmentId: number | null;
     newEstablishment: NewEstablishment | null;
@@ -199,6 +204,8 @@ export default function EstablishmentStep({
                                 value={newEstablishment.area}
                                 onChange={(value) => onChangeNew('area', value)}
                                 error={errors['establishment.area']}
+                                dimensions={dimensions}
+                                onDimensionsChange={onChangeDimensions}
                             />
                         </div>
                         <WizardInput

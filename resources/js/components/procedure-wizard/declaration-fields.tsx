@@ -25,10 +25,13 @@ type Flag =
  * 6. sectorial, 7. ITSE, 8. anuncio).
  */
 export default function DeclarationFields({
+    dimensionsAbove = false,
     declaration,
     errors,
     onChange,
 }: {
+    /** A new establishment: length and width were typed in its area, above. */
+    dimensionsAbove?: boolean;
     declaration: Declaration;
     errors: Record<string, string | undefined>;
     onChange: <K extends keyof Declaration>(
@@ -94,8 +97,18 @@ export default function DeclarationFields({
         <div className="space-y-6">
             <Section title="Dimensiones y otros datos del establecimiento">
                 <div className="grid gap-4 md:grid-cols-4">
-                    <WizardInput {...number('length')} label="Largo (m)" />
-                    <WizardInput {...number('width')} label="Ancho (m)" />
+                    {!dimensionsAbove && (
+                        <>
+                            <WizardInput
+                                {...number('length')}
+                                label="Largo (m)"
+                            />
+                            <WizardInput
+                                {...number('width')}
+                                label="Ancho (m)"
+                            />
+                        </>
+                    )}
                     <WizardField
                         id="declaration_construction_material"
                         label="Material de construcción predominante"
@@ -119,11 +132,27 @@ export default function DeclarationFields({
                         'Materiales combustibles, tóxicos o inflamables',
                     )}
                 </div>
-                {area && (
+                {dimensionsAbove ? (
                     <p className="text-sm text-muted-foreground">
-                        Largo × ancho = {area} m²
+                        {area
+                            ? `Largo ${declaration.length} m × ancho ${declaration.width} m = ${area} m², tomados del área del establecimiento.`
+                            : 'El largo y el ancho se toman del área del establecimiento (arriba).'}
                     </p>
+                ) : (
+                    area && (
+                        <p className="text-sm text-muted-foreground">
+                            Largo × ancho = {area} m²
+                        </p>
+                    )
                 )}
+                {dimensionsAbove &&
+                    (errors['declaration.length'] ||
+                        errors['declaration.width']) && (
+                        <p className="text-sm text-destructive">
+                            {errors['declaration.length'] ??
+                                errors['declaration.width']}
+                        </p>
+                    )}
             </Section>
 
             <Section title="Declaración jurada sectorial">

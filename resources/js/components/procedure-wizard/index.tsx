@@ -454,6 +454,20 @@ export default function ProcedureWizard({
                                     }));
                                 }}
                                 onChangeNew={setEstablishmentField}
+                                dimensions={{
+                                    length: form.data.declaration.length,
+                                    width: form.data.declaration.width,
+                                }}
+                                onChangeDimensions={(length, width) =>
+                                    form.setData((data) => ({
+                                        ...data,
+                                        declaration: {
+                                            ...data.declaration,
+                                            length,
+                                            width,
+                                        },
+                                    }))
+                                }
                             />
 
                             {declarationSource &&
@@ -484,6 +498,9 @@ export default function ProcedureWizard({
                             {(form.data.establishment_id !== null ||
                                 form.data.establishment !== null) && (
                                 <DeclarationFields
+                                    dimensionsAbove={
+                                        form.data.establishment !== null
+                                    }
                                     declaration={form.data.declaration}
                                     errors={errors}
                                     onChange={setDeclarationField}
