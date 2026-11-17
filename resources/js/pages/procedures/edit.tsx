@@ -12,6 +12,8 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import ProcedureController from '@/actions/App/Http/Controllers/ProcedureController';
 import AreaInput from '@/components/area-input';
+import DocumentLookupInput from '@/components/document-lookup-input';
+import type { OfficialData } from '@/components/document-lookup-input';
 import FormSelect from '@/components/form-select';
 import ProcedureStatusBadge from '@/components/procedure-status-badge';
 import DeclarationFields from '@/components/procedure-wizard/declaration-fields';
@@ -234,6 +236,26 @@ export default function ProcedureEdit({
     );
 
     const { applicant: person, premises: place } = form.data;
+    // A representative's CE has letters; digits are asked as a DNI.
+    const representativeType = /[^\d\s]/.test(
+        form.data.declaration.representative_document,
+    )
+        ? 'ce'
+        : 'dni';
+
+    // RENIEC brings the name; SUNAT also the fiscal address.
+    const fillApplicant = (data: OfficialData) =>
+        form.setData((current) => ({
+            ...current,
+            applicant: {
+                ...current.applicant,
+                name: data.name,
+                address: data.address ?? current.applicant.address,
+                district: data.district ?? current.applicant.district,
+                province: data.province ?? current.applicant.province,
+                department: data.department ?? current.applicant.department,
+            },
+        }));
     const isCompany =
         person.document_type === 'ruc' &&
         person.document_number.startsWith('20');
@@ -381,9 +403,11 @@ export default function ProcedureEdit({
                                         }
                                     />
                                 </WizardField>
-                                <WizardInput
+                                <DocumentLookupInput
                                     {...applicant('document_number')}
                                     label="N° de documento"
+                                    documentType={person.document_type}
+                                    onFound={fillApplicant}
                                 />
                                 {person.document_type !== 'ruc' ? (
                                     <WizardInput
@@ -456,19 +480,39 @@ export default function ProcedureEdit({
 
                         <Section title="Representante legal o apoderado (opcional)">
                             <div className="grid gap-4 md:grid-cols-6">
-                                {REPRESENTATIVE.map(([key, label, span]) => (
-                                    <WizardInput
-                                        key={key}
-                                        id={`declaration_${key}`}
-                                        label={label}
-                                        value={form.data.declaration[key]}
-                                        onChange={(value) =>
-                                            setDeclaration(key, value)
-                                        }
-                                        error={errors[`declaration.${key}`]}
-                                        className={span || undefined}
-                                    />
-                                ))}
+                                {REPRESENTATIVE.map(([key, label, span]) =>
+                                    key === 'representative_document' ? (
+                                        <DocumentLookupInput
+                                            key={key}
+                                            id={`declaration_${key}`}
+                                            label={label}
+                                            value={form.data.declaration[key]}
+                                            onChange={(value) =>
+                                                setDeclaration(key, value)
+                                            }
+                                            documentType={representativeType}
+                                            onFound={(data) =>
+                                                setDeclaration(
+                                                    'representative_name',
+                                                    data.name,
+                                                )
+                                            }
+                                            error={errors[`declaration.${key}`]}
+                                        />
+                                    ) : (
+                                        <WizardInput
+                                            key={key}
+                                            id={`declaration_${key}`}
+                                            label={label}
+                                            value={form.data.declaration[key]}
+                                            onChange={(value) =>
+                                                setDeclaration(key, value)
+                                            }
+                                            error={errors[`declaration.${key}`]}
+                                            className={span || undefined}
+                                        />
+                                    ),
+                                )}
                             </div>
                         </Section>
 

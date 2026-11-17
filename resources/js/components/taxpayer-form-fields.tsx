@@ -2,6 +2,7 @@ import { useFormContext } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
 import TaxpayerController from '@/actions/App/Http/Controllers/TaxpayerController';
+import DocumentLookupInput from '@/components/document-lookup-input';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,6 +58,8 @@ export default function TaxpayerFormFields({
         district: taxpayer?.district ?? '',
         province: taxpayer?.province ?? '',
         department: taxpayer?.department ?? '',
+        representative_name: taxpayer?.representative_name ?? '',
+        representative_document: taxpayer?.representative_document ?? '',
     });
     const [lookup, setLookup] = useState<Lookup>({ status: 'idle' });
 
@@ -115,6 +118,7 @@ export default function TaxpayerFormFields({
         const { data } = result;
 
         setValues((current) => ({
+            ...current,
             name: data.name,
             address: data.address ?? current.address,
             district: data.district ?? current.district,
@@ -384,9 +388,8 @@ export default function TaxpayerFormFields({
                             <Input
                                 id="representative_name"
                                 name="representative_name"
-                                defaultValue={
-                                    taxpayer?.representative_name ?? ''
-                                }
+                                value={values.representative_name}
+                                onChange={set('representative_name')}
                                 onBlur={() =>
                                     form?.validate('representative_name')
                                 }
@@ -396,25 +399,29 @@ export default function TaxpayerFormFields({
                             />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="representative_document">
-                                DNI del representante
-                            </Label>
-                            <Input
-                                id="representative_document"
-                                name="representative_document"
-                                inputMode="numeric"
-                                defaultValue={
-                                    taxpayer?.representative_document ?? ''
-                                }
-                                onBlur={() =>
-                                    form?.validate('representative_document')
-                                }
-                            />
-                            <InputError
-                                message={form?.errors.representative_document}
-                            />
-                        </div>
+                        <DocumentLookupInput
+                            id="representative_document"
+                            name="representative_document"
+                            label="DNI del representante"
+                            documentType="dni"
+                            value={values.representative_document}
+                            onChange={(value) =>
+                                setValues((current) => ({
+                                    ...current,
+                                    representative_document: value,
+                                }))
+                            }
+                            onFound={(data) =>
+                                setValues((current) => ({
+                                    ...current,
+                                    representative_name: data.name,
+                                }))
+                            }
+                            onBlur={() =>
+                                form?.validate('representative_document')
+                            }
+                            error={form?.errors.representative_document}
+                        />
 
                         <div className="grid gap-2">
                             <Label htmlFor="representative_sunarp">

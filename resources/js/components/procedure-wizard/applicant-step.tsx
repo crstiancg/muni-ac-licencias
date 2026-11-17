@@ -1,6 +1,7 @@
 import { CircleCheck, Search, UserPlus, X } from 'lucide-react';
 import { useState } from 'react';
 import TaxpayerController from '@/actions/App/Http/Controllers/TaxpayerController';
+import DocumentLookupInput from '@/components/document-lookup-input';
 import FormSelect from '@/components/form-select';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -135,21 +136,48 @@ export default function ApplicantStep({
                         ['representative_sunarp', 'N° de partida (SUNARP)'],
                         ['representative_phone', 'Teléfono'],
                     ] as const
-                ).map(([key, label]) => (
-                    <WizardInput
-                        key={key}
-                        id={`declaration_${key}`}
-                        label={label}
-                        value={representative[key]}
-                        onChange={(value) => onChangeRepresentative(key, value)}
-                        error={errors[`declaration.${key}`]}
-                        className={
-                            key === 'representative_name'
-                                ? 'md:col-span-4'
-                                : undefined
-                        }
-                    />
-                ))}
+                ).map(([key, label]) =>
+                    key === 'representative_document' ? (
+                        <DocumentLookupInput
+                            key={key}
+                            id={`declaration_${key}`}
+                            label={label}
+                            value={representative[key]}
+                            onChange={(value) =>
+                                onChangeRepresentative(key, value)
+                            }
+                            // A CE has letters; digits are asked as a DNI.
+                            documentType={
+                                /[^\d\s]/.test(representative[key])
+                                    ? 'ce'
+                                    : 'dni'
+                            }
+                            onFound={(data) =>
+                                onChangeRepresentative(
+                                    'representative_name',
+                                    data.name,
+                                )
+                            }
+                            error={errors[`declaration.${key}`]}
+                        />
+                    ) : (
+                        <WizardInput
+                            key={key}
+                            id={`declaration_${key}`}
+                            label={label}
+                            value={representative[key]}
+                            onChange={(value) =>
+                                onChangeRepresentative(key, value)
+                            }
+                            error={errors[`declaration.${key}`]}
+                            className={
+                                key === 'representative_name'
+                                    ? 'md:col-span-4'
+                                    : undefined
+                            }
+                        />
+                    ),
+                )}
             </div>
         </fieldset>
     );

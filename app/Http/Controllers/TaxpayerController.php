@@ -122,7 +122,8 @@ class TaxpayerController extends Controller
 
         $number = (string) $request->query('number');
 
-        if ($taxpayer = Taxpayer::query()->document($type, $number)->first()) {
+        // remote=1: the official data even when registered (correcting a procedure, a representative).
+        if (! $request->boolean('remote') && $taxpayer = Taxpayer::query()->document($type, $number)->first()) {
             return response()->json(['source' => 'local', 'taxpayer' => $taxpayer]);
         }
 
