@@ -143,6 +143,31 @@ class EditProcedureTest extends TestCase
             ->assertDontSee('BODEGA Y LIBRERIA');
     }
 
+    public function test_correcting_into_a_company_asks_for_its_sunarp_registry_entry()
+    {
+        $procedure = $this->register();
+        $company = ['document_type' => 'ruc', 'document_number' => '20616230949', 'ruc' => null];
+
+        $this->actingAs($this->clerk)
+            ->put(route('procedures.update', $procedure), ['procedure_type_ids' => [$this->type->id], ...$this->corrected($procedure, $company)])
+            ->assertSessionHasErrors('declaration.representative_sunarp');
+
+        $this->actingAs($this->clerk)
+            ->put(route('procedures.update', $procedure), ['procedure_type_ids' => [$this->type->id], ...$this->corrected($procedure, $company, declaration: ['representative_sunarp' => '11023456'])])
+            ->assertSessionHasNoErrors();
+    }
+
+    public function test_correcting_a_natural_person_drops_the_legal_representative()
+    {
+        $procedure = $this->register();
+
+        $this->actingAs($this->clerk)
+            ->put(route('procedures.update', $procedure), ['procedure_type_ids' => [$this->type->id], ...$this->corrected($procedure, ['document_type' => 'dni', 'document_number' => '01234567'], declaration: ['representative_name' => 'QUISPE MAMANI ROSA'])])
+            ->assertSessionHasNoErrors();
+
+        $this->assertNull($procedure->fresh()->declaration['representative_name']);
+    }
+
     public function test_the_payment_order_and_the_licence_take_the_corrected_data()
     {
         $procedure = $this->register();

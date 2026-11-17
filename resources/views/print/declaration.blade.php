@@ -13,8 +13,8 @@
     $sign = (bool) ($d['sign'] ?? false);
     $signLength = $sign ? ($d['sign_length'] ?? 0) : 0;
     $signHeight = $sign ? ($d['sign_height'] ?? 0) : 0;
-    // Older DJs without a declared representative fall back to the taxpayer's.
-    $representative = fn (string $key) => array_key_exists($key, $d) ? $d[$key] : $taxpayer->{$key};
+    // Only a company has a legal representative. Older DJs without one declared fall back to the taxpayer's.
+    $representative = fn (string $key) => ! $taxpayer->isCompany() ? null : (array_key_exists($key, $d) ? $d[$key] : $taxpayer->{$key});
     $logo = config('licencias.logo');
     $hasLogo = $logo && file_exists(public_path($logo));
 @endphp

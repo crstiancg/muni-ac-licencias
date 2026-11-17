@@ -20,7 +20,7 @@ class LicenseLetterheadTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function issueLicense(): License
+    private function issueLicense(array $taxpayer = [], array $declaration = []): License
     {
         Uit::factory()->create(['year' => now()->year, 'amount' => 5500]);
         $establishment = Establishment::factory()->create([
@@ -29,13 +29,16 @@ class LicenseLetterheadTest extends TestCase
             'area' => 40,
             'capacity' => 15,
         ]);
+        if ($taxpayer) {
+            $establishment->taxpayer->update($taxpayer);
+        }
         $type = ProcedureType::factory()->create(['is_active' => true, 'uit_percentage' => 3.7855, 'document_type' => 'licencia']);
 
         $procedure = app(RegisterProcedure::class)->handle([
             'procedure_type_ids' => [$type->id],
             'taxpayer_id' => $establishment->taxpayer_id,
             'establishment_id' => $establishment->id,
-            'declaration' => ['flammable_materials' => false, 'signage' => true, 'breakers' => true, 'first_aid_kit' => true, 'wiring_conduits' => true, 'sign' => false],
+            'declaration' => ['flammable_materials' => false, 'signage' => true, 'breakers' => true, 'first_aid_kit' => true, 'wiring_conduits' => true, 'sign' => false, ...$declaration],
         ]);
         $procedure->update(['file_number' => '2026-00049928']);
 
@@ -79,7 +82,9 @@ class LicenseLetterheadTest extends TestCase
             ->assertOk()
             ->assertSee('class="letterhead"', false)
             ->assertSee($license->holder_name)
-            ->assertSee('CARNES DON JOSE')
+            // A natural person: the "Razón social" line stays blank.
+            ->assertSee('<div class="f" style="left:38.7mm;top:122mm"></div>', false)
+            ->assertDontSee('CARNES DON JOSE')
             ->assertSee('CARNICERIA')
             ->assertSee($license->address)
             ->assertSee('PROHIBIDO OCUPACION DE LA VIA PUBLICA')
@@ -108,7 +113,7 @@ class LicenseLetterheadTest extends TestCase
             ->assertSee('0010234')
             ->assertSee(mb_strtoupper(config('licencias.municipality')))
             ->assertSee('Licencia de funcionamiento para establecimiento')
-            ->assertSeeInOrder(['Apellidos y Nombres', $license->holder_name, 'Razón social del Establecimiento', 'CARNES DON JOSE'])
+            ->assertSeeInOrder(['Apellidos y Nombres', $license->holder_name, 'Razón social del Establecimiento', '<div class="value"></div>', 'Clase de Establecimiento'], false)
             ->assertSee('CARNICERIA')
             ->assertSee($license->address)
             ->assertSee('PROHIBIDO OCUPACION DE LA VIA PUBLICA')
@@ -121,5 +126,33 @@ class LicenseLetterheadTest extends TestCase
             ->assertSeeInOrder(['Emisor', 'Sub Gerencia de Actividades', 'Gerencia de Desarrollo'])
             ->assertDontSee('Turismo')
             ->assertSee('class="qr" src="data:image/svg+xml;base64,', false);
+    }
+
+    public function test_a_company_licence_prints_its_legal_representative_as_razon_social()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $clerk = User::factory()->create();
+        $clerk->assignRole('Mesa de partes');
+        $license = $this->issueLicense(
+            ['document_type' => 'ruc', 'document_number' => '20616230949', 'ruc' => null, 'name' => 'GRUPO THARWAH S.A.C.', 'representative_name' => 'REPRESENTANTE DE LA FICHA'],
+            ['representative_name' => 'GUERRA VASQUEZ JOCELIN MILAGROS', 'representative_sunarp' => '11023456'],
+        );
+
+        $this->actingAs($clerk)
+            ->get(route('licenses.print', $license))
+            ->assertSeeInOrder(['GRUPO THARWAH S.A.C.', 'GUERRA VASQUEZ JOCELIN MILAGROS', 'CARNICERIA'])
+            ->assertDontSee('CARNES DON JOSE')
+            ->assertDontSee('REPRESENTANTE DE LA FICHA');
+
+        $this->actingAs($clerk)
+            ->get(route('licenses.print', [$license, 'blank' => 1]))
+            ->assertSeeInOrder(['Razón social del Establecimiento', 'GUERRA VASQUEZ JOCELIN MILAGROS']);
+
+        // Licences without a declared representative take the company's file.
+        $license->procedure->update(['declaration' => collect($license->procedure->declaration)->except('representative_name')->all()]);
+
+        $this->actingAs($clerk)
+            ->get(route('licenses.print', $license))
+            ->assertSee('REPRESENTANTE DE LA FICHA');
     }
 }

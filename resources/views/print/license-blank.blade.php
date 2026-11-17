@@ -153,7 +153,8 @@
                 <div class="label">Apellidos y Nombres</div>
                 <div class="value">{{ $license->holder_name }}</div>
                 <div class="label">Razón social del Establecimiento</div>
-                <div class="value">{{ $license->trade_name }}</div>
+                {{-- A company's legal representative; blank for a natural person. --}}
+                <div class="value">{{ $license->legalRepresentative() }}</div>
                 <div class="label">Clase de Establecimiento Comercial, Industrial o de Servicios</div>
                 <div class="value">{{ $license->activity }}</div>
                 <div class="label">Domicilio de Establecimiento:</div>

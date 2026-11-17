@@ -61,7 +61,7 @@ class ProcedureRequest extends FormRequest
 
             // Also step 3: the sworn declaration printed when registering.
             // Mesa de partes data comes later, when the signed DJ is filed.
-            ...SwornDeclaration::rulesFor(),
+            ...SwornDeclaration::rulesFor(company: $this->applicantIsCompany()),
         ];
     }
 
@@ -77,6 +77,20 @@ class ProcedureRequest extends FormRequest
                 'ruc' => trim((string) $this->input('taxpayer.ruc')) ?: null,
             ]]);
         }
+
+        if (! $this->applicantIsCompany()) {
+            $this->merge(['declaration' => SwornDeclaration::withoutRepresentative($this->input('declaration'))]);
+        }
+    }
+
+    /**
+     * A company (RUC 20) applies through its legal representative.
+     */
+    private function applicantIsCompany(): bool
+    {
+        return $this->filled('taxpayer_id')
+            ? (bool) Taxpayer::query()->find($this->integer('taxpayer_id'))?->isCompany()
+            : Taxpayer::isCompanyDocument($this->input('taxpayer.document_type'), $this->input('taxpayer.document_number'));
     }
 
     /**
@@ -91,6 +105,7 @@ class ProcedureRequest extends FormRequest
             'taxpayer.required' => 'Busca al solicitante por su DNI o RUC.',
             'establishment.required' => 'Elige o registra el establecimiento.',
             ...TaxpayerRequest::messagesFor('taxpayer.'),
+            ...SwornDeclaration::messagesFor(),
         ];
     }
 

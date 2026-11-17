@@ -8,6 +8,7 @@ use App\Models\Procedure;
 use App\Models\ProcedureType;
 use App\Models\Uit;
 use App\Models\User;
+use App\Support\SwornDeclaration;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -89,7 +90,7 @@ class SwornDeclarationTest extends TestCase
     public function test_the_representative_is_declared_per_procedure_without_touching_the_taxpayer()
     {
         $establishment = Establishment::factory()->create();
-        $establishment->taxpayer->update(['representative_name' => 'APODERADO ANTERIOR']);
+        $establishment->taxpayer->update(['document_type' => 'ruc', 'document_number' => '20616230949', 'ruc' => null, 'representative_name' => 'APODERADO ANTERIOR']);
         $type = ProcedureType::factory()->create(['is_active' => true]);
 
         $this->actingAs($this->clerk)
@@ -124,9 +125,9 @@ class SwornDeclarationTest extends TestCase
             ->post(route('procedures.store'), [
                 'procedure_type_ids' => [$type->id],
                 'taxpayer' => [
-                    'document_type' => 'ce',
-                    'document_number' => 'X1234567',
-                    'name' => 'PEREZ JUAN',
+                    'document_type' => 'ruc',
+                    'document_number' => '20616230949',
+                    'name' => 'GRUPO SAC',
                     'address' => 'JR. LIMA',
                     'number' => '123',
                     'interior' => '201',
@@ -141,6 +142,7 @@ class SwornDeclarationTest extends TestCase
                 'declaration' => $this->declaration([
                     'representative_name' => 'QUISPE MAMANI ROSA',
                     'representative_document' => '40123456',
+                    'representative_sunarp' => '11002233',
                 ]),
             ])
             ->assertSessionHasNoErrors();
@@ -149,6 +151,73 @@ class SwornDeclarationTest extends TestCase
         $this->assertSame('QUISPE MAMANI ROSA', $taxpayer->representative_name);
         $this->assertSame('40123456', $taxpayer->representative_document);
         $this->assertSame(['123', '201', 'F', '12', 'URB. CHANU CHANU'], [$taxpayer->number, $taxpayer->interior, $taxpayer->block, $taxpayer->lot, $taxpayer->settlement]);
+    }
+
+    public function test_a_company_declares_its_sunarp_registry_entry()
+    {
+        $establishment = Establishment::factory()->create();
+        $establishment->taxpayer->update(['document_type' => 'ruc', 'document_number' => '20616230949', 'ruc' => null]);
+        $type = ProcedureType::factory()->create(['is_active' => true]);
+
+        $this->actingAs($this->clerk)
+            ->post(route('procedures.store'), $this->payload($establishment, $type))
+            ->assertSessionHasErrors(['declaration.representative_sunarp' => 'La partida registral (SUNARP) es obligatoria para una empresa (RUC 20).']);
+
+        $this->actingAs($this->clerk)
+            ->post(route('procedures.store'), $this->payload($establishment, $type, [
+                'declaration' => $this->declaration(['representative_sunarp' => '11023456']),
+            ]))
+            ->assertSessionHasNoErrors();
+    }
+
+    public function test_a_new_company_declares_its_sunarp_registry_entry_too()
+    {
+        $type = ProcedureType::factory()->create(['is_active' => true]);
+
+        $this->actingAs($this->clerk)
+            ->post(route('procedures.store'), [
+                'procedure_type_ids' => [$type->id],
+                'taxpayer' => ['document_type' => 'ruc', 'document_number' => '20616230949', 'name' => 'GRUPO SAC', 'address' => 'JR. LIMA', 'district' => 'PUNO', 'province' => 'PUNO', 'department' => 'PUNO'],
+                'establishment' => ['activity' => 'BODEGA', 'street' => 'LIMA'],
+                'declaration' => $this->declaration(),
+            ])
+            ->assertSessionHasErrors('declaration.representative_sunarp');
+    }
+
+    public function test_a_natural_person_does_not_need_a_sunarp_registry_entry()
+    {
+        $establishment = Establishment::factory()->create();
+        $establishment->taxpayer->update(['document_type' => 'dni', 'document_number' => '01234567']);
+        $type = ProcedureType::factory()->create(['is_active' => true]);
+
+        $this->actingAs($this->clerk)
+            ->post(route('procedures.store'), $this->payload($establishment, $type))
+            ->assertSessionHasNoErrors();
+    }
+
+    public function test_only_a_company_declares_a_legal_representative()
+    {
+        $establishment = Establishment::factory()->create();
+        $establishment->taxpayer->update(['document_type' => 'dni', 'document_number' => '01234567', 'representative_name' => 'APODERADO DEL SISTEMA ANTERIOR']);
+        $type = ProcedureType::factory()->create(['is_active' => true]);
+
+        $this->actingAs($this->clerk)
+            ->post(route('procedures.store'), $this->payload($establishment, $type, [
+                'declaration' => $this->declaration(['representative_name' => 'QUISPE MAMANI ROSA', 'representative_document' => '40123456']),
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $procedure = Procedure::query()->sole();
+        $this->assertNull($procedure->declaration['representative_name']);
+        $this->assertNull($procedure->declaration['representative_document']);
+
+        // Not even an older DJ falls back to the representative in the file.
+        $procedure->update(['declaration' => collect($procedure->declaration)->except(SwornDeclaration::REPRESENTATIVE)->all()]);
+
+        $this->actingAs($this->clerk)
+            ->get(route('procedures.declaration.print', $procedure))
+            ->assertDontSee('QUISPE MAMANI ROSA')
+            ->assertDontSee('APODERADO DEL SISTEMA ANTERIOR');
     }
 
     public function test_the_applicant_address_prints_with_its_number_interior_block_lot_and_settlement()

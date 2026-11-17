@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\DocumentType;
 use App\Models\Procedure;
 use App\Models\ProcedureType;
+use App\Models\Taxpayer;
 use App\Support\SwornDeclaration;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -48,7 +49,7 @@ class UpdateProcedureRequest extends FormRequest
             ),
             'premises' => ['required', 'array'],
             ...EstablishmentRequest::rulesFor('premises.'),
-            ...SwornDeclaration::rulesFor(),
+            ...SwornDeclaration::rulesFor(company: $this->applicantIsCompany()),
         ];
     }
 
@@ -64,6 +65,18 @@ class UpdateProcedureRequest extends FormRequest
                 'ruc' => trim((string) $this->input('applicant.ruc')) ?: null,
             ]]);
         }
+
+        if (! $this->applicantIsCompany()) {
+            $this->merge(['declaration' => SwornDeclaration::withoutRepresentative($this->input('declaration'))]);
+        }
+    }
+
+    /**
+     * A company (RUC 20) applies through its legal representative.
+     */
+    private function applicantIsCompany(): bool
+    {
+        return Taxpayer::isCompanyDocument($this->input('applicant.document_type'), $this->input('applicant.document_number'));
     }
 
     /**
@@ -71,7 +84,10 @@ class UpdateProcedureRequest extends FormRequest
      */
     public function messages(): array
     {
-        return TaxpayerRequest::messagesFor('applicant.');
+        return [
+            ...TaxpayerRequest::messagesFor('applicant.'),
+            ...SwornDeclaration::messagesFor(),
+        ];
     }
 
     /**

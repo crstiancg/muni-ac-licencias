@@ -212,6 +212,24 @@ class License extends Model
     }
 
     /**
+     * The legal representative printed as "Razón social" on the licence: only
+     * a company (RUC 20) has one. As declared in its procedure; licences
+     * without one declared take the company's file.
+     */
+    public function legalRepresentative(): ?string
+    {
+        if (! str_starts_with((string) $this->holder_document, 'RUC 20')) {
+            return null;
+        }
+
+        $declared = $this->procedure?->declaration ?? [];
+
+        return array_key_exists('representative_name', $declared)
+            ? $declared['representative_name']
+            : $this->taxpayer?->representative_name;
+    }
+
+    /**
      * Inspectors' field visits, latest first.
      *
      * @return HasMany<Inspection, $this>

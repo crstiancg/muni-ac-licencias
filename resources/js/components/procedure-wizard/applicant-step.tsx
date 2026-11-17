@@ -123,61 +123,64 @@ export default function ApplicantStep({
         }
     }
 
+    // The company's registry entry (SUNARP): required for a RUC 20, so it
+    // sits with the applicant's data, not with the representative.
+    const sunarpField = (
+        <WizardInput
+            id="declaration_representative_sunarp"
+            label="N° de partida registral (SUNARP)"
+            value={representative.representative_sunarp}
+            onChange={(value) =>
+                onChangeRepresentative('representative_sunarp', value)
+            }
+            error={errors['declaration.representative_sunarp']}
+        />
+    );
+
     const representativeFields = (
         <fieldset className="space-y-4 rounded-lg border p-4">
             <legend className="px-1 text-sm font-semibold">
-                Representante legal o apoderado (opcional)
+                Representante legal
             </legend>
             <div className="grid gap-4 md:grid-cols-4">
-                {(
-                    [
-                        ['representative_name', 'Apellidos y nombres'],
-                        ['representative_document', 'N° de DNI o CE'],
-                        ['representative_sunarp', 'N° de partida (SUNARP)'],
-                        ['representative_phone', 'Teléfono'],
-                    ] as const
-                ).map(([key, label]) =>
-                    key === 'representative_document' ? (
-                        <DocumentLookupInput
-                            key={key}
-                            id={`declaration_${key}`}
-                            label={label}
-                            value={representative[key]}
-                            onChange={(value) =>
-                                onChangeRepresentative(key, value)
-                            }
-                            // A CE has letters; digits are asked as a DNI.
-                            documentType={
-                                /[^\d\s]/.test(representative[key])
-                                    ? 'ce'
-                                    : 'dni'
-                            }
-                            onFound={(data) =>
-                                onChangeRepresentative(
-                                    'representative_name',
-                                    data.name,
-                                )
-                            }
-                            error={errors[`declaration.${key}`]}
-                        />
-                    ) : (
-                        <WizardInput
-                            key={key}
-                            id={`declaration_${key}`}
-                            label={label}
-                            value={representative[key]}
-                            onChange={(value) =>
-                                onChangeRepresentative(key, value)
-                            }
-                            error={errors[`declaration.${key}`]}
-                            className={
-                                key === 'representative_name'
-                                    ? 'md:col-span-4'
-                                    : undefined
-                            }
-                        />
-                    ),
-                )}
+                <WizardInput
+                    id="declaration_representative_name"
+                    label="Apellidos y nombres"
+                    value={representative.representative_name}
+                    onChange={(value) =>
+                        onChangeRepresentative('representative_name', value)
+                    }
+                    error={errors['declaration.representative_name']}
+                    className="md:col-span-2"
+                />
+                <DocumentLookupInput
+                    id="declaration_representative_document"
+                    label="N° de DNI o CE"
+                    value={representative.representative_document}
+                    onChange={(value) =>
+                        onChangeRepresentative('representative_document', value)
+                    }
+                    // A CE has letters; digits are asked as a DNI.
+                    documentType={
+                        /[^\d\s]/.test(representative.representative_document)
+                            ? 'ce'
+                            : 'dni'
+                    }
+                    onFound={(data) =>
+                        onChangeRepresentative('representative_name', data.name)
+                    }
+                    error={errors['declaration.representative_document']}
+                />
+                <WizardInput
+                    id="declaration_representative_phone"
+                    label="Teléfono"
+                    value={representative.representative_phone}
+                    onChange={(value) =>
+                        onChangeRepresentative('representative_phone', value)
+                    }
+                    error={errors['declaration.representative_phone']}
+                    inputMode="tel"
+                />
             </div>
         </fieldset>
     );
@@ -206,7 +209,16 @@ export default function ApplicantStep({
                         Cambiar solicitante
                     </Button>
                 </div>
-                {representativeFields}
+                {/* Only a company (RUC 20) declares a legal representative. */}
+                {applicant.document_type === 'ruc' &&
+                    applicant.document_number.startsWith('20') && (
+                        <>
+                            <div className="grid gap-4 md:grid-cols-4">
+                                {sunarpField}
+                            </div>
+                            {representativeFields}
+                        </>
+                    )}
             </div>
         );
     }
@@ -292,9 +304,10 @@ export default function ApplicantStep({
                         {...field('department')}
                         label="Departamento"
                     />
+                    {isCompany && sunarpField}
                 </div>
 
-                {representativeFields}
+                {isCompany && representativeFields}
             </div>
         );
     }

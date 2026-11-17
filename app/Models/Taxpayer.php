@@ -95,7 +95,16 @@ class Taxpayer extends Model
      */
     public function isCompany(): bool
     {
-        return $this->document_type === DocumentType::Ruc && str_starts_with($this->document_number, '20');
+        return self::isCompanyDocument($this->document_type, $this->document_number);
+    }
+
+    /**
+     * The same, for a document typed in a form.
+     */
+    public static function isCompanyDocument(DocumentType|string|null $type, ?string $number): bool
+    {
+        return DocumentType::tryFrom($type instanceof DocumentType ? $type->value : (string) $type) === DocumentType::Ruc
+            && str_starts_with((string) $number, '20');
     }
 
     /**

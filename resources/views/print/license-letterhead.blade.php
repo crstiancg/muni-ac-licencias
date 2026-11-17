@@ -75,7 +75,7 @@
             <div class="f crest-code" style="left:8mm;top:54mm;width:41mm">C.T. {{ $procedure?->code }}</div>
 
             <div class="f" style="left:38.7mm;top:105mm">{{ $license->holder_name }}</div>
-            <div class="f" style="left:38.7mm;top:122mm">{{ $license->trade_name }}</div>
+            <div class="f" style="left:38.7mm;top:122mm">{{ $license->legalRepresentative() }}</div>
             <div class="f" style="left:38.7mm;top:139.3mm">{{ $license->activity }}</div>
             <div class="f" style="left:38.7mm;top:155.1mm">{{ $license->address }}</div>
             <div class="f wrap" style="left:40mm;top:167.3mm;width:125mm;font-size:8.5pt">{{ $observations }}</div>

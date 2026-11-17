@@ -24,7 +24,7 @@ class SwornDeclaration
     /**
      * @return array<string, array<mixed>>
      */
-    public static function rulesFor(string $prefix = 'declaration.'): array
+    public static function rulesFor(string $prefix = 'declaration.', bool $company = false): array
     {
         $sign = "{$prefix}sign";
 
@@ -32,7 +32,8 @@ class SwornDeclaration
             rtrim($prefix, '.') => ['required', 'array'],
             "{$prefix}representative_name" => ['nullable', 'string', 'max:255'],
             "{$prefix}representative_document" => ['nullable', 'string', 'max:15'],
-            "{$prefix}representative_sunarp" => ['nullable', 'string', 'max:30'],
+            // The company's registry entry: a RUC 20 cannot go without it.
+            "{$prefix}representative_sunarp" => [$company ? 'required' : 'nullable', 'string', 'max:30'],
             "{$prefix}representative_phone" => ['nullable', 'string', 'max:20'],
             "{$prefix}length" => ['nullable', 'numeric', 'min:0.01', 'max:99999'],
             "{$prefix}width" => ['nullable', 'numeric', 'min:0.01', 'max:99999'],
@@ -52,6 +53,27 @@ class SwornDeclaration
             "{$prefix}sign_description" => ['nullable', 'string', 'max:500'],
             "{$prefix}sign_length" => ['nullable', "required_if_accepted:{$sign}", 'numeric', 'min:0.01', 'max:999'],
             "{$prefix}sign_height" => ['nullable', "required_if_accepted:{$sign}", 'numeric', 'min:0.01', 'max:999'],
+        ];
+    }
+
+    /**
+     * Only a company (RUC 20) declares a legal representative: anyone else's
+     * is dropped, even when the form still carried it.
+     */
+    public static function withoutRepresentative(mixed $declaration): mixed
+    {
+        return is_array($declaration)
+            ? [...$declaration, ...array_fill_keys(self::REPRESENTATIVE, null)]
+            : $declaration;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function messagesFor(string $prefix = 'declaration.'): array
+    {
+        return [
+            "{$prefix}representative_sunarp.required" => 'La partida registral (SUNARP) es obligatoria para una empresa (RUC 20).',
         ];
     }
 

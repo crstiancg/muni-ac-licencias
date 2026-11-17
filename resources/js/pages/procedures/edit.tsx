@@ -75,8 +75,7 @@ const PREMISES_FIELDS = [
 
 const REPRESENTATIVE = [
     ['representative_name', 'Apellidos y nombres', 'md:col-span-3'],
-    ['representative_document', 'N° de DNI o CE', ''],
-    ['representative_sunarp', 'N° de partida (SUNARP)', ''],
+    ['representative_document', 'N° de DNI o CE', 'md:col-span-2'],
     ['representative_phone', 'Teléfono', ''],
 ] as const;
 
@@ -461,7 +460,11 @@ export default function ProcedureEdit({
                                 <WizardInput
                                     {...applicant('settlement')}
                                     label="Urb., AA.HH., Barrio, Otros"
-                                    className="col-span-2 md:col-span-3"
+                                    className={
+                                        isCompany
+                                            ? 'col-span-2'
+                                            : 'col-span-2 md:col-span-3'
+                                    }
                                 />
                                 <WizardInput
                                     {...applicant('district')}
@@ -475,46 +478,81 @@ export default function ProcedureEdit({
                                     {...applicant('department')}
                                     label="Departamento"
                                 />
-                            </div>
-                        </Section>
-
-                        <Section title="Representante legal o apoderado (opcional)">
-                            <div className="grid gap-4 md:grid-cols-6">
-                                {REPRESENTATIVE.map(([key, label, span]) =>
-                                    key === 'representative_document' ? (
-                                        <DocumentLookupInput
-                                            key={key}
-                                            id={`declaration_${key}`}
-                                            label={label}
-                                            value={form.data.declaration[key]}
-                                            onChange={(value) =>
-                                                setDeclaration(key, value)
-                                            }
-                                            documentType={representativeType}
-                                            onFound={(data) =>
-                                                setDeclaration(
-                                                    'representative_name',
-                                                    data.name,
-                                                )
-                                            }
-                                            error={errors[`declaration.${key}`]}
-                                        />
-                                    ) : (
-                                        <WizardInput
-                                            key={key}
-                                            id={`declaration_${key}`}
-                                            label={label}
-                                            value={form.data.declaration[key]}
-                                            onChange={(value) =>
-                                                setDeclaration(key, value)
-                                            }
-                                            error={errors[`declaration.${key}`]}
-                                            className={span || undefined}
-                                        />
-                                    ),
+                                {/* The company's registry entry: required for a RUC 20. */}
+                                {isCompany && (
+                                    <WizardInput
+                                        id="declaration_representative_sunarp"
+                                        label="N° de partida registral (SUNARP)"
+                                        value={
+                                            form.data.declaration
+                                                .representative_sunarp
+                                        }
+                                        onChange={(value) =>
+                                            setDeclaration(
+                                                'representative_sunarp',
+                                                value,
+                                            )
+                                        }
+                                        error={
+                                            errors[
+                                                'declaration.representative_sunarp'
+                                            ]
+                                        }
+                                    />
                                 )}
                             </div>
                         </Section>
+
+                        {/* Only a company (RUC 20) declares a legal representative. */}
+                        {isCompany && (
+                            <Section title="Representante legal">
+                                <div className="grid gap-4 md:grid-cols-6">
+                                    {REPRESENTATIVE.map(([key, label, span]) =>
+                                        key === 'representative_document' ? (
+                                            <DocumentLookupInput
+                                                key={key}
+                                                id={`declaration_${key}`}
+                                                label={label}
+                                                value={
+                                                    form.data.declaration[key]
+                                                }
+                                                onChange={(value) =>
+                                                    setDeclaration(key, value)
+                                                }
+                                                documentType={
+                                                    representativeType
+                                                }
+                                                onFound={(data) =>
+                                                    setDeclaration(
+                                                        'representative_name',
+                                                        data.name,
+                                                    )
+                                                }
+                                                error={
+                                                    errors[`declaration.${key}`]
+                                                }
+                                            />
+                                        ) : (
+                                            <WizardInput
+                                                key={key}
+                                                id={`declaration_${key}`}
+                                                label={label}
+                                                value={
+                                                    form.data.declaration[key]
+                                                }
+                                                onChange={(value) =>
+                                                    setDeclaration(key, value)
+                                                }
+                                                error={
+                                                    errors[`declaration.${key}`]
+                                                }
+                                                className={span || undefined}
+                                            />
+                                        ),
+                                    )}
+                                </div>
+                            </Section>
+                        )}
 
                         <Section title="Datos del establecimiento">
                             <div className="grid gap-4 md:grid-cols-4">
