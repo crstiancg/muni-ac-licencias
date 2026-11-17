@@ -84,8 +84,8 @@ class LicenseLetterheadTest extends TestCase
             ->assertSee($license->holder_name)
             // A natural person: the "Razón social" line stays blank.
             ->assertSee('<div class="f" style="left:38.7mm;top:122mm"></div>', false)
-            ->assertDontSee('CARNES DON JOSE')
-            ->assertSee('CARNICERIA')
+            // The class of establishment carries the trade name.
+            ->assertSee('CARNICERIA - CARNES DON JOSE')
             ->assertSee($license->address)
             ->assertSee('PROHIBIDO OCUPACION DE LA VIA PUBLICA')
             ->assertSee('208.20')
@@ -114,7 +114,7 @@ class LicenseLetterheadTest extends TestCase
             ->assertSee(mb_strtoupper(config('licencias.municipality')))
             ->assertSee('Licencia de funcionamiento para establecimiento')
             ->assertSeeInOrder(['Apellidos y Nombres', $license->holder_name, 'Razón social del Establecimiento', '<div class="value"></div>', 'Clase de Establecimiento'], false)
-            ->assertSee('CARNICERIA')
+            ->assertSee('CARNICERIA - CARNES DON JOSE')
             ->assertSee($license->address)
             ->assertSee('PROHIBIDO OCUPACION DE LA VIA PUBLICA')
             ->assertSeeInOrder(['208.20', 'DOSCIENTOS OCHO CON 20/100', 'SOLES'])
@@ -140,8 +140,7 @@ class LicenseLetterheadTest extends TestCase
 
         $this->actingAs($clerk)
             ->get(route('licenses.print', $license))
-            ->assertSeeInOrder(['GRUPO THARWAH S.A.C.', 'GUERRA VASQUEZ JOCELIN MILAGROS', 'CARNICERIA'])
-            ->assertDontSee('CARNES DON JOSE')
+            ->assertSeeInOrder(['GRUPO THARWAH S.A.C.', 'GUERRA VASQUEZ JOCELIN MILAGROS', 'CARNICERIA - CARNES DON JOSE'])
             ->assertDontSee('REPRESENTANTE DE LA FICHA');
 
         $this->actingAs($clerk)

@@ -156,7 +156,7 @@
                 {{-- A company's legal representative; blank for a natural person. --}}
                 <div class="value">{{ $license->legalRepresentative() }}</div>
                 <div class="label">Clase de Establecimiento Comercial, Industrial o de Servicios</div>
-                <div class="value">{{ $license->activity }}</div>
+                <div class="value">{{ $license->establishmentClass() }}</div>
                 <div class="label">Domicilio de Establecimiento:</div>
                 <div class="value">{{ $license->address }}</div>
                 <div class="label">Observaciones:</div>

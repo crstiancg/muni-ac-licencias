@@ -212,6 +212,15 @@ class License extends Model
     }
 
     /**
+     * "Clase de establecimiento" on the licence: the activity followed by the
+     * trade name, when it has one (RESTAURANTE - EL SOMBRERITO).
+     */
+    public function establishmentClass(): string
+    {
+        return collect([$this->activity, $this->trade_name])->filter()->join(' - ');
+    }
+
+    /**
      * The legal representative printed as "Razón social" on the licence: only
      * a company (RUC 20) has one. As declared in its procedure; licences
      * without one declared take the company's file.
