@@ -162,7 +162,7 @@
                 <div class="label">Clase de Establecimiento Comercial, Industrial o de Servicios</div>
                 <div class="value">{{ $license->establishmentClass() }}</div>
                 <div class="label">Domicilio de Establecimiento:</div>
-                <div class="value">{{ $license->address }}</div>
+                <div class="value">{{ $license->printedAddress() }}</div>
                 <div class="label">Observaciones:</div>
                 <div class="value obs">{{ $observations }}</div>
                 <div class="label row">

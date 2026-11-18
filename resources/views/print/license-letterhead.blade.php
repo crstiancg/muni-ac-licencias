@@ -81,7 +81,7 @@
             <div class="f" style="left:38.7mm;top:105mm">{{ $license->printedPersonName() }}</div>
             <div class="f" style="left:38.7mm;top:122mm">{{ $license->printedBusinessName() }}</div>
             <div class="f" style="left:38.7mm;top:139.3mm">{{ $license->establishmentClass() }}</div>
-            <div class="f" style="left:38.7mm;top:155.1mm">{{ $license->address }}</div>
+            <div class="f" style="left:38.7mm;top:155.1mm">{{ $license->printedAddress() }}</div>
             <div class="f wrap" style="left:40mm;top:167.3mm;width:125mm;font-size:8.5pt">{{ $observations }}</div>
 
             <div class="f" style="left:67mm;top:189.9mm">{{ $order ? number_format((float) $order->total, 2, '.', '') : '' }}</div>

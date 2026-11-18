@@ -6,6 +6,7 @@ use App\Concerns\Audited;
 use App\Enums\IssuedDocumentType;
 use App\Enums\LicenseStatus;
 use App\Enums\RiskLevel;
+use App\Enums\SettlementType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -236,6 +237,24 @@ class License extends Model
     public function printedBusinessName(): ?string
     {
         return $this->isCompany() ? $this->holder_name : null;
+    }
+
+    /**
+     * "Domicilio de Establecimiento" on the licence: only the street, without
+     * the " - BARRIO CHANU CHANU" that the stored address ends with.
+     */
+    public function printedAddress(): string
+    {
+        $labels = collect(SettlementType::cases())
+            ->map(fn (SettlementType $type) => preg_quote(mb_strtoupper($type->label()), '/'))
+            ->join('|');
+        $address = preg_replace("/ - (?:{$labels})\\b.*$/u", '', (string) $this->address);
+
+        // A settlement named without its type: only its name follows the dash.
+        $name = $this->establishment?->settlement_name;
+        $suffix = $name ? ' - '.mb_strtoupper($name) : null;
+
+        return $suffix && str_ends_with($address, $suffix) ? mb_substr($address, 0, -mb_strlen($suffix)) : $address;
     }
 
     /**

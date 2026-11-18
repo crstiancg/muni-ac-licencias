@@ -13,6 +13,7 @@ use App\Models\Uit;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -28,6 +29,8 @@ class LicenseLetterheadTest extends TestCase
             'activity' => 'CARNICERIA',
             'area' => 40,
             'capacity' => 15,
+            'settlement_type' => 'barrio',
+            'settlement_name' => 'CHANU CHANU',
         ]);
         if ($taxpayer) {
             $establishment->taxpayer->update($taxpayer);
@@ -88,7 +91,9 @@ class LicenseLetterheadTest extends TestCase
             ->assertDontSee('RUC.')
             // The class of establishment carries the trade name.
             ->assertSee('CARNICERIA - CARNES DON JOSE')
-            ->assertSee($license->address)
+            // The licence keeps the settlement, but the sheet prints only the street.
+            ->assertSee('<div class="f" style="left:38.7mm;top:155.1mm">'.e(Str::before($license->address, ' - BARRIO')).'</div>', false)
+            ->assertDontSee('BARRIO CHANU CHANU')
             ->assertSee('PROHIBIDO OCUPACION DE LA VIA PUBLICA')
             ->assertSee('208.20')
             ->assertSeeInOrder(['DOSCIENTOS OCHO CON 20/100', 'SOLES'])
@@ -117,7 +122,8 @@ class LicenseLetterheadTest extends TestCase
             ->assertSee('Licencia de funcionamiento para establecimiento')
             ->assertSeeInOrder(['Apellidos y Nombres', $license->holder_name, 'Razón social del Establecimiento', '<div class="value"></div>', 'Clase de Establecimiento'], false)
             ->assertSee('CARNICERIA - CARNES DON JOSE')
-            ->assertSee($license->address)
+            ->assertSeeInOrder(['Domicilio de Establecimiento:', e(Str::before($license->address, ' - BARRIO')), 'Observaciones:'], false)
+            ->assertDontSee('BARRIO CHANU CHANU')
             ->assertSee('PROHIBIDO OCUPACION DE LA VIA PUBLICA')
             ->assertSeeInOrder(['208.20', 'DOSCIENTOS OCHO CON 20/100', 'SOLES'])
             ->assertSee('2026-00049928')
