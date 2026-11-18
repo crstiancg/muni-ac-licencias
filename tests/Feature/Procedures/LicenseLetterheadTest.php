@@ -84,6 +84,8 @@ class LicenseLetterheadTest extends TestCase
             ->assertSee('<div class="f" style="left:38.7mm;top:105mm">'.e($license->holder_name).'</div>', false)
             // A natural person: the "Razón social" line stays blank.
             ->assertSee('<div class="f" style="left:38.7mm;top:122mm"></div>', false)
+            // Only a RUC holder gets the RUC under the series.
+            ->assertDontSee('RUC.')
             // The class of establishment carries the trade name.
             ->assertSee('CARNICERIA - CARNES DON JOSE')
             ->assertSee($license->address)
@@ -128,6 +130,24 @@ class LicenseLetterheadTest extends TestCase
             ->assertSee('class="qr" src="data:image/svg+xml;base64,', false);
     }
 
+    public function test_a_natural_person_with_ruc_prints_the_ruc_but_no_razon_social()
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $clerk = User::factory()->create();
+        $clerk->assignRole('Mesa de partes');
+        $license = $this->issueLicense(['document_type' => 'ruc', 'document_number' => '10456789012', 'ruc' => null, 'name' => 'QUISPE MAMANI ROSA']);
+
+        $this->actingAs($clerk)
+            ->get(route('licenses.print', $license))
+            ->assertSee('RUC. 10456789012')
+            ->assertSee('<div class="f" style="left:38.7mm;top:105mm">QUISPE MAMANI ROSA</div>', false)
+            ->assertSee('<div class="f" style="left:38.7mm;top:122mm"></div>', false);
+
+        $this->actingAs($clerk)
+            ->get(route('licenses.print', [$license, 'blank' => 1]))
+            ->assertSee('RUC. 10456789012');
+    }
+
     public function test_a_company_licence_prints_its_representative_as_name_and_itself_as_razon_social()
     {
         $this->seed(RolesAndPermissionsSeeder::class);
@@ -142,10 +162,12 @@ class LicenseLetterheadTest extends TestCase
             ->get(route('licenses.print', $license))
             ->assertSee('<div class="f" style="left:38.7mm;top:105mm">GUERRA VASQUEZ JOCELIN MILAGROS</div>', false)
             ->assertSee('<div class="f" style="left:38.7mm;top:122mm">GRUPO THARWAH S.A.C.</div>', false)
+            ->assertSee('RUC. 20616230949')
             ->assertDontSee('REPRESENTANTE DE LA FICHA');
 
         $this->actingAs($clerk)
             ->get(route('licenses.print', [$license, 'blank' => 1]))
+            ->assertSeeInOrder(['class="serial"', 'RUC. 20616230949', 'class="entity'], false)
             ->assertSeeInOrder(['Apellidos y Nombres', 'GUERRA VASQUEZ JOCELIN MILAGROS', 'Razón social del Establecimiento', 'GRUPO THARWAH S.A.C.', 'Clase de Establecimiento']);
 
         // Licences without a declared representative take the company's file.

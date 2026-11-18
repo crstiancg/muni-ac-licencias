@@ -239,6 +239,16 @@ class License extends Model
     }
 
     /**
+     * The holder's RUC, printed under the series; null for a DNI holder.
+     */
+    public function holderRuc(): ?string
+    {
+        return str_starts_with((string) $this->holder_document, 'RUC ')
+            ? substr($this->holder_document, 4)
+            : null;
+    }
+
+    /**
      * Only a company (RUC 20) has a razón social and a legal representative.
      */
     public function isCompany(): bool

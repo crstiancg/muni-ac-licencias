@@ -1,7 +1,7 @@
 @php
     // Positions in mm measured on the municipality's pre-printed A4 sheet.
     // Bump the layout version on every position change: it is printed in a corner to tell test prints apart.
-    $layoutVersion = 'v9';
+    $layoutVersion = 'v10';
     $dx = config('licencias.license_offset_x');
     $dy = config('licencias.license_offset_y');
     $date = fn ($value) => $value?->format('Y-m-d');
@@ -73,6 +73,10 @@
             @endif
 
             <div class="f crest-code" style="left:8mm;top:54mm;width:41mm">C.T. {{ $procedure?->code }}</div>
+            @if ($license->holderRuc())
+                {{-- Under the pre-printed series. --}}
+                <div class="f" style="left:97mm;top:47mm;font-size:11pt;letter-spacing:.3mm">RUC. {{ $license->holderRuc() }}</div>
+            @endif
 
             <div class="f" style="left:38.7mm;top:105mm">{{ $license->printedPersonName() }}</div>
             <div class="f" style="left:38.7mm;top:122mm">{{ $license->printedBusinessName() }}</div>

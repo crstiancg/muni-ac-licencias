@@ -36,6 +36,7 @@
         .serial { position: absolute; left: 88mm; top: 34.5mm; white-space: nowrap; }
         .serial .label { font-size: 23pt; color: #1f2a44; letter-spacing: .3mm; }
         .serial .num { margin-left: 6mm; font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 19pt; color: #e0336f; letter-spacing: .8mm; }
+        .ruc { position: absolute; left: 97mm; top: 46.5mm; font-size: 11pt; font-weight: 700; color: #1f2a44; letter-spacing: .3mm; white-space: nowrap; }
 
         .entity { position: absolute; left: 30mm; right: 30mm; top: 56mm; text-align: center; text-transform: uppercase; color: #1f2a44; line-height: 1.15; }
         .entity .l1 { font-size: 17.5pt; font-weight: 700; letter-spacing: .1mm; }
@@ -139,6 +140,9 @@
             {{-- Shrinks so a long series never runs into the photo box. --}}
             <span class="num" @if (mb_strlen($serial) > 9) style="font-size:{{ max(10, 19 - (mb_strlen($serial) - 9) * 1.6) }}pt;letter-spacing:0" @endif>{{ $serial }}</span>
         </div>
+        @if ($license->holderRuc())
+            <div class="ruc condensed">RUC. {{ $license->holderRuc() }}</div>
+        @endif
 
         <div class="entity condensed">
             <div class="l1">{{ mb_strtoupper(config('licencias.municipality')) }}</div>
