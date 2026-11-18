@@ -15,6 +15,10 @@
     $signHeight = $sign ? ($d['sign_height'] ?? 0) : 0;
     // Only a company has a legal representative. Older DJs without one declared fall back to the taxpayer's.
     $representative = fn (string $key) => ! $taxpayer->isCompany() ? null : (array_key_exists($key, $d) ? $d[$key] : $taxpayer->{$key});
+    // "10. DNI o CE" is always a person's (a company's representative); a RUC always goes in "13. RUC".
+    $registeredByRuc = $taxpayer->document_type === \App\Enums\DocumentType::Ruc;
+    $applicantDni = $taxpayer->isCompany() ? $representative('representative_document') : ($registeredByRuc ? null : $taxpayer->document_number);
+    $applicantRuc = $registeredByRuc ? $taxpayer->document_number : $taxpayer->ruc;
     $logo = config('licencias.logo');
     $hasLogo = $logo && file_exists(public_path($logo));
 @endphp
@@ -123,10 +127,10 @@
             <tr><td class="v" colspan="6">{{ $taxpayer->name }}</td></tr>
             <tr><td class="l" colspan="6">9. Apellidos y nombres o Razón Social</td></tr>
             <tr>
-                <td class="v">{{ $taxpayer->document_number }}</td>
+                <td class="v">{{ $applicantDni }}</td>
                 <td class="v" style="text-transform:none">{{ $taxpayer->email }}</td>
                 <td class="v" colspan="2">{{ $taxpayer->phone }}</td>
-                <td class="v" colspan="2">{{ $taxpayer->ruc }}</td>
+                <td class="v" colspan="2">{{ $applicantRuc }}</td>
             </tr>
             <tr>
                 <td class="l">10. Nro. de DNI o CE</td>

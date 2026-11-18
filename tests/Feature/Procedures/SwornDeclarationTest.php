@@ -112,9 +112,32 @@ class SwornDeclarationTest extends TestCase
         $this->actingAs($this->clerk)
             ->get(route('procedures.declaration.print', $procedure))
             ->assertSee('QUISPE MAMANI ROSA')
-            ->assertSee('40123456')
             ->assertSee('951000111')
-            ->assertDontSee('APODERADO ANTERIOR');
+            ->assertDontSee('APODERADO ANTERIOR')
+            // A company: the representative's DNI as the applicant's, its own RUC in "13. RUC".
+            ->assertSeeInOrder(['II. DATOS DEL SOLICITANTE', '<td class="v">40123456</td>', '>20616230949</td>', '10. Nro. de DNI o CE', '13. RUC', 'III. REPRESENTANTE LEGAL', '<td class="v">40123456</td>'], false);
+    }
+
+    public function test_a_natural_person_prints_its_dni_and_ruc_in_their_own_fields()
+    {
+        $establishment = Establishment::factory()->create();
+        $establishment->taxpayer->update(['document_type' => 'dni', 'document_number' => '01234567', 'ruc' => '10012345678']);
+        $type = ProcedureType::factory()->create(['is_active' => true]);
+
+        $procedure = app(RegisterProcedure::class)->handle($this->payload($establishment, $type));
+
+        $this->actingAs($this->clerk)
+            ->get(route('procedures.declaration.print', $procedure))
+            ->assertSeeInOrder(['II. DATOS DEL SOLICITANTE', '<td class="v">01234567</td>', '>10012345678</td>', '10. Nro. de DNI o CE'], false);
+
+        // Registered by its RUC 10: the RUC goes in "13. RUC", not in the DNI field.
+        $establishment = Establishment::factory()->create();
+        $establishment->taxpayer->update(['document_type' => 'ruc', 'document_number' => '10456789012', 'ruc' => null]);
+        $procedure = app(RegisterProcedure::class)->handle($this->payload($establishment, $type));
+
+        $this->actingAs($this->clerk)
+            ->get(route('procedures.declaration.print', $procedure))
+            ->assertSeeInOrder(['II. DATOS DEL SOLICITANTE', '<td class="v"></td>', 'text-transform:none', '>10456789012</td>', '10. Nro. de DNI o CE'], false);
     }
 
     public function test_a_new_taxpayer_keeps_the_declared_representative_for_next_time()
