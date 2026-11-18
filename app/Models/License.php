@@ -221,13 +221,38 @@ class License extends Model
     }
 
     /**
-     * The legal representative printed as "Razón social" on the licence: only
-     * a company (RUC 20) has one. As declared in its procedure; licences
-     * without one declared take the company's file.
+     * "Apellidos y Nombres" on the licence: always a person, so a company
+     * prints its legal representative there.
+     */
+    public function printedPersonName(): ?string
+    {
+        return $this->isCompany() ? $this->legalRepresentative() : $this->holder_name;
+    }
+
+    /**
+     * "Razón social del Establecimiento" on the licence: the company itself;
+     * blank for a natural person.
+     */
+    public function printedBusinessName(): ?string
+    {
+        return $this->isCompany() ? $this->holder_name : null;
+    }
+
+    /**
+     * Only a company (RUC 20) has a razón social and a legal representative.
+     */
+    public function isCompany(): bool
+    {
+        return str_starts_with((string) $this->holder_document, 'RUC 20');
+    }
+
+    /**
+     * A company's legal representative, as declared in its procedure;
+     * licences without one declared take the company's file.
      */
     public function legalRepresentative(): ?string
     {
-        if (! str_starts_with((string) $this->holder_document, 'RUC 20')) {
+        if (! $this->isCompany()) {
             return null;
         }
 

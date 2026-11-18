@@ -81,7 +81,7 @@ class LicenseLetterheadTest extends TestCase
             ->get(route('licenses.print', $license))
             ->assertOk()
             ->assertSee('class="letterhead"', false)
-            ->assertSee($license->holder_name)
+            ->assertSee('<div class="f" style="left:38.7mm;top:105mm">'.e($license->holder_name).'</div>', false)
             // A natural person: the "Razón social" line stays blank.
             ->assertSee('<div class="f" style="left:38.7mm;top:122mm"></div>', false)
             // The class of establishment carries the trade name.
@@ -128,7 +128,7 @@ class LicenseLetterheadTest extends TestCase
             ->assertSee('class="qr" src="data:image/svg+xml;base64,', false);
     }
 
-    public function test_a_company_licence_prints_its_legal_representative_as_razon_social()
+    public function test_a_company_licence_prints_its_representative_as_name_and_itself_as_razon_social()
     {
         $this->seed(RolesAndPermissionsSeeder::class);
         $clerk = User::factory()->create();
@@ -140,12 +140,13 @@ class LicenseLetterheadTest extends TestCase
 
         $this->actingAs($clerk)
             ->get(route('licenses.print', $license))
-            ->assertSeeInOrder(['GRUPO THARWAH S.A.C.', 'GUERRA VASQUEZ JOCELIN MILAGROS', 'CARNICERIA - CARNES DON JOSE'])
+            ->assertSee('<div class="f" style="left:38.7mm;top:105mm">GUERRA VASQUEZ JOCELIN MILAGROS</div>', false)
+            ->assertSee('<div class="f" style="left:38.7mm;top:122mm">GRUPO THARWAH S.A.C.</div>', false)
             ->assertDontSee('REPRESENTANTE DE LA FICHA');
 
         $this->actingAs($clerk)
             ->get(route('licenses.print', [$license, 'blank' => 1]))
-            ->assertSeeInOrder(['Razón social del Establecimiento', 'GUERRA VASQUEZ JOCELIN MILAGROS']);
+            ->assertSeeInOrder(['Apellidos y Nombres', 'GUERRA VASQUEZ JOCELIN MILAGROS', 'Razón social del Establecimiento', 'GRUPO THARWAH S.A.C.', 'Clase de Establecimiento']);
 
         // Licences without a declared representative take the company's file.
         $license->procedure->update(['declaration' => collect($license->procedure->declaration)->except('representative_name')->all()]);

@@ -151,10 +151,10 @@
         <div class="content">
             <div class="box">
                 <div class="label">Apellidos y Nombres</div>
-                <div class="value">{{ $license->holder_name }}</div>
+                {{-- A company prints its legal representative here and itself as razón social. --}}
+                <div class="value">{{ $license->printedPersonName() }}</div>
                 <div class="label">Razón social del Establecimiento</div>
-                {{-- A company's legal representative; blank for a natural person. --}}
-                <div class="value">{{ $license->legalRepresentative() }}</div>
+                <div class="value">{{ $license->printedBusinessName() }}</div>
                 <div class="label">Clase de Establecimiento Comercial, Industrial o de Servicios</div>
                 <div class="value">{{ $license->establishmentClass() }}</div>
                 <div class="label">Domicilio de Establecimiento:</div>
